@@ -4,17 +4,29 @@ extern crate num_traits;
 use num_bigint::BigInt;
 use num_traits::One;
 use std::cmp::Ordering;
+use std::ops::Add;
 
-#[derive(Debug)]
-struct Unit<'a> {
-    coef: BigInt, // 整数係数 
-    variables: Vec<&'a Variable<'a>>, // 変数リスト(全て乗算したとみなす)
+#[derive(Debug, Clone)]
+struct Polynomial<'a> {
+    units: Vec<&'a Unit<'a>>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+// 3x^4y^5
+// coef: 3
+// variables: [x^4, y^5]
+#[derive(Debug, Clone)]
+struct Unit<'a> {
+    coef: BigInt,
+    variables: Vec<&'a Variable<'a>>, // always sorted
+}
+
+// x^4
+// power: 4
+// name: x
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct Variable<'a> {
-    power: BigInt, // べき数
-    name: &'a str, //変数の文字列
+    power: BigInt,
+    name: &'a str,
 }
 
 use std::fmt;
@@ -22,36 +34,77 @@ use std::fmt;
 // Unit
 
 /*
-impl<'a> Ord for Unit<'a> {
-    fn cmp(&self, other: &Self) -> Ordering {
+impl<'a> Add for Unit<'a> {
+    type Output = Unit
+    fn add(self, other: Output) -> Output {
 
     }
 }
 */
 
+impl<'a> PartialEq for Unit<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        let mut s = self.clone();
+        s.normalize();
+        let mut o = other.clone();
+        o.normalize();
+        s.coef == o.coef && s.variables == s.variables
+    }
+}
+
+// TODO:
+/*
+impl<'a> Ord for Unit<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+    }
+}
+*/
+
+impl<'a> fmt::Display for Polynomial<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut s = self.clone();
+        s.normalize();
+        let mut st = String::new();
+        for i in &s.units {
+            st.push_str(&i.to_string());
+            st.push_str(" ");
+        }
+        write!(f, "{}", st.trim_end())
+    }
+}
+
+impl<'a> Polynomial<'a> {
+    pub fn normalize(&mut self) {
+        self.units.sort();
+    }
+}
+
 impl<'a> Unit<'a> {
-    pub fn normalize(&self) {
-        //self.sort()
-        // TODO:
+    pub fn normalize(&mut self) {
+        self.variables.sort();
     }
 }
 
 impl<'a> fmt::Display for Unit<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.normalize();
-        if self.coef == One::one() {
-            let mut s = String::new();
-            for i in &self.variables {
-                s.push_str(&i.to_string());
+        let mut s = self.clone();
+        s.normalize();
+        if s.coef == One::one() {
+            let mut st = String::new();
+            for i in &s.variables {
+                st.push_str(&i.to_string());
+                st.push_str(" ");
             }
-            write!(f, "{}", s)
+            write!(f, "{}", st.trim_end())
         } else {
-            let mut s = String::new();
-            s.push_str(&self.coef.to_string());
-            for i in &self.variables {
-                s.push_str(&i.to_string());
+            let mut st = String::new();
+            st.push_str(&s.coef.to_string());
+            st.push_str(" ");
+            for i in &s.variables {
+                st.push_str(&i.to_string());
+                st.push_str(" ");
             }
-            write!(f, "{}", s)
+            write!(f, "{}", st.trim_end())
         }
     }
 }
@@ -154,6 +207,20 @@ fn unit() {
         coef: One::one(),
         variables: vec![&b2, &a2],
     };
-    assert_eq!(u1.to_string(), "a^2b^2");
-    assert_eq!(u2.to_string(), "a^2b^2");
+    assert_eq!(u1.to_string(), "a^2 b^2");
+    assert_eq!(u2.to_string(), "a^2 b^2");
+
+    let u3_1 = Unit {
+        coef: BigInt::from(3),
+        variables: vec![&a2, &b2],
+    };
+    let u5_2 = Unit {
+        coef: BigInt::from(5),
+        variables: vec![&b2, &a2],
+    };
+    assert_eq!(u3_1.to_string(), "3 a^2 b^2");
+    let p1 = Polynomial {
+        units: vec![&u3_1, &u5_2],
+    };
+    assert_eq!(p1.to_string(), "");
 }
