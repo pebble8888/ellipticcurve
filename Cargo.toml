@@ -1,0 +1,9 @@
+[package]
+name = "moduler-polynomial"
+version = "0.1.0"
+authors = ["pebble8888 <pebble8888@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+num-bigint = "0.2"
+num-traits = "0.2"
