@@ -6,7 +6,6 @@ use num_traits::One;
 use num_traits::Zero;
 use num_traits::pow;
 use std::cmp::Ordering;
-use std::ops::Neg;
 use std::fmt;
 use std::ops; 
 
@@ -34,16 +33,13 @@ impl_op_ex!(/ |a: &Unit, b: &Unit| -> Unit {
     }
 });
 
-impl Neg for Unit {
-    type Output = Unit;
-    fn neg(self) -> Self {
-        Unit {
-            coef: -&self.coef,
-            xpow: self.xpow,
-            ypow: self.ypow,
-        }
+impl_op_ex!(- |a: &Unit| -> Unit {
+    Unit {
+        coef: -&a.coef,
+        xpow: a.xpow.clone(),
+        ypow: a.ypow.clone(),
     }
-}
+});
 
 impl Unit {
     pub fn equal_order(&self, other: &Self) -> bool {
