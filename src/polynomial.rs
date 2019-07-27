@@ -1,24 +1,28 @@
 extern crate num_bigint;
 extern crate num_traits;
+extern crate num_iter;
 
 use num_bigint::BigInt;
-use num_traits::One;
+//use num_traits::One;
 use num_traits::Zero;
-use num_traits::pow;
-use std::cmp::Ordering;
+//use std::cmp::Ordering;
 use std::ops::Add;
+use std::ops::AddAssign;
 use std::ops::Sub;
+use std::ops::SubAssign;
 use std::ops::Mul;
+//use std::ops::MulAssign;
 use std::ops::Div;
-//use std::ops::Rem;
+use std::ops::Rem;
 use std::ops::Neg;
 use std::fmt;
 use super::unit;
 
 type Unit = unit::Unit;
+//type UnitBuilder = unitbuilder::UnitBuilder;
 
 #[derive(Debug, Clone)]
-struct Polynomial {
+pub struct Polynomial {
     pub units: Vec<Unit>,
 }
 
@@ -34,10 +38,27 @@ impl Add for Polynomial {
     }
 }
 
+impl AddAssign for Polynomial {
+    fn add_assign(&mut self, other: Self) {
+        let mut other_units = other.units.clone();
+        self.units.append(&mut other_units);
+        self.normalize();
+    }
+}
+
 impl Sub for Polynomial {
     type Output = Polynomial;
     fn sub(self, other: Self) -> Self {
         self + (-other)
+    }
+}
+
+impl SubAssign for Polynomial {
+    fn sub_assign(&mut self, other: Self) {
+        let minus_other = - other;
+        let mut tmp_units = minus_other.units.clone();
+        self.units.append(&mut tmp_units);
+        self.normalize();
     }
 }
 
@@ -73,8 +94,8 @@ impl Mul for Polynomial {
 impl Div for Polynomial {
     type Output = Polynomial;
     fn div(self, other: Self) -> Self {
-        if other.units.len() == 0 {
-            panic!("other.units.len() == 0");
+        if other.is_zero() {
+            panic!("other.is_zero()");
         }
         else if other.units.len() == 1 {
             let mut units: Vec<Unit> = Vec::new();
@@ -93,11 +114,36 @@ impl Div for Polynomial {
     }
 }
 
+impl Rem for Polynomial {
+    type Output = Polynomial;
+    fn rem(self, other: Self) -> Self {
+        assert!(!self.has_y());
+        assert!(!other.has_y());
+        let o_h = other.highest_unit_x();
+        let mut tmp = self.clone();
+        loop {
+            let tmp_h = tmp.highest_unit_x();
+            if tmp_h.xpow < o_h.xpow {
+                break;
+            }
+            let q = Polynomial{ units: vec![
+                Unit { 
+                    coef: tmp_h.coef.clone() / o_h.coef.clone(),
+                    xpow: tmp_h.xpow.clone() - o_h.xpow.clone(), 
+                    ypow: Zero::zero(),
+                },
+            ]};
+            tmp -= q * other.clone();
+        }
+        tmp
+    }
+}
+
 impl fmt::Display for Polynomial {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut s = self.clone();
         s.normalize();
-        if s.units.len() == 0 {
+        if s.is_zero() {
             return write!(f, "0");
         }
         let mut st = String::new();
@@ -115,6 +161,10 @@ impl fmt::Display for Polynomial {
 }
 
 impl Polynomial {
+    pub fn new() -> Self {
+        Polynomial { units: vec![] }
+    }
+
     pub fn normalize(&mut self) {
         let units = &mut self.units;
         units.sort_by(|a, b| b.cmp(a));
@@ -139,6 +189,17 @@ impl Polynomial {
                 i = i + 1;
             }
         }
+    }
+    pub fn power(&self, val: BigInt) -> Self {
+        if val == BigInt::from(0) {
+            assert!(false);
+        }
+        let mut m = self.clone();
+        for _i in num_iter::range(BigInt::from(0), val-1) {
+            m = m.clone() * self.clone();
+        }
+        m.normalize();
+        m
     }
 
     pub fn modular(&self, val: BigInt) -> Self {
@@ -166,6 +227,15 @@ impl Polynomial {
         pol.units.len() == 0
     }
 
+    pub fn has_y(&self) -> bool {
+        for i in &self.units {
+            if i.has_y() {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn to_frob(&self, n: usize) -> Self {
         let mut units: Vec<Unit> = Vec::new();
         for u in &self.units {
@@ -178,20 +248,48 @@ impl Polynomial {
         pol
     }
 
-    /*
     pub fn ec_reduction(&self, a: BigInt, b: BigInt) -> Self {
-        let mut t = Polynomial {
-            units: [].to_vec(),
-        };
+        let mut t = Polynomial::new();
         for u in &self.units {
             if u.ypow >= BigInt::from(2) {
-                let yy = u.ypow.modular(BigInt::from(2));
+                let yy = u.ypow.clone() / BigInt::from(2);
+                let mut e = Polynomial {
+                    units: [u.clone()].to_vec(),
+                };
+                e = e.clone() / Polynomial { units: [
+                Unit {
+                    coef: BigInt::from(1), 
+                    xpow: BigInt::from(0),
+                    ypow: yy.clone() * 2,
+                }].to_vec()};
+                e = e.clone() * (Polynomial { units: [
+                Unit {
+                    coef: BigInt::from(1),
+                    xpow: BigInt::from(3),
+                    ypow: BigInt::from(0),
+                }, 
+                Unit {
+                    coef: a.clone(),
+                    xpow: BigInt::from(1),
+                    ypow: BigInt::from(0),
+                },
+                Unit {
+                    coef: b.clone(),
+                    xpow: BigInt::from(0),
+                    ypow: BigInt::from(0),
+                },
+                ].to_vec() }.power(yy.clone()));
+                t += e;
+            } else {
                 let e = Polynomial {
-                }
+                    units: [u.clone()].to_vec(),
+                };
+                t += e;
             }
         }
+        t.normalize();
+        t
     }
-    */
 
     //pub fn remainder(&self, pol: Polynomial, prime: BigInt) -> Self {
     //
@@ -203,7 +301,12 @@ impl Polynomial {
 }
 
 #[test]
-fn unit() {
+fn polynmomial_test() { 
+
+    use num_traits::One;
+    use super::unitbuilder;
+    type UnitBuilder = unitbuilder::UnitBuilder;
+
     let u1 = Unit {
         coef: One::one(),
         xpow: BigInt::from(4),
@@ -281,5 +384,38 @@ fn unit() {
     let p38 = p36.clone().modular(BigInt::from(5));
     assert_eq!(p38.to_string(), "2 x^2 y^4");
 
+    // power
+    let p39 = p38.clone().power(BigInt::from(2));
+    assert_eq!(p39.to_string(), "4 x^4 y^8");
+
+    let p40 = p37.clone().power(BigInt::from(2));
+    assert_eq!(p40.to_string(), "25 x^6 y^10 + 10 x^5 y^9 + x^4 y^8");
+
+    // ec_reduction
+    let u41 = Unit {
+        coef: BigInt::from(1),
+        xpow: BigInt::from(0),
+        ypow: BigInt::from(2),
+    };
+    let p41 = Polynomial {
+        units: vec![u41],
+    };
+    let p42 = p41.clone().ec_reduction(BigInt::from(2), BigInt::from(7));
+    assert_eq!(p42.to_string(), "x^3 + 2 x + 7");
+
+    assert_eq!(p42.highest_unit_x().to_string(), "x^3");
+
+    // rem
+    let u43 = UnitBuilder::new().coef(1).xpow(4).finalize();
+    let u44 = UnitBuilder::new().coef(2).xpow(1).finalize();
+    let p47 = Polynomial { units: vec![u43, u44] };
+
+    let u45 = UnitBuilder::new().coef(1).xpow(2).finalize();
+    let u46 = UnitBuilder::new().coef(3).finalize();
+    let p48 = Polynomial { units: vec![u45, u46] };
+    assert_eq!(p47.clone().to_string(), "x^4 + 2 x");
+    assert_eq!(p48.clone().to_string(), "x^2 + 3");
+
+    assert_eq!((p47 % p48).to_string(), "2 x + 9"); 
 }
 

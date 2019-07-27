@@ -6,16 +6,14 @@ use num_traits::One;
 use num_traits::Zero;
 use num_traits::pow;
 use std::cmp::Ordering;
-use std::ops::Add;
-use std::ops::Sub;
 use std::ops::Mul;
 use std::ops::Div;
-//use std::ops::Rem;
 use std::ops::Neg;
 use std::fmt;
+//use std::default::Default;
 
 // coef x^xpow y^ypow
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Unit {
     pub coef: BigInt,
     pub xpow: BigInt,
@@ -90,6 +88,10 @@ impl Unit {
     pub fn is_zero(&self) -> bool {
         self.coef == Zero::zero()
     }
+
+    pub fn has_y(&self) -> bool {
+        self.ypow != Zero::zero()
+    }
 }
 
 impl Ord for Unit {
@@ -117,35 +119,51 @@ impl PartialOrd for Unit {
 impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.coef == One::one() {
-            if self.xpow == One::one() && self.ypow == One::one() {
+            if self.xpow == Zero::zero() && self.ypow == Zero::zero() {
                 write!(f, "1")
             } else {
                 let mut st = String::new();
-                if self.xpow != One::one() {
-                    st.push_str("x^");
-                    st.push_str(&self.xpow.to_string());
+                if self.xpow != Zero::zero() {
+                    if self.xpow == One::one() {
+                        st.push_str("x");
+                    } else {
+                        st.push_str("x^");
+                        st.push_str(&self.xpow.to_string());
+                    }
                     st.push_str(" ");
                 }
-                if self.ypow != One::one() {
-                    st.push_str("y^");
-                    st.push_str(&self.ypow.to_string());
+                if self.ypow != Zero::zero() {
+                    if self.ypow == One::one() {
+                        st.push_str("y");
+                    } else {
+                        st.push_str("y^");
+                        st.push_str(&self.ypow.to_string());
+                    }
                 }
                 write!(f, "{}", st.trim_end())
             }
         } else if self.coef == BigInt::from(-1) {
-            if self.xpow == One::one() && self.ypow == One::one() {
+            if self.xpow == Zero::zero() && self.ypow == Zero::zero() {
                 write!(f, "- 1")
             } else {
                 let mut st = String::new();
                 st.push_str("- ");
-                if self.xpow != One::one() {
-                    st.push_str("x^");
-                    st.push_str(&self.xpow.to_string());
+                if self.xpow != Zero::zero() {
+                    if self.xpow == One::one() {
+                        st.push_str("x");
+                    } else {
+                        st.push_str("x^");
+                        st.push_str(&self.xpow.to_string());
+                    }
                     st.push_str(" ");
                 }
-                if self.ypow != One::one() {
-                    st.push_str("y^");
-                    st.push_str(&self.ypow.to_string());
+                if self.ypow != Zero::zero() {
+                    if self.ypow == One::one() {
+                        st.push_str("y");
+                    } else {
+                        st.push_str("y^");
+                        st.push_str(&self.ypow.to_string());
+                    }
                 }
                 write!(f, "{}", st.trim_end())
             }
@@ -160,17 +178,38 @@ impl fmt::Display for Unit {
                 st.push_str(&abs_coef.to_string());
             }
             st.push_str(" ");
-            if self.xpow != One::one() {
-                st.push_str("x^");
-                st.push_str(&self.xpow.to_string());
+            if self.xpow != Zero::zero() {
+                if self.xpow == One::one() {
+                    st.push_str("x");
+                } else {
+                    st.push_str("x^");
+                    st.push_str(&self.xpow.to_string());
+                }
                 st.push_str(" ");
             }
-            if self.ypow != One::one() {
-                st.push_str("y^");
-                st.push_str(&self.ypow.to_string());
+            if self.ypow != Zero::zero() {
+                if self.ypow == One::one() {
+                    st.push_str("y");
+                } else {
+                    st.push_str("y^");
+                    st.push_str(&self.ypow.to_string());
+                }
             }
             write!(f, "{}", st.trim_end())
         }
     }
 }
+
+#[test]
+fn unit_test() {
+    let u0: Unit = Default::default();
+    assert_eq!(u0.clone().to_string(), "0");
+
+    let u1: Unit = Unit {
+        coef: BigInt::from(3),
+        .. Default::default()
+    };
+    assert_eq!(u1.clone().to_string(), "3");
+}
+
 
