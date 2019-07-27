@@ -6,11 +6,9 @@ use num_traits::One;
 use num_traits::Zero;
 use num_traits::pow;
 use std::cmp::Ordering;
-use std::ops::Mul;
-use std::ops::Div;
 use std::ops::Neg;
 use std::fmt;
-//use std::default::Default;
+use std::ops; 
 
 // coef x^xpow y^ypow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -20,27 +18,21 @@ pub struct Unit {
     pub ypow: BigInt,
 }
 
-impl Mul for Unit {
-    type Output = Unit;
-    fn mul(self, other: Self) -> Self {
-        Unit {
-            coef: &self.coef * &other.coef,
-            xpow: &self.xpow + &other.xpow,
-            ypow: &self.ypow + &other.ypow,
-        }
+impl_op_ex!(* |a: &Unit, b: &Unit| -> Unit {
+    Unit {
+        coef: &a.coef * &b.coef,
+        xpow: &a.xpow + &b.xpow,
+        ypow: &a.ypow + &b.ypow,
     }
-}
+});
 
-impl Div for Unit {
-    type Output = Unit;
-    fn div(self, other: Self) -> Self {
-        Unit {
-            coef: &self.coef / &other.coef,
-            xpow: &self.xpow - &other.xpow,
-            ypow: &self.ypow - &other.ypow,
-        }
+impl_op_ex!(/ |a: &Unit, b: &Unit| -> Unit {
+    Unit {
+        coef: &a.coef / &b.coef,
+        xpow: &a.xpow - &b.xpow,
+        ypow: &a.ypow - &b.ypow,
     }
-}
+});
 
 impl Neg for Unit {
     type Output = Unit;
@@ -59,8 +51,8 @@ impl Unit {
     }
     pub fn power(&self, val: usize) -> Self {
         let coef = pow(self.coef.clone(), val);
-        let xpow = self.xpow.clone() * val;
-        let ypow = self.ypow.clone() * val;
+        let xpow = &self.xpow * val;
+        let ypow = &self.ypow * val;
         Unit {
             coef: coef,
             xpow: xpow,
@@ -68,19 +60,15 @@ impl Unit {
         }
     }
     pub fn to_frob(&self, val: usize) -> Self {
-        let coef = self.coef.clone();
-        let xpow = self.xpow.clone() * val;
-        let ypow = self.ypow.clone() * val;
         Unit {
-            coef: coef,
-            xpow: xpow,
-            ypow: ypow,
+            coef: self.coef.clone(),
+            xpow: &self.xpow * val,
+            ypow: &self.ypow * val,
         }
     }
     pub fn modular(&self, val: BigInt) -> Self {
-        let coef = self.coef.clone() % val;
         Unit {
-            coef: coef,
+            coef: &self.coef % val,
             xpow: self.xpow.clone(),
             ypow: self.ypow.clone(),
         }
@@ -173,7 +161,7 @@ impl fmt::Display for Unit {
             if self.coef >= Zero::zero() {
                 st.push_str(&self.coef.to_string());
             } else {
-                let abs_coef = self.coef.clone() * BigInt::from(-1);
+                let abs_coef = &self.coef * BigInt::from(-1);
                 st.push_str("- ");
                 st.push_str(&abs_coef.to_string());
             }
@@ -203,13 +191,24 @@ impl fmt::Display for Unit {
 #[test]
 fn unit_test() {
     let u0: Unit = Default::default();
-    assert_eq!(u0.clone().to_string(), "0");
+    assert_eq!(&u0.to_string(), "0");
 
-    let u1: Unit = Unit {
+    let u1 = Unit {
         coef: BigInt::from(3),
         .. Default::default()
     };
-    assert_eq!(u1.clone().to_string(), "3");
+    assert_eq!(&u1.to_string(), "3");
+
+    let u2 = Unit {
+        coef: BigInt::from(4),
+        .. Default::default()
+    };
+    let u3 = Unit {
+        coef: BigInt::from(3),
+        .. Default::default()
+    };
+    assert_eq!((u2.clone() * u3.clone()).to_string(), "12");
+    assert_eq!((&u2 * &u3).to_string(), "12");
 }
 
 

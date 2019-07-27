@@ -16,10 +16,10 @@ use std::ops::Div;
 use std::ops::Rem;
 use std::ops::Neg;
 use std::fmt;
+use std::ops;
 use super::unit;
 
 type Unit = unit::Unit;
-//type UnitBuilder = unitbuilder::UnitBuilder;
 
 #[derive(Debug, Clone)]
 pub struct Polynomial {
@@ -79,7 +79,7 @@ impl Mul for Polynomial {
         let mut units: Vec<Unit> = Vec::new();
         for i in &self.units {
             for j in &other.units {
-                let u: Unit = i.clone() * j.clone();
+                let u: Unit = i * j;
                 units.push(u);
             }
         }
@@ -100,7 +100,7 @@ impl Div for Polynomial {
         else if other.units.len() == 1 {
             let mut units: Vec<Unit> = Vec::new();
             for i in &self.units {
-                let u = i.clone() / other.units[0].clone();
+                let u = i / &other.units[0];
                 units.push(u);
             }
             let mut pol = Polynomial {
@@ -117,6 +117,33 @@ impl Div for Polynomial {
 impl Rem for Polynomial {
     type Output = Polynomial;
     fn rem(self, other: Self) -> Self {
+        assert!(!self.has_y());
+        assert!(!other.has_y());
+        let o_h = other.highest_unit_x();
+        let mut tmp = self.clone();
+        loop {
+            let tmp_h = tmp.highest_unit_x();
+            if tmp_h.xpow < o_h.xpow {
+                break;
+            }
+            let q = Polynomial{ units: vec![
+                Unit { 
+                    coef: &tmp_h.coef / &o_h.coef,
+                    xpow: &tmp_h.xpow - &o_h.xpow, 
+                    ypow: Zero::zero(),
+                },
+            ]};
+            tmp -= q * other.clone();
+        }
+        tmp
+    }
+}
+
+// TODO: to macro
+
+impl<'a> Rem<&'a Polynomial> for &'a Polynomial {
+    type Output = Polynomial;
+    fn rem(self, other: Self) -> Polynomial {
         assert!(!self.has_y());
         assert!(!other.has_y());
         let o_h = other.highest_unit_x();
@@ -190,6 +217,7 @@ impl Polynomial {
             }
         }
     }
+
     pub fn power(&self, val: BigInt) -> Self {
         if val == BigInt::from(0) {
             assert!(false);
@@ -225,6 +253,17 @@ impl Polynomial {
         let mut pol = self.clone();
         pol.normalize();
         pol.units.len() == 0
+    }
+
+    pub fn is_gcd_one(&self, other: &Self) -> bool {
+        let s = self.highest_unit_x();
+        let o = other.highest_unit_x();
+        if s.xpow < o.xpow {
+            let m = other % self;
+            return !m.is_zero();
+        }
+        let m = self % other;
+        return !m.is_zero();
     }
 
     pub fn has_y(&self) -> bool {
