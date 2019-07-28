@@ -8,6 +8,9 @@ use num_traits::pow;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops; 
+use super::polynomial;
+
+type Polynomial = polynomial::Polynomial;
 
 // coef x^xpow y^ypow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -17,12 +20,28 @@ pub struct Unit {
     pub ypow: BigInt,
 }
 
+impl_op_ex!(+ |a: &Unit, b: &Unit| -> Polynomial {
+    let mut pol = Polynomial {
+        units: vec![a.clone(), b.clone()],
+    };
+    pol.normalize();
+    pol
+});
+
 impl_op_ex!(* |a: &Unit, b: &Unit| -> Unit {
     Unit {
         coef: &a.coef * &b.coef,
         xpow: &a.xpow + &b.xpow,
         ypow: &a.ypow + &b.ypow,
     }
+});
+
+impl_op_ex!(- |a: &Unit, b: &Unit| -> Polynomial {
+    let mut pol = Polynomial {
+        units: vec![a.clone(), -b.clone()],
+    };
+    pol.normalize();
+    pol
 });
 
 impl_op_ex!(/ |a: &Unit, b: &Unit| -> Unit {
@@ -42,6 +61,16 @@ impl_op_ex!(- |a: &Unit| -> Unit {
 });
 
 impl Unit {
+    pub fn new() -> Unit {
+        Unit { coef: Zero::zero(), xpow: Zero::zero(), ypow: Zero::zero(), }
+    }
+
+    pub fn to_pol(&self) -> Polynomial {
+        Polynomial {
+            units: vec![self.clone()],
+        }
+    }
+
     pub fn equal_order(&self, other: &Self) -> bool {
         return &self.xpow == &other.xpow && self.ypow == other.ypow 
     }
@@ -59,6 +88,13 @@ impl Unit {
         Unit {
             coef: self.coef.clone(),
             xpow: &self.xpow * val,
+            ypow: &self.ypow * val,
+        }
+    }
+    pub fn to_y_power(&self, val: usize) -> Self {
+        Unit {
+            coef: self.coef.clone(),
+            xpow: self.xpow.clone(),
             ypow: &self.ypow * val,
         }
     }
