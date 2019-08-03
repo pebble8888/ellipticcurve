@@ -4,11 +4,12 @@ extern crate num_traits;
 use num_bigint::BigInt;
 use num_traits::One;
 use num_traits::Zero;
-use num_traits::pow;
+//use num_traits::pow;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops; 
 use super::polynomial;
+use super::bigint::{Power, PowerModular};
 
 type Polynomial = polynomial::Polynomial;
 
@@ -72,39 +73,60 @@ impl Unit {
     }
 
     pub fn equal_order(&self, other: &Self) -> bool {
-        return &self.xpow == &other.xpow && self.ypow == other.ypow 
+        return &self.xpow == &other.xpow && &self.ypow == &other.ypow 
     }
-    pub fn power(&self, val: usize) -> Self {
-        let coef = pow(self.coef.clone(), val);
-        let xpow = &self.xpow * val;
-        let ypow = &self.ypow * val;
+
+    pub fn power(&self, n: &BigInt) -> Self {
         Unit {
-            coef: coef,
-            xpow: xpow,
-            ypow: ypow,
+            coef: self.coef.clone().power(&n.clone()),
+            xpow: &self.xpow * n.clone(),
+            ypow: &self.ypow * n.clone(),
         }
     }
-    pub fn to_frob(&self, val: usize) -> Self {
+
+    pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
+        Unit {
+            coef: self.coef.power_modular(n, p),
+            xpow: &self.xpow * n.clone(),
+            ypow: &self.ypow * n.clone(),
+        }
+    }
+
+    pub fn to_frob(&self, n: &BigInt) -> Self {
         Unit {
             coef: self.coef.clone(),
-            xpow: &self.xpow * val,
-            ypow: &self.ypow * val,
+            xpow: &self.xpow * n.clone(),
+            ypow: &self.ypow * n.clone(),
         }
     }
-    pub fn to_y_power(&self, val: usize) -> Self {
+
+    pub fn to_y_power(&self, n: &BigInt) -> Self {
         Unit {
             coef: self.coef.clone(),
             xpow: self.xpow.clone(),
-            ypow: &self.ypow * val,
+            ypow: &self.ypow * n.clone(),
         }
     }
-    pub fn modular(&self, val: BigInt) -> Self {
-        Unit {
-            coef: &self.coef % val,
-            xpow: self.xpow.clone(),
-            ypow: self.ypow.clone(),
+
+    pub fn modular(&self, n: &BigInt) -> Self {
+        if n == &Zero::zero() {
+            return self.clone();
+            /*
+            Unit {
+                coef: &self.coef,
+                xpow: self.xpow.clone(),
+                ypow: self.ypow.clone(),
+            }
+            */
+        } else {
+            Unit {
+                coef: &self.coef % n,
+                xpow: self.xpow.clone(),
+                ypow: self.ypow.clone(),
+            }
         }
     }
+
     pub fn is_zero(&self) -> bool {
         self.coef == Zero::zero()
     }
@@ -241,6 +263,14 @@ fn unit_test() {
     };
     assert_eq!((u2.clone() * u3.clone()).to_string(), "12");
     assert_eq!((&u2 * &u3).to_string(), "12");
+    assert_eq!(Unit {
+        coef: BigInt::from(20),
+        xpow: BigInt::from(1),
+        ypow: BigInt::from(0),
+    }.modular(&BigInt::from(19)).to_string(), "x");
+
+    // power_modular
+                      
 }
 
 
