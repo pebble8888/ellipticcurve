@@ -8,6 +8,7 @@ use num_traits::Zero;
 
 pub trait Power {
     fn power(&self, n: &BigInt) -> Self; 
+    fn power_i(&self, n: i64) -> Self;
 }
 
 pub trait PowerModular {
@@ -35,6 +36,11 @@ impl Power for BigInt {
             t = &t * self;
         }
         t
+    }
+
+    fn power_i(&self, n: i64) -> Self {
+        let n = BigInt::from(n);
+        self.power(&n)
     }
 }
 

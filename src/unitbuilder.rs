@@ -7,9 +7,9 @@ type Unit = unit::Unit;
 
 #[derive(Debug, Clone, Default)]
 pub struct UnitBuilder {
-    coef: i64,
-    xpow: i64,
-    ypow: i64,
+    coef: BigInt,
+    xpow: BigInt,
+    ypow: BigInt,
 }
 
 impl UnitBuilder {
@@ -17,26 +17,41 @@ impl UnitBuilder {
         Default::default()
     }
 
-    pub fn coef(&mut self, coef: i64) -> &mut UnitBuilder {
-        self.coef = coef;
+    pub fn coef(&mut self, coef: &BigInt) -> &mut UnitBuilder {
+        self.coef = coef.clone();
         self
     }
 
-    pub fn xpow(&mut self, xpow: i64) -> &mut UnitBuilder {
-        self.xpow = xpow; 
+    pub fn coef_i(&mut self, coef: i64) -> &mut UnitBuilder {
+        self.coef = BigInt::from(coef);
         self
     }
 
-    pub fn ypow(&mut self, ypow: i64) -> &mut UnitBuilder {
-        self.ypow = ypow;
+    pub fn xpow(&mut self, xpow: &BigInt) -> &mut UnitBuilder {
+        self.xpow = xpow.clone();
+        self
+    }
+
+    pub fn xpow_i(&mut self, xpow: i64) -> &mut UnitBuilder {
+        self.xpow = BigInt::from(xpow); 
+        self
+    }
+
+    pub fn ypow(&mut self, ypow: &BigInt) -> &mut UnitBuilder {
+        self.ypow = ypow.clone();
+        self
+    }
+
+    pub fn ypow_i(&mut self, ypow: i64) -> &mut UnitBuilder {
+        self.ypow = BigInt::from(ypow);
         self
     }
 
     pub fn finalize(&self) -> Unit {
         Unit { 
-            coef: BigInt::from(self.coef),
-            xpow: BigInt::from(self.xpow),
-            ypow: BigInt::from(self.ypow),
+            coef: self.coef.clone(),
+            xpow: self.xpow.clone(),
+            ypow: self.ypow.clone(),
         }
     }
 }

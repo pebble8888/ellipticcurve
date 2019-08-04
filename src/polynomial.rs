@@ -9,8 +9,10 @@ use std::fmt;
 use std::ops;
 use super::unit;
 use super::bigint::{Inverse, DivFloor};
+use super::unitbuilder;
 
 type Unit = unit::Unit;
+type UnitBuilder = unitbuilder::UnitBuilder;
 
 #[derive(Debug, Clone)]
 pub struct Polynomial {
@@ -52,7 +54,7 @@ impl_op_ex!(* |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut units: Vec<Unit> = Vec::with_capacity(a.units.len() * b.units.len());
     for i in &a.units {
         for j in &b.units {
-            let u: Unit = i * j;
+            let u = i * j;
             units.push(u);
         }
     }
@@ -120,11 +122,11 @@ impl fmt::Display for Polynomial {
 
 impl Polynomial {
     pub fn new() -> Self {
-        Polynomial { units: vec![Unit::new()] }
+        UnitBuilder::new().finalize().to_pol()
     }
 
     pub fn normalize(&mut self) {
-        println!("{} normalize()", line!());
+        //println!("{} normalize()", line!());
         let units = &mut self.units;
         units.sort_by(|a, b| b.cmp(a));
         let mut i = 0; 
@@ -147,18 +149,14 @@ impl Polynomial {
                 i += 1;
             }
         }
-        println!("{} normalize()", line!());
+        //println!("{} normalize()", line!());
     }
 
     pub fn power(&self, n: &BigInt) -> Self {
-        println!("{} {}", line!(), n);
         assert!(*n >= Zero::zero(), "n:{}", n.to_string());
         if *n == Zero::zero() {
-            return Unit {
-                coef: BigInt::from(1),
-                xpow: Zero::zero(),
-                ypow: Zero::zero(),
-            }.to_pol();
+            UnitBuilder::new().coef_i(1).finalize()
+            .to_pol();
         }
         
         let mut m = self.clone();
@@ -166,8 +164,12 @@ impl Polynomial {
             m *= self;
         }
         m.normalize();
-        println!("{}", line!());
         m
+    }
+
+    pub fn power_i(&self, n: i64) -> Self {
+        let n = BigInt::from(n);
+        self.power(&n)
     }
 
     pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
@@ -175,11 +177,7 @@ impl Polynomial {
         assert!(*n >= Zero::zero());
         let mut b = self.clone();
         b = b.modular(p);
-        let mut r = Unit {
-                coef: BigInt::from(1),
-                xpow: Zero::zero(),
-                ypow: Zero::zero(),
-        }.to_pol();
+        let mut r = UnitBuilder::new().coef_i(1).finalize().to_pol();
         let mut e = n.clone();
         while &e > &One::one() {
             println!("{} e:{}", line!(), e);
@@ -200,8 +198,8 @@ impl Polynomial {
     }
 
     pub fn polynomial_modular(&self, other: &Polynomial, p: &BigInt) -> Self {
-        assert!(!self.has_y(), "{}", self.to_string());
-        assert!(!other.has_y(), "{}", other.to_string());
+        assert!(!self.has_y(), "!self.has_y()");
+        assert!(!other.has_y(), "!other.has_y()");
         let h = other.highest_unit_x();
         let mut tmp = self.clone();
         loop {
@@ -209,11 +207,7 @@ impl Polynomial {
             if tmp_h.xpow < h.xpow {
                 break;
             }
-            let q = Unit { 
-                        coef: &tmp_h.coef * &h.coef.inverse(p),
-                        xpow: &tmp_h.xpow - &h.xpow, 
-                        ypow: Zero::zero(),
-                    }.to_pol();
+            let q = UnitBuilder::new().coef(&(&tmp_h.coef * &h.coef.inverse(p))).xpow(&(&tmp_h.xpow - &h.xpow)).finalize().to_pol();
             tmp -= q * other;
             tmp = tmp.modular(&p);
         }
@@ -309,44 +303,26 @@ impl Polynomial {
             if u.ypow >= BigInt::from(2) {
                 let yy = u.ypow.clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= Polynomial { units: [
-                Unit {
-                    coef: BigInt::from(1), 
-                    xpow: BigInt::from(0),
-                    ypow: yy.clone() * 2,
-                }].to_vec()};
-                let ee = Polynomial { units: [
-                    Unit {
-                        coef: BigInt::from(1),
-                        xpow: BigInt::from(3),
-                        ypow: BigInt::from(0),
-                    }, 
-                    Unit {
-                        coef: a.clone(),
-                        xpow: BigInt::from(1),
-                        ypow: BigInt::from(0),
-                    },
-                    Unit {
-                        coef: b.clone(),
-                        xpow: BigInt::from(0),
-                        ypow: BigInt::from(0),
-                    },
-                ].to_vec() };
+                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize().to_pol();
+
+                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).finalize().to_pol() 
+                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).finalize().to_pol()
+                       + UnitBuilder::new().coef(&b.clone()).finalize().to_pol();
                 // power() is faster than power_modular()
-                println!("{}", line!());
+                //println!("{}", line!());
                 let ee = ee.power(&yy.clone());
-                println!("{}", line!());
+                //println!("{}", line!());
                 e *= ee;
-                println!("{}", line!());
+                //println!("{}", line!());
                 t += e;
             } else {
                 //println!("{}", line!());
                 t += u.clone().to_pol();
             }
         }
-        println!("{}", line!());
+        //println!("{}", line!());
         t.normalize();
-        println!("{}", line!());
+        //println!("{}", line!());
         t
     }
 }
@@ -354,20 +330,12 @@ impl Polynomial {
 #[test]
 fn polynmomial_test() { 
 
-    use num_traits::One;
+    //use num_traits::One;
     use super::unitbuilder;
     type UnitBuilder = unitbuilder::UnitBuilder;
 
-    let u1 = Unit {
-        coef: One::one(),
-        xpow: BigInt::from(4),
-        ypow: BigInt::from(2),
-    };
-    let u2 = Unit {
-        coef: BigInt::from(3),
-        xpow: BigInt::from(2),
-        ypow: BigInt::from(4),
-    };
+    let u1 = UnitBuilder::new().coef_i(1).xpow_i(4).ypow_i(2).finalize();
+    let u2 = UnitBuilder::new().coef_i(3).xpow_i(2).ypow_i(4).finalize();
     assert_eq!(u1.to_string(), "x^4 y^2");
     assert_eq!(u2.to_string(), "3 x^2 y^4");
 
@@ -405,21 +373,13 @@ fn polynmomial_test() {
     let p11 = &p5 - &p5;
     assert_eq!(p11.to_string(), "0");
 
-    let u21 = u2.power(&BigInt::from(3));
+    let u21 = u2.power_i(3);
     assert_eq!(u21.to_string(), "27 x^6 y^12");
 
     // Modular
-    let u33 = Unit {
-        coef: BigInt::from(37),
-        xpow: BigInt::from(2),
-        ypow: BigInt::from(4),
-    };
+    let u33 = UnitBuilder::new().coef_i(37).xpow_i(2).ypow_i(4).finalize();
 
-    let u35 = Unit {
-        coef: BigInt::from(35),
-        xpow: BigInt::from(3),
-        ypow: BigInt::from(5),
-    };
+    let u35 = UnitBuilder::new().coef_i(35).xpow_i(3).ypow_i(5).finalize();
 
     let u34 = u33.modular(&BigInt::from(24));
     assert_eq!(u34.to_string(), "13 x^2 y^4");
@@ -434,21 +394,17 @@ fn polynmomial_test() {
     assert_eq!(p38.to_string(), "2 x^2 y^4");
 
     // power
-    let p39 = p38.power(&BigInt::from(2));
+    let p39 = p38.power_i(2);
     assert_eq!(p39.to_string(), "4 x^4 y^8");
 
-    let p3_39 = p38.power(&BigInt::from(3));
+    let p3_39 = p38.power_i(3);
     assert_eq!(p3_39.to_string(), "8 x^6 y^12");
 
-    let p40 = p37.power(&BigInt::from(2));
+    let p40 = p37.power_i(2);
     assert_eq!(p40.to_string(), "25 x^6 y^10 + 10 x^5 y^9 + x^4 y^8");
 
     // ec_reduction
-    let u41 = Unit {
-        coef: BigInt::from(1),
-        xpow: BigInt::from(1),
-        ypow: BigInt::from(3),
-    };
+    let u41 = UnitBuilder::new().coef_i(1).xpow_i(1).ypow_i(3).finalize();
     let p41 = Polynomial {
         units: vec![u41],
     };
@@ -458,12 +414,12 @@ fn polynmomial_test() {
     assert_eq!(p42.highest_unit_x().to_string(), "x^4 y");
 
     // rem
-    let u43 = UnitBuilder::new().coef(3).xpow(4).finalize();
-    let u44 = UnitBuilder::new().coef(2).xpow(1).finalize();
+    let u43 = UnitBuilder::new().coef_i(3).xpow_i(4).finalize();
+    let u44 = UnitBuilder::new().coef_i(2).xpow_i(1).finalize();
     let p47 = Polynomial { units: vec![u43, u44] };
 
-    let u45 = UnitBuilder::new().coef(2).xpow(2).finalize();
-    let u46 = UnitBuilder::new().coef(3).finalize();
+    let u45 = UnitBuilder::new().coef_i(2).xpow_i(2).finalize();
+    let u46 = UnitBuilder::new().coef_i(3).finalize();
     let p48 = Polynomial { units: vec![u45, u46] };
     assert_eq!(p47.to_string(), "3 x^4 + 2 x");
     assert_eq!(p48.to_string(), "2 x^2 + 3");
@@ -477,9 +433,9 @@ fn polynmomial_test() {
     assert_eq!(p49.to_string(), "6 x^6 + 9 x^4 + 4 x^3 + 6 x");
 
     // /=
-    let u50 = UnitBuilder::new().coef(6).xpow(6).finalize();
-    let u51 = UnitBuilder::new().coef(12).xpow(4).finalize();
-    let u52 = UnitBuilder::new().coef(3).xpow(2).finalize();
+    let u50 = UnitBuilder::new().coef_i(6).xpow_i(6).finalize();
+    let u51 = UnitBuilder::new().coef_i(12).xpow_i(4).finalize();
+    let u52 = UnitBuilder::new().coef_i(3).xpow_i(2).finalize();
     let mut p50 = &u50 + &u51;
     let p51 = u52.to_pol();
     p50 /= &p51;

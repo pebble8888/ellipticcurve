@@ -83,6 +83,10 @@ impl Unit {
         }
     }
 
+    pub fn power_i(&self, n: i64) -> Self {
+        self.power(&BigInt::from(n))
+    }
+
     pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
         Unit {
             coef: self.coef.power_modular(n, p),
