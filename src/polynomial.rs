@@ -8,7 +8,7 @@ use num_traits::One;
 use std::fmt;
 use std::ops;
 use super::unit;
-use super::bigint::{/*Power, PowerModular, */ Inverse};
+use super::bigint::{Inverse, DivFloor};
 
 type Unit = unit::Unit;
 
@@ -124,12 +124,11 @@ impl Polynomial {
     }
 
     pub fn normalize(&mut self) {
-        //println!("{} normalize()", line!());
+        println!("{} normalize()", line!());
         let units = &mut self.units;
         units.sort_by(|a, b| b.cmp(a));
         let mut i = 0; 
         while i < units.len() {
-            //println!("{} {} {}", line!(), i, units.len());
             if units[i].coef == Zero::zero() {
                 units.remove(i);
             } else if i+1 < units.len() && units[i].equal_order(&units[i+1]) {
@@ -148,10 +147,11 @@ impl Polynomial {
                 i += 1;
             }
         }
-        //println!("{} normalize()", line!());
+        println!("{} normalize()", line!());
     }
 
     pub fn power(&self, n: &BigInt) -> Self {
+        println!("{} {}", line!(), n);
         assert!(*n >= Zero::zero(), "n:{}", n.to_string());
         if *n == Zero::zero() {
             return Unit {
@@ -166,6 +166,7 @@ impl Polynomial {
             m *= self;
         }
         m.normalize();
+        println!("{}", line!());
         m
     }
 
@@ -199,8 +200,8 @@ impl Polynomial {
     }
 
     pub fn polynomial_modular(&self, other: &Polynomial, p: &BigInt) -> Self {
-        assert!(!self.has_y());
-        assert!(!other.has_y());
+        assert!(!self.has_y(), "{}", self.to_string());
+        assert!(!other.has_y(), "{}", other.to_string());
         let h = other.highest_unit_x();
         let mut tmp = self.clone();
         loop {
@@ -216,7 +217,7 @@ impl Polynomial {
             tmp -= q * other;
             tmp = tmp.modular(&p);
         }
-        tmp
+        tmp.modular(&p)
     }
 
     pub fn modular(&self, p: &BigInt) -> Self {
@@ -302,23 +303,18 @@ impl Polynomial {
         pol
     }
 
-    pub fn ec_reduction(&self, a: &BigInt, b: &BigInt, p:&BigInt) -> Self {
-        //println!("ec_reduction {}", line!());
+    pub fn ec_reduction(&self, a: &BigInt, b: &BigInt) -> Self {
         let mut t = Polynomial::new();
         for u in &self.units {
-            //println!("{} {}", line!(), u.to_string());
             if u.ypow >= BigInt::from(2) {
-                let yy = u.ypow.clone() / BigInt::from(2);
-                let mut e = Polynomial {
-                    units: [u.clone()].to_vec(),
-                };
+                let yy = u.ypow.clone().div_floor(&BigInt::from(2));
+                let mut e = u.clone().to_pol();
                 e /= Polynomial { units: [
                 Unit {
                     coef: BigInt::from(1), 
                     xpow: BigInt::from(0),
                     ypow: yy.clone() * 2,
                 }].to_vec()};
-                //println!("{} e:{}", line!(), e.to_string());
                 let ee = Polynomial { units: [
                     Unit {
                         coef: BigInt::from(1),
@@ -337,36 +333,21 @@ impl Polynomial {
                     },
                 ].to_vec() };
                 // power() is faster than power_modular()
-                let mut ee = ee.power(&yy.clone());
-                //println!("{} ee:{}", line!(), ee.to_string());
-                ee = ee.modular(p);
-                //println!("{} ee:{}", line!(), ee.to_string());
+                println!("{}", line!());
+                let ee = ee.power(&yy.clone());
+                println!("{}", line!());
                 e *= ee;
-                //println!("{}", line!());
-
+                println!("{}", line!());
                 t += e;
-
-                //println!("{}", line!());
-                t = t.modular(p);
             } else {
-                let e = Polynomial {
-                    units: [u.clone()].to_vec(),
-                };
-                t += e;
+                //println!("{}", line!());
+                t += u.clone().to_pol();
             }
         }
-        //println!("{}", line!());
+        println!("{}", line!());
         t.normalize();
-        //println!("{}", line!());
-        if *p != Zero::zero() {
-            //println!("{}", line!());
-            let s = t.modular(p);
-            //println!("{} {}", line!(), t.to_string());
-            return s;
-        } else {
-            //println!("{} {}", line!(), t.to_string());
-            return t.clone();
-        }
+        println!("{}", line!());
+        t
     }
 }
 
@@ -471,7 +452,7 @@ fn polynmomial_test() {
     let p41 = Polynomial {
         units: vec![u41],
     };
-    let p42 = p41.ec_reduction(&BigInt::from(2), &BigInt::from(7), &BigInt::from(19));
+    let p42 = p41.ec_reduction(&BigInt::from(2), &BigInt::from(7));
     assert_eq!(p42.to_string(), "x^4 y + 2 x^2 y + 7 x y");
 
     assert_eq!(p42.highest_unit_x().to_string(), "x^4 y");
