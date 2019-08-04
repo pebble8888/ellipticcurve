@@ -204,10 +204,10 @@ impl Polynomial {
         let mut tmp = self.clone();
         loop {
             let tmp_h = tmp.highest_unit_x();
-            if tmp_h.xpow < h.xpow {
+            if tmp_h.xpow() < h.xpow() {
                 break;
             }
-            let q = UnitBuilder::new().coef(&(&tmp_h.coef * &h.coef.inverse(p))).xpow(&(&tmp_h.xpow - &h.xpow)).finalize().to_pol();
+            let q = UnitBuilder::new().coef(&(tmp_h.coef.clone() * h.coef.inverse(p))).xpow(&(tmp_h.xpow() - h.xpow())).finalize().to_pol();
             tmp -= q * other;
             tmp = tmp.modular(&p);
         }
@@ -256,7 +256,7 @@ impl Polynomial {
     pub fn is_gcd_one(&self, other: &Self, p: &BigInt) -> bool {
         let s = self.highest_unit_x();
         let o = other.highest_unit_x();
-        if s.xpow < o.xpow {
+        if s.xpow() < o.xpow() {
             let m = other.polynomial_modular(self, p);
             return !m.is_zero();
         }
@@ -300,8 +300,8 @@ impl Polynomial {
     pub fn ec_reduction(&self, a: &BigInt, b: &BigInt) -> Self {
         let mut t = Polynomial::new();
         for u in &self.units {
-            if u.ypow >= BigInt::from(2) {
-                let yy = u.ypow.clone().div_floor(&BigInt::from(2));
+            if u.ypow() >= &BigInt::from(2) {
+                let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
                 e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize().to_pol();
 
@@ -360,9 +360,6 @@ fn polynmomial_test() {
     assert_eq!(p5.to_string(), "x^8 y^4 + 6 x^6 y^6 + 9 x^4 y^8");
 
     // Neg
-    let u8 = - &u1;
-    assert_eq!(u8.to_string(), "- x^4 y^2"); 
-
     let p9 = - &p1; 
     assert_eq!(p9.to_string(), "- x^4 y^2 - 3 x^2 y^4");
 

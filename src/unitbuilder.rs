@@ -4,6 +4,7 @@ use std::default::Default;
 use super::unit;
 
 type Unit = unit::Unit;
+type UnitKey = unit::UnitKey;
 
 #[derive(Debug, Clone, Default)]
 pub struct UnitBuilder {
@@ -48,10 +49,12 @@ impl UnitBuilder {
     }
 
     pub fn finalize(&self) -> Unit {
-        Unit { 
-            coef: self.coef.clone(),
-            xpow: self.xpow.clone(),
-            ypow: self.ypow.clone(),
+        Unit {
+          coef: self.coef.clone(),
+          key: UnitKey {
+              xpow: self.xpow.clone(),
+              ypow: self.ypow.clone(),
+          },
         }
     }
 }

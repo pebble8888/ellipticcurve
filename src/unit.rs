@@ -9,13 +9,20 @@ use std::fmt;
 use std::ops; 
 use super::polynomial;
 use super::bigint::{Power, PowerModular, DivFloor, RemFloor};
+use super::unitbuilder;
 
 type Polynomial = polynomial::Polynomial;
+type UnitBuilder = unitbuilder::UnitBuilder;
 
 // coef x^xpow y^ypow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Unit {
     pub coef: BigInt,
+    pub key: UnitKey,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct UnitKey {
     pub xpow: BigInt,
     pub ypow: BigInt,
 }
@@ -31,8 +38,10 @@ impl_op_ex!(+ |a: &Unit, b: &Unit| -> Polynomial {
 impl_op_ex!(* |a: &Unit, b: &Unit| -> Unit {
     Unit {
         coef: &a.coef * &b.coef,
-        xpow: &a.xpow + &b.xpow,
-        ypow: &a.ypow + &b.ypow,
+        key: UnitKey { 
+            xpow: a.xpow() + b.xpow(),
+            ypow: a.ypow() + b.ypow(),
+        },
     }
 });
 
@@ -45,24 +54,32 @@ impl_op_ex!(- |a: &Unit, b: &Unit| -> Polynomial {
 });
 
 impl_op_ex!(/ |a: &Unit, b: &Unit| -> Unit {
-    Unit {
-        coef: a.coef.div_floor(&b.coef),
-        xpow: &a.xpow - &b.xpow,
-        ypow: &a.ypow - &b.ypow,
-    }
+    UnitBuilder::new()
+        .coef(&a.coef.div_floor(&b.coef))
+        .xpow(&(a.xpow() - b.xpow()))
+        .ypow(&(a.ypow() - b.ypow())).
+        finalize()
 });
 
 impl_op_ex!(- |a: &Unit| -> Unit {
-    Unit {
-        coef: -&a.coef,
-        xpow: a.xpow.clone(),
-        ypow: a.ypow.clone(),
-    }
+    UnitBuilder::new()
+        .coef(&(-a.coef.clone()))
+        .xpow(&a.xpow().clone())
+        .ypow(&a.ypow().clone())
+        .finalize()
 });
 
 impl Unit {
+    pub fn xpow(&self) -> &BigInt {
+        &self.key.xpow
+    }
+
+    pub fn ypow(&self) -> &BigInt {
+        &self.key.ypow
+    }
+
     pub fn new() -> Unit {
-        Unit { coef: Zero::zero(), xpow: Zero::zero(), ypow: Zero::zero(), }
+        UnitBuilder::new().finalize()
     }
 
     pub fn to_pol(&self) -> Polynomial {
@@ -72,15 +89,15 @@ impl Unit {
     }
 
     pub fn equal_order(&self, other: &Self) -> bool {
-        return &self.xpow == &other.xpow && &self.ypow == &other.ypow 
+        return &self.xpow() == &other.xpow() && &self.ypow() == &other.ypow()
     }
 
     pub fn power(&self, n: &BigInt) -> Self {
-        Unit {
-            coef: self.coef.clone().power(&n.clone()),
-            xpow: &self.xpow * n.clone(),
-            ypow: &self.ypow * n.clone(),
-        }
+        UnitBuilder::new()
+          .coef(&self.coef.clone().power(&n.clone()))
+          .xpow(&(self.xpow() * n.clone()))
+          .ypow(&(self.ypow() * n.clone()))
+          .finalize()
     }
 
     pub fn power_i(&self, n: i64) -> Self {
@@ -88,38 +105,38 @@ impl Unit {
     }
 
     pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
-        Unit {
-            coef: self.coef.power_modular(n, p),
-            xpow: &self.xpow * n.clone(),
-            ypow: &self.ypow * n.clone(),
-        }
+        UnitBuilder::new()
+            .coef(&self.coef.power_modular(n, p))
+            .xpow(&(self.xpow() * n.clone()))
+            .ypow(&(self.ypow() * n.clone()))
+            .finalize()
     }
 
     pub fn to_frob(&self, n: &BigInt) -> Self {
-        Unit {
-            coef: self.coef.clone(),
-            xpow: &self.xpow * n.clone(),
-            ypow: &self.ypow * n.clone(),
-        }
+        UnitBuilder::new()
+          .coef(&self.coef.clone())
+          .xpow(&(self.xpow() * n.clone()))
+          .ypow(&(self.ypow() * n.clone()))
+          .finalize()
     }
 
     pub fn to_y_power(&self, n: &BigInt) -> Self {
-        Unit {
-            coef: self.coef.clone(),
-            xpow: self.xpow.clone(),
-            ypow: &self.ypow * n.clone(),
-        }
+        UnitBuilder::new()
+          .coef(&self.coef.clone())
+          .xpow(&self.xpow().clone())
+          .ypow(&(self.ypow() * n.clone()))
+          .finalize()
     }
 
     pub fn modular(&self, n: &BigInt) -> Self {
         if n == &Zero::zero() {
             return self.clone();
         } else {
-            Unit {
-                coef: self.coef.rem_floor(n),
-                xpow: self.xpow.clone(),
-                ypow: self.ypow.clone(),
-            }
+            UnitBuilder::new()
+              .coef(&self.coef.rem_floor(n))
+              .xpow(&self.xpow().clone())
+              .ypow(&self.ypow().clone())
+              .finalize()
         }
     }
 
@@ -128,20 +145,20 @@ impl Unit {
     }
 
     pub fn has_y(&self) -> bool {
-        self.ypow != Zero::zero()
+        self.ypow() != &BigInt::from(0)
     }
 }
 
 impl Ord for Unit {
     fn cmp(&self, other: &Self) -> Ordering {
-        if self.xpow < other.xpow {
+        if self.xpow() < other.xpow() {
             return Ordering::Less;
-        } else if self.xpow > other.xpow {
+        } else if self.xpow() > other.xpow() {
             return Ordering::Greater;
         }
-        if self.ypow < other.ypow {
+        if self.ypow() < other.ypow() {
             return Ordering::Less;
-        } else if self.ypow > other.ypow {
+        } else if self.ypow() > other.ypow() {
             return Ordering::Greater;
         }
         return Ordering::Equal;
@@ -156,51 +173,51 @@ impl PartialOrd for Unit {
 
 impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.coef == One::one() {
-            if self.xpow == Zero::zero() && self.ypow == Zero::zero() {
+        if self.coef == BigInt::from(1) {
+            if self.xpow().is_zero() && self.ypow().is_zero() {
                 write!(f, "1")
             } else {
                 let mut st = String::new();
-                if self.xpow != Zero::zero() {
-                    if self.xpow == One::one() {
+                if !self.xpow().is_zero() {
+                    if self.xpow().is_one() {
                         st.push_str("x");
                     } else {
                         st.push_str("x^");
-                        st.push_str(&self.xpow.to_string());
+                        st.push_str(&self.xpow().to_string());
                     }
                     st.push_str(" ");
                 }
-                if self.ypow != Zero::zero() {
-                    if self.ypow == One::one() {
+                if !self.ypow().is_zero() {
+                    if self.ypow().is_one() {
                         st.push_str("y");
                     } else {
                         st.push_str("y^");
-                        st.push_str(&self.ypow.to_string());
+                        st.push_str(&self.ypow().to_string());
                     }
                 }
                 write!(f, "{}", st.trim_end())
             }
         } else if self.coef == BigInt::from(-1) {
-            if self.xpow == Zero::zero() && self.ypow == Zero::zero() {
+            if self.xpow().is_zero() && self.ypow().is_zero() {
                 write!(f, "- 1")
             } else {
                 let mut st = String::new();
                 st.push_str("- ");
-                if self.xpow != Zero::zero() {
-                    if self.xpow == One::one() {
+                if !self.xpow().is_zero() {
+                    if self.xpow().is_one() {
                         st.push_str("x");
                     } else {
                         st.push_str("x^");
-                        st.push_str(&self.xpow.to_string());
+                        st.push_str(&self.xpow().to_string());
                     }
                     st.push_str(" ");
                 }
-                if self.ypow != Zero::zero() {
-                    if self.ypow == One::one() {
+                if !self.ypow().is_zero() {
+                    if self.ypow().is_one() {
                         st.push_str("y");
                     } else {
                         st.push_str("y^");
-                        st.push_str(&self.ypow.to_string());
+                        st.push_str(&self.ypow().to_string());
                     }
                 }
                 write!(f, "{}", st.trim_end())
@@ -216,21 +233,21 @@ impl fmt::Display for Unit {
                 st.push_str(&abs_coef.to_string());
             }
             st.push_str(" ");
-            if self.xpow != Zero::zero() {
-                if self.xpow == One::one() {
+            if !self.xpow().is_zero() {
+                if self.xpow().is_one() {
                     st.push_str("x");
                 } else {
                     st.push_str("x^");
-                    st.push_str(&self.xpow.to_string());
+                    st.push_str(&self.xpow().to_string());
                 }
                 st.push_str(" ");
             }
-            if self.ypow != Zero::zero() {
-                if self.ypow == One::one() {
+            if !self.ypow().is_zero() {
+                if self.ypow().is_one() {
                     st.push_str("y");
                 } else {
                     st.push_str("y^");
-                    st.push_str(&self.ypow.to_string());
+                    st.push_str(&self.ypow().to_string());
                 }
             }
             write!(f, "{}", st.trim_end())
@@ -259,14 +276,17 @@ fn unit_test() {
     };
     assert_eq!((u2.clone() * u3.clone()).to_string(), "12");
     assert_eq!((&u2 * &u3).to_string(), "12");
-    assert_eq!(Unit {
-        coef: BigInt::from(20),
-        xpow: BigInt::from(1),
-        ypow: BigInt::from(0),
-    }.modular(&BigInt::from(19)).to_string(), "x");
+    assert_eq!(UnitBuilder::new()
+        .coef_i(20)
+        .xpow_i(1)
+        .finalize()
+        .modular(&BigInt::from(19)).to_string(), "x");
 
     // power_modular
-                      
+
+    let u11 = UnitBuilder::new().coef_i(1).xpow_i(4).ypow_i(2).finalize();
+    let u8 = - &u11;
+    assert_eq!(u8.to_string(), "- x^4 y^2"); 
 }
 
 
