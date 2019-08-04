@@ -9,6 +9,7 @@ use num_traits::Zero;
 use super::polynomial;
 use super::unit;
 use super::unitbuilder;
+use super::bigint::{DivFloor, RemFloor};
 
 type Unit = unit::Unit;
 type UnitBuilder = unitbuilder::UnitBuilder;
@@ -38,16 +39,16 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt, p: &BigInt) -> Polynomial {
             Unit { coef: -4 * a * b,    xpow: One::one(),      ypow: Zero::zero(), },
             Unit { coef: BigInt::from(-8) * pow(b.clone(),2) - pow(a.clone(),3), xpow: Zero::zero(), ypow: Zero::zero(), },
         ] }
-    } else if n % BigInt::from(2) == One::one() {
-        let m: BigInt = (n-1) / 2;
+    } else if n.rem_floor(&BigInt::from(2)) == One::one() {
+        let m: BigInt = (n-BigInt::from(1)).div_floor(&BigInt::from(2));
         assert!(&m < n);
         let e = psi(a, b, &(m.clone()+2), p);
-        let f = psi(a, b, &(m.clone()), p).power(&BigInt::from(3)).modular(p);
+        let f = psi(a, b, &(m.clone()), p).power(&BigInt::from(3));
         let g = psi(a, b, &(m.clone()-1), p);
-        let h = psi(a, b, &(m.clone()+1), p).power(&BigInt::from(3)).modular(p);
+        let h = psi(a, b, &(m.clone()+1), p).power(&BigInt::from(3));
         (e*f - g*h).ec_reduction(a, b, p)
     } else {
-        let m: BigInt = n / 2;
+        let m: BigInt = n.div_floor(&BigInt::from(2));
         assert!(&m < n);
         let e = psi(a, b, &(m.clone()+2), p);
         let f = psi(a, b, &(m.clone()-1), p).power(&BigInt::from(2));

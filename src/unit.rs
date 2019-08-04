@@ -4,12 +4,11 @@ extern crate num_traits;
 use num_bigint::BigInt;
 use num_traits::One;
 use num_traits::Zero;
-//use num_traits::pow;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops; 
 use super::polynomial;
-use super::bigint::{Power, PowerModular};
+use super::bigint::{Power, PowerModular, DivFloor, RemFloor};
 
 type Polynomial = polynomial::Polynomial;
 
@@ -47,7 +46,7 @@ impl_op_ex!(- |a: &Unit, b: &Unit| -> Polynomial {
 
 impl_op_ex!(/ |a: &Unit, b: &Unit| -> Unit {
     Unit {
-        coef: &a.coef / &b.coef,
+        coef: a.coef.div_floor(&b.coef),
         xpow: &a.xpow - &b.xpow,
         ypow: &a.ypow - &b.ypow,
     }
@@ -111,16 +110,9 @@ impl Unit {
     pub fn modular(&self, n: &BigInt) -> Self {
         if n == &Zero::zero() {
             return self.clone();
-            /*
-            Unit {
-                coef: &self.coef,
-                xpow: self.xpow.clone(),
-                ypow: self.ypow.clone(),
-            }
-            */
         } else {
             Unit {
-                coef: &self.coef % n,
+                coef: self.coef.rem_floor(n),
                 xpow: self.xpow.clone(),
                 ypow: self.ypow.clone(),
             }

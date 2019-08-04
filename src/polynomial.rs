@@ -59,9 +59,7 @@ impl_op_ex!(* |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = Polynomial {
         units: units,
     };
-    //println!("{}", line!());
     pol.normalize();
-    //println!("{}", line!());
     pol
 });
 
@@ -98,39 +96,6 @@ impl_op_ex!(/= |a: &mut Polynomial, b: &Polynomial| {
     a.units = c.units;
     a.normalize();
 });
-
-/*
-impl_op_ex!(% |a: &Polynomial, b: &Polynomial| -> Polynomial {
-    assert!(!a.has_y());
-    assert!(!b.has_y());
-    let o_h = b.highest_unit_x();
-    let mut tmp = a.clone();
-    loop {
-        let tmp_h = tmp.highest_unit_x();
-        if tmp_h.xpow < o_h.xpow {
-            break;
-        }
-        //assert!(&tmp_h.coef % &o_h.coef == BigInt::from(0));
-        let q = Unit { 
-                    coef: &tmp_h.coef / &o_h.coef,
-                    xpow: &tmp_h.xpow - &o_h.xpow, 
-                    ypow: Zero::zero(),
-                }.to_pol();
-        
-        tmp -= q * b;
-    }
-    tmp
-});
-*/
-
-/*
-impl_op_ex!(%= |a: &mut Polynomial, b: &Polynomial| {
-    let c = a.clone() % b;
-    a.units.clear();
-    a.units = c.units;
-    a.normalize();
-});
-*/
 
 impl fmt::Display for Polynomial {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -218,46 +183,38 @@ impl Polynomial {
         while &e > &One::one() {
             println!("{} e:{}", line!(), e);
             if &e % 2 != Zero::zero() {
-                //println!("{}", line!());
                 r *= &b;
-                //println!("{}", line!());
                 r = r.modular(p);
-                //println!("{}", line!());
             }
-            //println!("{} {}", line!(), b.to_string());
             b *= b.clone();
-            //println!("{}", line!());
-             b = b.modular(p);
-            //println!("{}", line!());
+            b = b.modular(p);
             e /= 2;
-            //println!("{}", line!());
         }
-        println!("{} r:{} b:{}", line!(), r.to_string(), b.to_string());
+        //println!("{} r:{} b:{}", line!(), r.to_string(), b.to_string());
         r *= b;
-        println!("{}", line!());
+        //println!("{}", line!());
         r = r.modular(p);
-        println!("{}", line!());
+        //println!("{}", line!());
         r
     }
 
     pub fn polynomial_modular(&self, other: &Polynomial, p: &BigInt) -> Self {
         assert!(!self.has_y());
         assert!(!other.has_y());
-        let o_h = other.highest_unit_x();
+        let h = other.highest_unit_x();
         let mut tmp = self.clone();
         loop {
             let tmp_h = tmp.highest_unit_x();
-            if tmp_h.xpow < o_h.xpow {
+            if tmp_h.xpow < h.xpow {
                 break;
             }
             let q = Unit { 
-                        coef: &tmp_h.coef * &o_h.coef.inverse(p),
-                        xpow: &tmp_h.xpow - &o_h.xpow, 
+                        coef: &tmp_h.coef * &h.coef.inverse(p),
+                        xpow: &tmp_h.xpow - &h.xpow, 
                         ypow: Zero::zero(),
                     }.to_pol();
-            
             tmp -= q * other;
-            tmp = tmp.clone().modular(&p);
+            tmp = tmp.modular(&p);
         }
         tmp
     }
@@ -520,22 +477,23 @@ fn polynmomial_test() {
     assert_eq!(p42.highest_unit_x().to_string(), "x^4 y");
 
     // rem
-    let u43 = UnitBuilder::new().coef(1).xpow(4).finalize();
+    let u43 = UnitBuilder::new().coef(3).xpow(4).finalize();
     let u44 = UnitBuilder::new().coef(2).xpow(1).finalize();
     let p47 = Polynomial { units: vec![u43, u44] };
 
-    let u45 = UnitBuilder::new().coef(1).xpow(2).finalize();
+    let u45 = UnitBuilder::new().coef(2).xpow(2).finalize();
     let u46 = UnitBuilder::new().coef(3).finalize();
     let p48 = Polynomial { units: vec![u45, u46] };
-    assert_eq!(p47.to_string(), "x^4 + 2 x");
-    assert_eq!(p48.to_string(), "x^2 + 3");
+    assert_eq!(p47.to_string(), "3 x^4 + 2 x");
+    assert_eq!(p48.to_string(), "2 x^2 + 3");
 
-    assert_eq!(p47.polynomial_modular(&p48, &BigInt::from(19)).to_string(), "2 x + 9"); 
+    // plynomial_modular
+    assert_eq!(p47.polynomial_modular(&p48, &BigInt::from(19)).to_string(), "2 x + 2"); 
 
     // *=
     let mut p49 = p47.clone();
     p49 *= &p48;
-    assert_eq!(p49.to_string(), "x^6 + 3 x^4 + 2 x^3 + 6 x");
+    assert_eq!(p49.to_string(), "6 x^6 + 9 x^4 + 4 x^3 + 6 x");
 
     // /=
     let u50 = UnitBuilder::new().coef(6).xpow(6).finalize();
@@ -545,11 +503,6 @@ fn polynmomial_test() {
     let p51 = u52.to_pol();
     p50 /= &p51;
     assert_eq!(p50.to_string(), "2 x^4 + 4 x^2");
-
-    // %=
-    //let mut p53 = &u50 + &u51;
-    //p53 %= &p51;
-    //assert_eq!(p53.to_string(), "0");
 
 }
 

@@ -1,8 +1,10 @@
 extern crate num_bigint;
 extern crate num_traits;
 extern crate num_iter;
+extern crate divrem;
 
 use num_bigint::BigInt;
+use num_traits::Zero;
 
 pub trait Power {
     fn power(&self, n: &BigInt) -> Self; 
@@ -14,6 +16,16 @@ pub trait PowerModular {
 
 pub trait Inverse {
     fn inverse(&self, p: &BigInt) -> Self;
+}
+
+pub trait DivFloor<Rhs=Self> {
+    type Output;
+    fn div_floor(&self, rhs: &Rhs) -> Self::Output;
+}
+
+pub trait RemFloor<Rhs=Self> {
+    type Output;
+    fn rem_floor(&self, rhs: &Rhs) -> Self::Output;
 }
 
 impl Power for BigInt { 
@@ -44,6 +56,36 @@ impl Inverse for BigInt {
     }
 }
 
+impl DivFloor for BigInt {
+    type Output = Self;
+    fn div_floor(&self, other: &Self) -> Self {
+        if self > &Zero::zero() && other > &Zero::zero() {
+            self / other
+        } else if self > &Zero::zero() && other < &Zero::zero() {
+            ((self - BigInt::from(1)) / other) - BigInt::from(1)
+        } else if self < &Zero::zero() && other > &Zero::zero() {
+            ((self + BigInt::from(1)) / other) - BigInt::from(1)
+        } else {
+            self / other
+        }
+    }
+}
+
+impl RemFloor for BigInt {
+    type Output = Self;
+    fn rem_floor(&self, other: &Self) -> Self {
+        if self > &Zero::zero() && other > &Zero::zero() {
+            self % other
+        } else if self > &Zero::zero() && other < &Zero::zero() {
+            ((self - BigInt::from(1)) % other) + other + BigInt::from(1)
+        } else if self < &Zero::zero() && other > &Zero::zero() {
+            ((self + BigInt::from(1)) % other) + other - BigInt::from(1)
+        } else {
+            self % other
+        }
+    }
+}
+
 #[test]
 fn bigint_power_test() {
     let q = BigInt::from(2);
@@ -61,10 +103,48 @@ fn bigint_power_modular_test() {
 
 #[test]
 fn bigint_inverse_test() {
-    let p = BigInt::from(5);
+    let p = BigInt::from(19);
     assert_eq!(BigInt::from(1).inverse(&p).to_string(), "1");
-    assert_eq!(BigInt::from(2).inverse(&p).to_string(), "3");
-    assert_eq!(BigInt::from(3).inverse(&p).to_string(), "2");
-    assert_eq!(BigInt::from(4).inverse(&p).to_string(), "4");
+    assert_eq!(BigInt::from(2).inverse(&p).to_string(), "10");
+    assert_eq!(BigInt::from(3).inverse(&p).to_string(), "13");
+    assert_eq!(BigInt::from(4).inverse(&p).to_string(), "5");
+}
+
+//use divrem::DivFloor;
+//use divrem::RemFloor;
+
+#[test]
+fn bigint_divide_test() {
+    /*
+    assert_eq!((BigInt::from(7) / BigInt::from(2)).to_string(), "3"); 
+    assert_eq!((BigInt::from(7) / BigInt::from(-2)).to_string(), "-3"); 
+    assert_eq!((BigInt::from(-7) / BigInt::from(2)).to_string(), "-3"); 
+    assert_eq!((BigInt::from(-7) / BigInt::from(-2)).to_string(), "3"); 
+
+    assert_eq!((BigInt::from(7) % BigInt::from(3)).to_string(), "1"); 
+    assert_eq!((BigInt::from(7) % BigInt::from(-3)).to_string(), "1"); 
+    assert_eq!((BigInt::from(-7) % BigInt::from(3)).to_string(), "-1"); 
+    assert_eq!((BigInt::from(-7) % BigInt::from(-3)).to_string(), "-1"); 
+
+    assert_eq!(7.div_floor(2), 3);
+    assert_eq!(7.div_floor(-2), -4);
+    assert_eq!((-7).div_floor(2), -4);
+    assert_eq!((-7).div_floor(-2), 3);
+
+    assert_eq!(7.rem_floor(3), 1);
+    assert_eq!(7.rem_floor(-3), -2);
+    assert_eq!((-7).rem_floor(3), 2);
+    assert_eq!((-7).rem_floor(-3), -1);
+    */
+
+    assert_eq!((BigInt::from(7).div_floor(&BigInt::from(2))).to_string(), "3"); 
+    assert_eq!((BigInt::from(7).div_floor(&BigInt::from(-2))).to_string(), "-4"); 
+    assert_eq!((BigInt::from(-7).div_floor(&BigInt::from(2))).to_string(), "-4"); 
+    assert_eq!((BigInt::from(-7).div_floor(&BigInt::from(-2))).to_string(), "3"); 
+
+    assert_eq!((BigInt::from(7).rem_floor(&BigInt::from(3))).to_string(), "1"); 
+    assert_eq!((BigInt::from(7).rem_floor(&BigInt::from(-3))).to_string(), "-2"); 
+    assert_eq!((BigInt::from(-7).rem_floor(&BigInt::from(3))).to_string(), "2"); 
+    assert_eq!((BigInt::from(-7).rem_floor(&BigInt::from(-3))).to_string(), "-1"); 
 }
 

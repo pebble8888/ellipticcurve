@@ -10,7 +10,7 @@ use super::unit;
 use super::unitbuilder;
 use super::division_polynomial;
 
-use crate::bigint::Power;
+use crate::bigint::{Power, DivFloor, RemFloor};
 
 type Unit = unit::Unit;
 type UnitBuilder = unitbuilder::UnitBuilder;
@@ -18,7 +18,8 @@ type Polynomial = polynomial::Polynomial;
 
 pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
     for l in &vec![BigInt::from(3), BigInt::from(5)] {
-        let ql = q % l;
+        println!("{} l:{}", line!(), l.to_string());
+        let ql = q.rem_floor(l);
         if l >= q {
             break;
         }
@@ -26,34 +27,33 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
         let jmax: BigInt = (l-1) / 2;
         println!("j:[1, {}]", jmax.to_string());
 
-        let num1 = ((division_polynomial::omega(a, b, &ql, q) - Unit {
-                       coef: One::one(),
-                       xpow: Zero::zero(),
-                       ypow: q.power(&BigInt::from(2)),
-                    }.to_pol() * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(3))).power(&BigInt::from(2)))
-                 - (division_polynomial::phi(a, b, &ql, q) + Unit {
-                       coef: One::one(),
-                       xpow: q.power(&BigInt::from(2)),
-                       ypow: BigInt::from(0),
-                   }.to_pol() * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(2))) *
-                   (division_polynomial::phi(a, b, &ql, q) - Unit {
-                           coef: One::one(),
-                           xpow: q.power(&BigInt::from(2)),
-                           ypow: BigInt::from(0),
+        // (b) x'
+        let b_num1 = ((division_polynomial::omega(a, b, &ql, q)
+                     - Unit {
+                         coef: One::one(),
+                         xpow: Zero::zero(),
+                         ypow: q.power(&BigInt::from(2)),
+                       }.to_pol() * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(3))).power(&BigInt::from(2)))
+                 - (division_polynomial::phi(a, b, &ql, q)
+                     + Unit {
+                         coef: One::one(),
+                         xpow: q.power(&BigInt::from(2)),
+                         ypow: BigInt::from(0),
+                       }.to_pol() * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(2))) *
+                   (division_polynomial::phi(a, b, &ql, q)
+                     - Unit {
+                         coef: One::one(),
+                         xpow: q.power(&BigInt::from(2)),
+                         ypow: BigInt::from(0),
                        }.to_pol() * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(2))).power(&BigInt::from(2));
-        let num1 = num1.modular(q);
-        //println!("{}", line!());
-        println!("num1:{} {}", line!(), num1.to_string());
+        println!("b_num1:{} {}", line!(), b_num1.to_string());
+        let b_num1 = b_num1.modular(q);
 
-        let num1 = num1.ec_reduction(a, b, q);
-        //println!("{}", line!());
-        println!("num1:{} {}", line!(), num1.to_string());
+        let b_num1 = b_num1.ec_reduction(a, b, q);
 
-        let num1 = num1.modular(q);
-        //println!("{}", line!());
-        println!("num1:{} {}", line!(), num1.to_string());
+        let b_num1 = b_num1.modular(q);
 
-        let den1 = (division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(2)))
+        let b_den1 = (division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(2)))
                  * ((division_polynomial::phi(a, b, &ql, q) - 
                         Unit {
                             coef: BigInt::from(1),
@@ -61,14 +61,14 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
                             ypow: BigInt::from(0),
                         }.to_pol()
                    * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(2))).power(&BigInt::from(2)));
-        let den1 = den1.modular(q);
+        let b_den1 = b_den1.modular(q);
         
-        println!("den1:{} {}", line!(), den1.to_string());
+        println!("b_den1:{} {}", line!(), b_den1.to_string());
 
         let mut found = false;
         let mut jj: BigInt = BigInt::from(0);
         for j in num_iter::range(BigInt::from(1), jmax + BigInt::from(1)) {
-            println!("j:{}", j.to_string());
+            println!("{} j:{}", line!(), j.to_string());
             // x
             let num2 = division_polynomial::phi(a, b, &j, q).modular(q).to_frob(q);
             println!("num2:{} {}", line!(), num2.to_string());
@@ -76,19 +76,17 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
             let den2 = division_polynomial::psi(a, b, &j, q).modular(q).to_frob(q).power(&BigInt::from(2));
             println!("den2:{} {}", line!(), den2.to_string());
 
-            let p1 = &num1 * &den2 - &num2 * &den1;
+            let p1 = &b_num1 * &den2 - &num2 * &b_den1;
             let p1 = p1.modular(q);
-            println!("p1:{} {}", line!(), p1.to_string());
 
             let p1 = p1.ec_reduction(&a, b, q);
-            println!("p1:{} {}", line!(), p1.to_string());
+            //println!("p1:{} {}", line!(), p1.to_string());
 
-            //let p1 = p1.modular(q);
-            let m = division_polynomial::psi(a, b, &l, q).modular(q);
-            println!("m:{} {}", line!(), m.to_string());
+            let p1 = p1.modular(q);
+            let psil = division_polynomial::psi(a, b, &l, q).modular(q);
+            println!("{} psi({}):{}", line!(), l, psil.to_string());
 
-            let p1 = p1.polynomial_modular(&m, q);
-            println!("p1:{} {}", line!(), p1.to_string());
+            let p1 = p1.polynomial_modular(&psil, q);
 
             let p1 = &p1.modular(q);
             println!("p1:{} {}", line!(), p1.to_string());
@@ -112,7 +110,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
                     }.to_pol()
                     ) * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(3));
             let d = d.modular(q);
-            println!("d:{} {}", line!(), d.to_string());
+            //println!("d:{} {}", line!(), d.to_string());
             let e = - division_polynomial::phi(a, b, &ql, q) +
                     Unit {
                         coef: BigInt::from(2),
@@ -120,10 +118,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
                         ypow: BigInt::from(0),
                     }.to_pol() * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(2));
             let e = e.modular(q);
-            println!("e:{} {}", line!(), e.to_string());
+            //println!("e:{} {}", line!(), e.to_string());
 
             let e = e.ec_reduction(a, b, q);
-            println!("e:{} {}", line!(), e.to_string());
+            //println!("e:{} {}", line!(), e.to_string());
 
             let f = division_polynomial::phi(a, b, &ql, q) - Unit {
                     coef: BigInt::from(1),
@@ -131,10 +129,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
                     ypow: BigInt::from(0),
                 }.to_pol() * division_polynomial::psi(a, b, &ql, q).power(&BigInt::from(2));
             let f = f.modular(q);
-            println!("f:{} {}", line!(), f.to_string());
+            //println!("f:{} {}", line!(), f.to_string());
 
             let f = f.ec_reduction(a, b, q);
-            println!("f:{} {}", line!(), f.to_string());
+            //println!("f:{} {}", line!(), f.to_string());
 
             let num1 = &d * (e * f.power(&BigInt::from(2)) - d.clone().power(&BigInt::from(2))) -
                 Unit {
@@ -163,10 +161,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
 
             let p1 = num1 * den2 - num2 * den1;
             let p1 = p1.modular(q);
-            println!("p1:{} {}", line!(), p1.to_string());
+            //println!("p1:{} {}", line!(), p1.to_string());
 
             let p2 = p1.ec_reduction(a, b, q);
-            println!("p2:{} {}", line!(), p2.to_string());
+            //println!("p2:{} {}", line!(), p2.to_string());
 
             let p3: Polynomial;
             if p2.has_y() {
@@ -188,10 +186,11 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
             }
         } else {
             // # (d)
+            println!("x not found");
             let mut found = false;
             let mut w = BigInt::from(1);
             for i in num_iter::range(BigInt::from(1), l.clone()) {
-                if i.power(&BigInt::from(2)) % l == ql {
+                if i.power(&BigInt::from(2)).rem_floor(l) == ql {
                     found = true;
                     w = i.clone();
                     break;
@@ -214,7 +213,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
 
                 let p4 = p2.polynomial_modular(&p3, q);
                 let p4 = p4.modular(q);
-                println!("p4 {}", p4.to_string());
+                println!("{} p4 {}", line!(), p4.to_string());
                 if !p4.is_zero() {
                     println!("a = 0 mod {} because of gcd = 1 (e)", l.to_string());
                 } else {
