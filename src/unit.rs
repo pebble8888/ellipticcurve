@@ -28,10 +28,14 @@ pub struct UnitKey {
 }
 
 impl_op_ex!(+ |a: &Unit, b: &Unit| -> Polynomial {
-    let mut pol = Polynomial {
-        units: vec![a.clone(), b.clone()],
-    };
-    pol.normalize();
+    let mut pol = a.clone().to_pol();
+    if let Some(coef) = pol.units.get(&b.key) {
+        // overwrite
+        let c = b.coef.clone() + coef;
+        pol.units.insert(b.key.clone(), c);
+    } else {
+        pol.units.insert(b.key.clone(), b.coef.clone());
+    }
     pol
 });
 
@@ -46,11 +50,7 @@ impl_op_ex!(* |a: &Unit, b: &Unit| -> Unit {
 });
 
 impl_op_ex!(- |a: &Unit, b: &Unit| -> Polynomial {
-    let mut pol = Polynomial {
-        units: vec![a.clone(), -b.clone()],
-    };
-    pol.normalize();
-    pol
+    a + (-b)
 });
 
 impl_op_ex!(/ |a: &Unit, b: &Unit| -> Unit {
@@ -70,6 +70,13 @@ impl_op_ex!(- |a: &Unit| -> Unit {
 });
 
 impl Unit {
+    pub fn from(key: &UnitKey, coef: &BigInt) -> Self {
+        Unit {
+            coef: coef.clone(),
+            key: key.clone(),
+        }
+    }
+
     pub fn xpow(&self) -> &BigInt {
         &self.key.xpow
     }
@@ -83,9 +90,10 @@ impl Unit {
     }
 
     pub fn to_pol(&self) -> Polynomial {
-        Polynomial {
-            units: vec![self.clone()],
-        }
+        let mut pol = Polynomial::new();
+        let u = self.clone();
+        pol.units.insert(u.key, u.coef);
+        pol
     }
 
     pub fn equal_order(&self, other: &Self) -> bool {
@@ -151,17 +159,29 @@ impl Unit {
 
 impl Ord for Unit {
     fn cmp(&self, other: &Self) -> Ordering {
-        if self.xpow() < other.xpow() {
+        self.key.cmp(&other.key)
+    }
+}
+
+impl Ord for UnitKey {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.xpow < other.xpow {
             return Ordering::Less;
-        } else if self.xpow() > other.xpow() {
+        } else if self.xpow > other.xpow {
             return Ordering::Greater;
         }
-        if self.ypow() < other.ypow() {
+        if self.ypow < other.ypow {
             return Ordering::Less;
-        } else if self.ypow() > other.ypow() {
+        } else if self.ypow > other.ypow {
             return Ordering::Greater;
         }
         return Ordering::Equal;
+    }
+}
+
+impl PartialOrd for UnitKey {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

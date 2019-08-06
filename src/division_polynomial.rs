@@ -76,7 +76,7 @@ pub fn omega(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
 }
 
 #[test]
-fn division_polynomial_test() {
+fn division_polynomial_test_psi() {
     // psi
     let psi0 = psi(&BigInt::from(1), &BigInt::from(1), &BigInt::from(0));
     assert_eq!(psi0.to_string(), "0");
@@ -95,7 +95,10 @@ fn division_polynomial_test() {
 
     let psi5 = psi(&BigInt::from(1), &BigInt::from(1), &BigInt::from(5));
     assert_eq!(psi5.to_string(), "5 x^12 + 62 x^10 + 380 x^9 - 105 x^8 + 240 x^7 - 540 x^6 - 696 x^5 - 2045 x^4 - 1680 x^3 - 290 x^2 - 740 x - 287");
+}
 
+#[test]
+fn division_polynomial_test_phi() {
     // phi
     let phi1 = phi(&BigInt::from(1), &BigInt::from(1), &BigInt::from(1));
     assert_eq!(phi1.to_string(), "x");
@@ -105,7 +108,10 @@ fn division_polynomial_test() {
     
     let phi3 = phi(&BigInt::from(1), &BigInt::from(1), &BigInt::from(3));
     assert_eq!(phi3.to_string(), "x^9 - 12 x^7 - 96 x^6 + 30 x^5 - 24 x^4 + 84 x^3 + 48 x^2 + 105 x + 72");
+}
 
+#[test]
+fn division_polynomial_test_omega() {
     // omega
     let omega1 = omega(&BigInt::from(1), &BigInt::from(1), &BigInt::from(1));
     assert_eq!(omega1.to_string(), "y");
