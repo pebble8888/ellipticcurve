@@ -6,10 +6,6 @@ extern crate divrem;
 use num_bigint::BigInt;
 use num_traits::Zero;
 
-//pub trait IsZero {
-//    fn is_zero(&self) -> bool;
-//}
-
 pub trait Power {
     fn power(&self, n: &BigInt) -> Self; 
     fn power_i(&self, n: i64) -> Self;
@@ -33,14 +29,6 @@ pub trait RemFloor<Rhs=Self> {
     fn rem_floor(&self, rhs: &Rhs) -> Self::Output;
 }
 
-/*
-impl IsZero for BigInt {
-    fn is_zero(&self) -> bool {
-        self == BigInt::from(0)
-    }
-}
-*/
-
 impl Power for BigInt { 
     fn power(&self, n: &BigInt) -> Self {
         let mut t = BigInt::from(1);
@@ -61,7 +49,7 @@ impl PowerModular for BigInt {
         let mut t = BigInt::from(1);
         for _i in num_iter::range(BigInt::from(0), n.clone()) {
             t = &t * self;
-            t = &t % p;
+            t = t.rem_floor(p);
         }
         t
     }

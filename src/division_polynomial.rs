@@ -42,7 +42,7 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
         let f = psi(a, b, &(m.clone())).power_i(3);
         let g = psi(a, b, &(m.clone()-1));
         let h = psi(a, b, &(m.clone()+1)).power_i(3);
-        (e*f - g*h).ec_reduction(a, b)
+        (e*f - g*h).reduction(a, b)
     } else {
         let m: BigInt = n.div_floor(&BigInt::from(2));
         assert!(&m < n);
@@ -52,7 +52,7 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
         let h = psi(a, b, &(m.clone()+1)).power_i(2);
         let i = psi(a, b, &m.clone()) * (e*f - g*h);
         let j = i / UnitBuilder::new().coef_i(2).ypow_i(1).finalize().to_pol();
-        j.ec_reduction(a, b)
+        j.reduction(a, b)
     }
 }
 
@@ -60,7 +60,7 @@ pub fn phi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
     assert!(*n >= One::one());
     let i = UnitBuilder::new().coef_i(1).xpow_i(1).finalize().to_pol() * psi(a, b, &(n.clone())).power_i(2)
               - psi(a, b, &(n.clone() + 1)) * psi(a, b, &(n.clone()-1));
-    i.ec_reduction(a, b)
+    i.reduction(a, b)
 }
 
 pub fn omega(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
@@ -71,7 +71,7 @@ pub fn omega(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
         let i = (psi(a, b, &(n.clone()+2)) * psi(a, b, &(n.clone()-1)).power_i(2)
                      - psi(a, b, &(n.clone()-2)) * psi(a, b, &(n.clone()+1)).power_i(2))
                   / UnitBuilder::new().coef_i(4).ypow_i(1).finalize().to_pol();
-        i.ec_reduction(a, b)
+        i.reduction(a, b)
     }
 }
 

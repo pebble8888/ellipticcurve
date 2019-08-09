@@ -176,14 +176,14 @@ impl Polynomial {
     }
 
     pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
-        println!("{}: n:{}", line!(), n);
+        //println!("{}: n:{}", line!(), n);
         assert!(*n >= Zero::zero());
         let mut b = self.clone();
         b = b.modular(p);
         let mut r = UnitBuilder::new().coef_i(1).finalize().to_pol();
         let mut e = n.clone();
         while &e > &One::one() {
-            println!("{} e:{}", line!(), e);
+            //println!("{} e:{}", line!(), e);
             if &e % 2 != Zero::zero() {
                 r *= &b;
                 r = r.modular(p);
@@ -302,7 +302,7 @@ impl Polynomial {
         pol
     }
 
-    pub fn ec_reduction(&self, a: &BigInt, b: &BigInt) -> Self {
+    pub fn reduction(&self, a: &BigInt, b: &BigInt) -> Self {
         let mut t = Polynomial::new();
         for (k, v) in &self.units {
             let u = Unit::from(k, v);
@@ -321,6 +321,31 @@ impl Polynomial {
             } else {
                 t += u.clone().to_pol();
             }
+        }
+        t
+    }
+
+    pub fn reduction_modular(&self, a: &BigInt, b: &BigInt, p: &BigInt) -> Self {
+        let mut t = Polynomial::new();
+        for (k, v) in &self.units {
+            let u = Unit::from(k, v);
+            if u.ypow() >= &BigInt::from(2) {
+                let yy = u.ypow().clone().div_floor(&BigInt::from(2));
+                let mut e = u.clone().to_pol();
+                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize().to_pol();
+
+                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).finalize().to_pol() 
+                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).finalize().to_pol()
+                       + UnitBuilder::new().coef(&b.clone()).finalize().to_pol();
+                // power() is faster than power_modular()
+                let ee = ee.power_modular(&yy.clone(), p);
+                let ee = ee.reduction_modular(a, b, p);
+                e *= ee;
+                t += e;
+            } else {
+                t += u.clone().to_pol();
+            }
+            t = t.modular(p);
         }
         t
     }
@@ -392,10 +417,10 @@ fn polynmomial_test() {
     let p40 = p37.power_i(2);
     assert_eq!(p40.to_string(), "25 x^6 y^10 + 10 x^5 y^9 + x^4 y^8");
 
-    // ec_reduction
+    // reduction
     let u41 = UnitBuilder::new().coef_i(1).xpow_i(1).ypow_i(3).finalize();
     let p41 = u41.to_pol();
-    let p42 = p41.ec_reduction(&BigInt::from(2), &BigInt::from(7));
+    let p42 = p41.reduction(&BigInt::from(2), &BigInt::from(7));
     assert_eq!(p42.to_string(), "x^4 y + 2 x^2 y + 7 x y");
 
     let p422 = UnitBuilder::new().coef_i(2).xpow_i(3).finalize().to_pol();
