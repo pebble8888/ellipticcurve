@@ -12,7 +12,13 @@ use crate::bigint::{Power, RemFloor};
 type UnitBuilder = unitbuilder::UnitBuilder;
 type Polynomial = polynomial::Polynomial;
 
-pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
+pub struct SchoofResult {
+    pub l: BigInt,
+    pub a: BigInt,
+}
+
+pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
+    let mut schoof_result: Vec<SchoofResult> = Vec::new();
     for l in &vec![BigInt::from(3), BigInt::from(5)] {
         println!("{} l:{}", line!(), l);
         let ql = q.rem_floor(l);
@@ -188,8 +194,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
             println!("{} pol % psi({}):{}", line!(), l, p11);
 
             if p11.is_zero() {
-                println!("(iii) y  a = {} mod {}", &jj, l);
+                schoof_result.push(SchoofResult { l: l.clone(), a: jj.clone() });
+                println!("(iii) y  a = {} mod {}", jj.clone(), l);
             } else {
+                schoof_result.push(SchoofResult { l: l.clone(), a: - jj.clone() });
                 println!("(iii) y  a = {} mod {}", (-jj.clone()), l);
             }
         } else {
@@ -205,6 +213,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
                 }
             }
             if !found {
+                schoof_result.push(SchoofResult { l: l.clone(), a: BigInt::from(0) });
                 println!("(d)  a = 0 mod l because of w not found (d)");
             } else {
                 // (e) x
@@ -219,6 +228,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
                 let p15 = p13.polynomial_modular(&p14, q);
                 println!("{} p15 {}", line!(), p15);
                 if !p15.is_zero() {
+                    schoof_result.push(SchoofResult { l: l.clone(), a: BigInt::from(0) });
                     println!("(e) y  a = 0 mod {} because of gcd = 1 (e)", l);
                 } else {
                     // (e) y
@@ -229,18 +239,40 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) {
                     let p17 = p16.reduction_modular(a, b, q);
                     println!("{}", p17);
                     if p17.is_gcd_one(&division_polynomial::psi(a, b, &l), q) {
-                        println!("(e) y  a = {} mod {}", (- BigInt::from(2) * w), l);
+                        let jj = - BigInt::from(2) * w;
+                        schoof_result.push(SchoofResult { l: l.clone(), a: jj.clone() });
+                        println!("(e) y  a = {} mod {}", &jj, l);
                     } else {
-                        println!("(e) y  a = {} mod {}", (BigInt::from(2) * w), l);
+                        let jj = BigInt::from(2) * w;
+                        schoof_result.push(SchoofResult { l: l.clone(), a: jj.clone() });
+                        println!("(e) y  a = {} mod {}", &jj, l);
                     }
                 }
             }
         }
     }
+    schoof_result
 }
 
 #[test]
-fn schoof_test() {
-    schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(19));
+fn schoof_test7() {
+    let q = 7;
+    let schoof_result = schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(q));
+    assert_eq!(schoof_result.len(), 2);
+    assert_eq!(schoof_result[0].l, BigInt::from(3));
+    assert_eq!(schoof_result[0].a, BigInt::from(0));
+    assert_eq!(schoof_result[1].l, BigInt::from(5));
+    assert_eq!(schoof_result[1].a, BigInt::from(-2));
+}
+
+#[test]
+fn schoof_test19() {
+    let q = 19;
+    let schoof_result = schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(q));
+    assert_eq!(schoof_result.len(), 2);
+    assert_eq!(schoof_result[0].l, BigInt::from(3));
+    assert_eq!(schoof_result[0].a, BigInt::from(-1));
+    assert_eq!(schoof_result[1].l, BigInt::from(5));
+    assert_eq!(schoof_result[1].a, BigInt::from(-2));
 }
 
