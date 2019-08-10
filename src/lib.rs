@@ -1,4 +1,5 @@
 #[macro_use] extern crate impl_ops;
+#[macro_use] mod assert_eq_str;
 
 pub mod bigint;
 pub mod unit;

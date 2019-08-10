@@ -29,10 +29,8 @@ pub struct UnitKey {
 
 impl_op_ex!(+ |a: &Unit, b: &Unit| -> Polynomial {
     let mut pol = a.clone().to_pol();
-    if let Some(coef) = pol.units.get(&b.key) {
-        // overwrite
-        let c = b.coef.clone() + coef;
-        pol.units.insert(b.key.clone(), c);
+    if let Some(av) = pol.units.get_mut(&b.key) {
+        *av += b.coef.clone(); 
     } else {
         pol.units.insert(b.key.clone(), b.coef.clone());
     }
@@ -97,7 +95,8 @@ impl Unit {
     }
 
     pub fn equal_order(&self, other: &Self) -> bool {
-        return &self.xpow() == &other.xpow() && &self.ypow() == &other.ypow()
+        return &self.xpow() == &other.xpow()
+            && &self.ypow() == &other.ypow()
     }
 
     pub fn power(&self, n: &BigInt) -> Self {
@@ -138,7 +137,7 @@ impl Unit {
 
     pub fn modular(&self, n: &BigInt) -> Self {
         if n == &Zero::zero() {
-            return self.clone();
+            panic!("modular zero!");
         } else {
             UnitBuilder::new()
               .coef(&self.coef.rem_floor(n))
@@ -278,13 +277,13 @@ impl fmt::Display for Unit {
 #[test]
 fn unit_test() {
     let u0: Unit = Default::default();
-    assert_eq!(&u0.to_string(), "0");
+    assert_eq_str!(u0, "0");
 
     let u1 = Unit {
         coef: BigInt::from(3),
         .. Default::default()
     };
-    assert_eq!(&u1.to_string(), "3");
+    assert_eq_str!(u1, "3");
 
     let u2 = Unit {
         coef: BigInt::from(4),
@@ -294,19 +293,19 @@ fn unit_test() {
         coef: BigInt::from(3),
         .. Default::default()
     };
-    assert_eq!((u2.clone() * u3.clone()).to_string(), "12");
-    assert_eq!((&u2 * &u3).to_string(), "12");
-    assert_eq!(UnitBuilder::new()
+    assert_eq_str!(u2.clone() * u3.clone(), "12");
+    assert_eq_str!(&u2 * &u3, "12");
+    assert_eq_str!(UnitBuilder::new()
         .coef_i(20)
         .xpow_i(1)
         .finalize()
-        .modular(&BigInt::from(19)).to_string(), "x");
+        .modular(&BigInt::from(19)), "x");
 
     // power_modular
 
     let u11 = UnitBuilder::new().coef_i(1).xpow_i(4).ypow_i(2).finalize();
     let u8 = - &u11;
-    assert_eq!(u8.to_string(), "- x^4 y^2"); 
+    assert_eq_str!(u8, "- x^4 y^2"); 
 }
 
 

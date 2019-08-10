@@ -96,24 +96,24 @@ impl RemFloor for BigInt {
 fn bigint_power_test() {
     let q = BigInt::from(2);
     let q2 = q.power(&BigInt::from(3));
-    assert_eq!(q2.to_string(), "8");
+    assert_eq_str!(q2, "8");
 }
 
 #[test]
 fn bigint_power_modular_test() {
     let p = BigInt::from(5);
-    assert_eq!(BigInt::from(3).power_modular(&BigInt::from(2), &p).to_string(), "4");
-    assert_eq!(BigInt::from(3).power_modular(&BigInt::from(3), &p).to_string(), "2");
-    assert_eq!(BigInt::from(3).power_modular(&BigInt::from(4), &p).to_string(), "1");
+    assert_eq_str!(BigInt::from(3).power_modular(&BigInt::from(2), &p), "4");
+    assert_eq_str!(BigInt::from(3).power_modular(&BigInt::from(3), &p), "2");
+    assert_eq_str!(BigInt::from(3).power_modular(&BigInt::from(4), &p), "1");
 }
 
 #[test]
 fn bigint_inverse_test() {
     let p = BigInt::from(19);
-    assert_eq!(BigInt::from(1).inverse(&p).to_string(), "1");
-    assert_eq!(BigInt::from(2).inverse(&p).to_string(), "10");
-    assert_eq!(BigInt::from(3).inverse(&p).to_string(), "13");
-    assert_eq!(BigInt::from(4).inverse(&p).to_string(), "5");
+    assert_eq_str!(BigInt::from(1).inverse(&p), "1");
+    assert_eq_str!(BigInt::from(2).inverse(&p), "10");
+    assert_eq_str!(BigInt::from(3).inverse(&p), "13");
+    assert_eq_str!(BigInt::from(4).inverse(&p), "5");
 }
 
 //use divrem::DivFloor;
@@ -143,14 +143,14 @@ fn bigint_divide_test() {
     assert_eq!((-7).rem_floor(-3), -1);
     */
 
-    assert_eq!((BigInt::from(7).div_floor(&BigInt::from(2))).to_string(), "3"); 
-    assert_eq!((BigInt::from(7).div_floor(&BigInt::from(-2))).to_string(), "-4"); 
-    assert_eq!((BigInt::from(-7).div_floor(&BigInt::from(2))).to_string(), "-4"); 
-    assert_eq!((BigInt::from(-7).div_floor(&BigInt::from(-2))).to_string(), "3"); 
+    assert_eq_str!((BigInt::from(7).div_floor(&BigInt::from(2))), "3"); 
+    assert_eq_str!((BigInt::from(7).div_floor(&BigInt::from(-2))), "-4"); 
+    assert_eq_str!((BigInt::from(-7).div_floor(&BigInt::from(2))), "-4"); 
+    assert_eq_str!((BigInt::from(-7).div_floor(&BigInt::from(-2))), "3"); 
 
-    assert_eq!((BigInt::from(7).rem_floor(&BigInt::from(3))).to_string(), "1"); 
-    assert_eq!((BigInt::from(7).rem_floor(&BigInt::from(-3))).to_string(), "-2"); 
-    assert_eq!((BigInt::from(-7).rem_floor(&BigInt::from(3))).to_string(), "2"); 
-    assert_eq!((BigInt::from(-7).rem_floor(&BigInt::from(-3))).to_string(), "-1"); 
+    assert_eq_str!((BigInt::from(7).rem_floor(&BigInt::from(3))), "1"); 
+    assert_eq_str!((BigInt::from(7).rem_floor(&BigInt::from(-3))), "-2"); 
+    assert_eq_str!((BigInt::from(-7).rem_floor(&BigInt::from(3))), "2"); 
+    assert_eq_str!((BigInt::from(-7).rem_floor(&BigInt::from(-3))), "-1"); 
 }
 
