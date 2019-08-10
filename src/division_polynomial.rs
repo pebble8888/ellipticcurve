@@ -21,18 +21,18 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
     } else if *n == BigInt::from(2) {
         return UnitBuilder::new().coef_i(2).ypow_i(1).finalize().to_pol();
     } else if *n == BigInt::from(3) {
-        UnitBuilder::new().coef_i(3).xpow_i(4).finalize().to_pol()
-        + UnitBuilder::new().coef(&(6 * a)).xpow_i(2).finalize().to_pol()
-        + UnitBuilder::new().coef(&(12 * b)).xpow_i(1).finalize().to_pol()
-        + UnitBuilder::new().coef(&( - a.clone().power_i(2))).finalize().to_pol()
+        UnitBuilder::new().coef_i(3).xpow_i(4).finalize()
+        + UnitBuilder::new().coef(&(6 * a)).xpow_i(2).finalize()
+        + UnitBuilder::new().coef(&(12 * b)).xpow_i(1).finalize()
+        + UnitBuilder::new().coef(&( - a.clone().power_i(2))).finalize()
     } else if *n == BigInt::from(4) {
-        UnitBuilder::new().coef_i(4).ypow_i(1).finalize().to_pol() *
-              ( UnitBuilder::new().coef_i(1).xpow_i(6).finalize().to_pol()
-              + UnitBuilder::new().coef(&(5 *a)).xpow_i(4).finalize().to_pol()
-              + UnitBuilder::new().coef(&(20 * b)).xpow_i(3).finalize().to_pol()
-              + UnitBuilder::new().coef(&(-5 * a.clone().power_i(2))).xpow_i(2).finalize().to_pol()
-              + UnitBuilder::new().coef(&(-4 * a * b)).xpow_i(1).finalize().to_pol()
-              + UnitBuilder::new().coef(&(BigInt::from(-8) * b.clone().power_i(2) - a.clone().power_i(3))).finalize().to_pol()
+        UnitBuilder::new().coef_i(4).ypow_i(1).finalize() *
+              ( UnitBuilder::new().coef_i(1).xpow_i(6).finalize()
+              + UnitBuilder::new().coef(&(5 *a)).xpow_i(4).finalize()
+              + UnitBuilder::new().coef(&(20 * b)).xpow_i(3).finalize()
+              + UnitBuilder::new().coef(&(-5 * a.clone().power_i(2))).xpow_i(2).finalize()
+              + UnitBuilder::new().coef(&(-4 * a * b)).xpow_i(1).finalize()
+              + UnitBuilder::new().coef(&(BigInt::from(-8) * b.clone().power_i(2) - a.clone().power_i(3))).finalize()
               ) 
         
     } else if n.rem_floor(&BigInt::from(2)) == One::one() {
@@ -51,15 +51,15 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
         let g = psi(a, b, &(m.clone()-2));
         let h = psi(a, b, &(m.clone()+1)).power_i(2);
         let i = psi(a, b, &m.clone()) * (e*f - g*h);
-        let j = i / UnitBuilder::new().coef_i(2).ypow_i(1).finalize().to_pol();
+        let j = i / UnitBuilder::new().coef_i(2).ypow_i(1).finalize();
         j.reduction(a, b)
     }
 }
 
 pub fn phi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
     assert!(*n >= One::one());
-    let i = UnitBuilder::new().coef_i(1).xpow_i(1).finalize().to_pol() * psi(a, b, &(n.clone())).power_i(2)
-              - psi(a, b, &(n.clone() + 1)) * psi(a, b, &(n.clone()-1));
+    let i = UnitBuilder::new().coef_i(1).xpow_i(1).finalize() * psi(a, b, &(n.clone())).power_i(2)
+              - psi(a, b, &(n + 1)) * psi(a, b, &(n.clone()-1));
     i.reduction(a, b)
 }
 
@@ -70,7 +70,7 @@ pub fn omega(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
     } else {
         let i = (psi(a, b, &(n.clone()+2)) * psi(a, b, &(n.clone()-1)).power_i(2)
                      - psi(a, b, &(n.clone()-2)) * psi(a, b, &(n.clone()+1)).power_i(2))
-                  / UnitBuilder::new().coef_i(4).ypow_i(1).finalize().to_pol();
+                  / UnitBuilder::new().coef_i(4).ypow_i(1).finalize();
         i.reduction(a, b)
     }
 }

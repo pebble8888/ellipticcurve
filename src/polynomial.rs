@@ -20,6 +20,7 @@ pub struct Polynomial {
     pub units: BTreeMap<unit::UnitKey, BigInt>
 }
 
+// +
 impl_op_ex!(+ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = a.clone();
     for (bk, bv) in &b.units {
@@ -37,6 +38,15 @@ impl_op_ex!(+ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     pol
 });
 
+impl_op_ex!(+ |a: &Polynomial, b: &Unit| -> Polynomial {
+    a + b.to_pol()
+});
+
+impl_op_ex!(+ |a: &Unit, b: &Polynomial| -> Polynomial {
+    a.to_pol() + b
+});
+
+// +=
 impl_op_ex!(+= |a: &mut Polynomial, b: &Polynomial| {
     for (bk, bv) in &b.units {
         if let Some(av) = a.units.get(&bk) {
@@ -52,10 +62,33 @@ impl_op_ex!(+= |a: &mut Polynomial, b: &Polynomial| {
     }
 });
 
+impl_op_ex!(+= |a: &mut Polynomial, b: &Unit| {
+    if let Some(av) = a.units.get(&b.key) {
+        let c = av + &b.coef;
+        if c.is_zero() {
+            a.units.remove(&b.key.clone());
+        } else {
+            a.units.insert(b.key.clone(), c);
+        }
+    } else {
+        a.units.insert(b.key.clone(), b.coef.clone());
+    }
+});
+
+// -
 impl_op_ex!(- |a: &Polynomial, b: &Polynomial| -> Polynomial {
     a.clone() + (-b.clone())
 });
 
+impl_op_ex!(- |a: &Polynomial, b: &Unit | -> Polynomial {
+    a.clone() + (-b.to_pol())
+});
+
+impl_op_ex!(- |a: &Unit, b: &Polynomial| -> Polynomial {
+    a.to_pol() + (-b.clone())
+});
+
+// -=
 impl_op_ex!(-= |a: &mut Polynomial, b: &Polynomial| {
     for (bk, bv) in &b.units {
         if let Some(av) = a.units.get(&bk) {
@@ -71,6 +104,7 @@ impl_op_ex!(-= |a: &mut Polynomial, b: &Polynomial| {
     }
 });
 
+// Neg
 impl_op_ex!(- |a: &Polynomial| -> Polynomial {
     let mut pol = Polynomial::new();
     for (k, coef) in &a.units {
@@ -79,6 +113,7 @@ impl_op_ex!(- |a: &Polynomial| -> Polynomial {
     pol
 });
 
+// *
 impl_op_ex!(* |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = Polynomial::new();
     for (ik, iv) in &a.units {
@@ -97,24 +132,33 @@ impl_op_ex!(* |a: &Polynomial, b: &Polynomial| -> Polynomial {
     pol
 });
 
+impl_op_ex!(* |a: &Polynomial, b: &Unit| -> Polynomial {
+    a * b.to_pol()
+});
+
+impl_op_ex!(* |a: &Unit, b: &Polynomial| -> Polynomial {
+    a.to_pol() * b
+});
+
+// *=
 impl_op_ex!(*= |a: &mut Polynomial, b: &Polynomial| {
     let c = a.clone() * b;
     a.units.clear();
     a.units = c.units; 
 });
 
+// /
 impl_op_ex!(/ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     if b.is_zero() {
         panic!("b.is_zero()");
     }
     else if b.units.len() == 1 {
-        //let mut units: Vec<Unit> = Vec::with_capacity(a.units.len());
         let mut pol = Polynomial::new();
         for (ak, av) in &a.units {
             let i = Unit::from(ak, av);
             let (k, v) = b.units.iter().next().unwrap();
             let u2 = Unit::from(k, v); 
-            let u = i / &u2; //&b.units[0];
+            let u = i / &u2;
             pol.units.insert(u.key, u.coef);
         }
         pol
@@ -123,8 +167,23 @@ impl_op_ex!(/ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     }
 });
 
+impl_op_ex!(/ |a: &Polynomial, b: &Unit| -> Polynomial {
+    a / b.to_pol()
+});
+
+impl_op_ex!(/ |a: &Unit, b: &Polynomial| -> Polynomial {
+    a.to_pol() / b
+});
+
+// /=
 impl_op_ex!(/= |a: &mut Polynomial, b: &Polynomial| {
     let c = a.clone() / b;
+    a.units.clear();
+    a.units = c.units;
+});
+
+impl_op_ex!(/= |a: &mut Polynomial, b: &Unit| {
+    let c = a.clone() / b.to_pol();
     a.units.clear();
     a.units = c.units;
 });
@@ -159,8 +218,7 @@ impl Polynomial {
     pub fn power(&self, n: &BigInt) -> Self {
         assert!(*n >= Zero::zero(), "n:{}", n.to_string());
         if *n == Zero::zero() {
-            UnitBuilder::new().coef_i(1).finalize()
-            .to_pol();
+            UnitBuilder::new().coef_i(1).finalize().to_pol();
         }
         
         let mut m = self.clone();
@@ -176,7 +234,6 @@ impl Polynomial {
     }
 
     pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
-        //println!("{}: n:{}", line!(), n);
         assert!(*n >= Zero::zero());
         let mut b = self.clone();
         b = b.modular(p);
@@ -199,9 +256,6 @@ impl Polynomial {
     pub fn polynomial_modular(&self, other: &Polynomial, p: &BigInt) -> Self {
         assert!(!self.has_y(), "!self.has_y()");
         assert!(!other.has_y(), "!other.has_y()");
-        //println!("{} p:{}", line!(), p);
-        //println!("{} self:{}", line!(), self);
-        //println!("{} other:{}", line!(), other);
         let h = other.highest_unit_x();
         let mut tmp = self.clone();
         loop {
@@ -305,17 +359,17 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize().to_pol();
+                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize();
 
-                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).finalize().to_pol() 
-                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).finalize().to_pol()
-                       + UnitBuilder::new().coef(&b.clone()).finalize().to_pol();
+                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).finalize()
+                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).finalize()
+                       + UnitBuilder::new().coef(&b.clone()).finalize();
                 // power() is faster than power_modular()
                 let ee = ee.power(&yy.clone());
                 e *= ee;
                 t += e;
             } else {
-                t += u.clone().to_pol();
+                t += u.clone();
             }
         }
         t
@@ -328,18 +382,18 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize().to_pol();
+                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize();
 
-                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).finalize().to_pol() 
-                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).finalize().to_pol()
-                       + UnitBuilder::new().coef(&b.clone()).finalize().to_pol();
+                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).finalize()
+                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).finalize()
+                       + UnitBuilder::new().coef(&b.clone()).finalize();
                 // power() is faster than power_modular()
                 let ee = ee.power_modular(&yy.clone(), p);
                 let ee = ee.reduction_modular(a, b, p);
                 e *= ee;
                 t += e;
             } else {
-                t += u.clone().to_pol();
+                t += u.clone();
             }
             t = t.modular(p);
         }
@@ -361,8 +415,8 @@ fn polynmomial_test() {
     let p1 = u1.clone() + u2.clone();
     assert_eq!(p1.to_string(), "x^4 y^2 + 3 x^2 y^4");
 
-    let p2 = u1.clone().to_pol();
-    let p3 = u2.clone().to_pol();
+    let p2 = u1.to_pol();
+    let p3 = u2.to_pol();
     let p4 = &p2 + &p3;
     assert_eq!(p4.to_string(), "x^4 y^2 + 3 x^2 y^4");
 
