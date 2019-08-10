@@ -5,9 +5,8 @@ authors = ["pebble8888 <pebble8888@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-num = "0.2"
+num-integer = "0.1"
 num-bigint = "0.2"
 num-traits = "0.2"
 num-iter = "0.1"
 impl_ops = "0.1"
-divrem = "0.1"

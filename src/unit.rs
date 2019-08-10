@@ -1,6 +1,4 @@
-extern crate num_bigint;
-extern crate num_traits;
-
+use num_integer::Integer;
 use num_bigint::BigInt;
 use num_traits::One;
 use num_traits::Zero;
@@ -8,7 +6,7 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops; 
 use super::polynomial;
-use super::bigint::{Power, PowerModular, DivFloor, RemFloor};
+use super::bigint::{Power, PowerModular};
 use super::unitbuilder;
 
 type Polynomial = polynomial::Polynomial;
@@ -140,7 +138,7 @@ impl Unit {
             panic!("modular zero!");
         } else {
             UnitBuilder::new()
-              .coef(&self.coef.rem_floor(n))
+              .coef(&self.coef.mod_floor(n))
               .xpow(&self.xpow().clone())
               .ypow(&self.ypow().clone())
               .finalize()

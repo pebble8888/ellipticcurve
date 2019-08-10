@@ -1,7 +1,4 @@
-extern crate num_bigint;
-extern crate num_traits;
-extern crate num_iter;
-
+use num_integer::Integer;
 use std::collections::BTreeMap;
 use num_bigint::BigInt;
 use num_traits::Zero;
@@ -9,7 +6,7 @@ use num_traits::One;
 use std::fmt;
 use std::ops;
 use super::unit;
-use super::bigint::{Inverse, DivFloor, RemFloor};
+use super::bigint::{Inverse};
 use super::unitbuilder;
 
 type Unit = unit::Unit;
@@ -277,7 +274,7 @@ impl Polynomial {
         let tmp = self.clone();
         let mut pol = Polynomial::new();  
         for (k, coef) in tmp.units {
-            let c = coef.rem_floor(p);
+            let c = coef.mod_floor(p);
             if p != &Zero::zero() {
                 assert!(&c < p, "c {}", &c);
             }

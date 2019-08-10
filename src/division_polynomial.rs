@@ -1,13 +1,10 @@
-extern crate num_bigint;
-extern crate num_traits;
-extern crate num_iter;
-
+use num_integer::Integer;
 use num_bigint::BigInt;
 use num_traits::One;
 use num_traits::Zero;
 use super::polynomial;
 use super::unitbuilder;
-use super::bigint::{DivFloor, RemFloor, Power};
+use super::bigint::{Power};
 
 type UnitBuilder = unitbuilder::UnitBuilder;
 type Polynomial = polynomial::Polynomial;
@@ -24,7 +21,7 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
         UnitBuilder::new().coef_i(3).xpow_i(4).finalize()
         + UnitBuilder::new().coef(&(6 * a)).xpow_i(2).finalize()
         + UnitBuilder::new().coef(&(12 * b)).xpow_i(1).finalize()
-        + UnitBuilder::new().coef(&( - a.power_i(2))).finalize()
+        + UnitBuilder::new().coef(&(- a.power_i(2))).finalize()
     } else if *n == BigInt::from(4) {
         UnitBuilder::new().coef_i(4).ypow_i(1).finalize() *
               ( UnitBuilder::new().coef_i(1).xpow_i(6).finalize()
@@ -35,7 +32,7 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
               + UnitBuilder::new().coef(&(BigInt::from(-8) * b.clone().power_i(2) - a.clone().power_i(3))).finalize()
               ) 
         
-    } else if n.rem_floor(&BigInt::from(2)) == One::one() {
+    } else if n.mod_floor(&BigInt::from(2)) == One::one() {
         let m = (n - BigInt::from(1)).div_floor(&BigInt::from(2));
         assert!(&m < n);
         let e = psi(a, b, &(m.clone()+2));

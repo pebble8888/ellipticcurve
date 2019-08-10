@@ -2,12 +2,13 @@ extern crate num_bigint;
 extern crate num_traits;
 extern crate num_iter;
 
+use num_integer::Integer;
 use num_bigint::BigInt;
 use super::polynomial;
 use super::unitbuilder;
 use super::division_polynomial;
 
-use crate::bigint::{Power, RemFloor};
+use crate::bigint::{Power};
 
 type UnitBuilder = unitbuilder::UnitBuilder;
 type Polynomial = polynomial::Polynomial;
@@ -21,7 +22,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
     let mut schoof_result: Vec<SchoofResult> = Vec::new();
     for l in &vec![BigInt::from(3), BigInt::from(5)] {
         println!("{} l:{}", line!(), l);
-        let ql = q.rem_floor(l);
+        let ql = q.mod_floor(l);
         if l >= q {
             break;
         }
@@ -206,7 +207,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             let mut found = false;
             let mut w = BigInt::from(1);
             for i in num_iter::range(BigInt::from(1), l.clone()) {
-                if i.power_i(2).rem_floor(l) == ql {
+                if i.power_i(2).mod_floor(l) == ql {
                     found = true;
                     w = i.clone();
                     break;
