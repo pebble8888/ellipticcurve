@@ -183,7 +183,6 @@ impl Polynomial {
         let mut r = UnitBuilder::new().coef_i(1).finalize().to_pol();
         let mut e = n.clone();
         while &e > &One::one() {
-            //println!("{} e:{}", line!(), e);
             if &e % 2 != Zero::zero() {
                 r *= &b;
                 r = r.modular(p);
@@ -192,11 +191,8 @@ impl Polynomial {
             b = b.modular(p);
             e /= 2;
         }
-        //println!("{} r:{} b:{}", line!(), r.to_string(), b.to_string());
         r *= b;
-        //println!("{}", line!());
         r = r.modular(p);
-        //println!("{}", line!());
         r
     }
 
