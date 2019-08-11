@@ -253,7 +253,6 @@ impl Polynomial {
     }
 
     pub fn polynomial_modular(&self, other: &Polynomial, p: &BigInt) -> Self {
-        assert!(!self.has_y(), "!self.has_y()");
         assert!(!other.has_y(), "!other.has_y()");
         let oh = other.highest_unit_x();
         let mut r = self.clone();
@@ -265,6 +264,7 @@ impl Polynomial {
             let mut q = UnitBuilder::new()
                     .coef(&(rh.coef.clone() * oh.coef.inverse(p)))
                     .xpow(&(rh.xpow() - oh.xpow()))
+                    .ypow(&(rh.ypow().clone()))
                     .build();
             q.modular_assign(&p);
             let mut d = q * other;
