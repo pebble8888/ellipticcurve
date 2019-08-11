@@ -8,6 +8,7 @@ use std::ops;
 use super::polynomial;
 use super::bigint::{Power, PowerModular};
 use super::unitbuilder;
+use super::unitbuilder::UnitBuildable;
 
 type Polynomial = polynomial::Polynomial;
 type UnitBuilder = unitbuilder::UnitBuilder;
@@ -65,6 +66,22 @@ impl_op_ex!(- |a: &Unit| -> Unit {
         .build()
 });
 
+impl Power<i64> for Unit {
+    fn power(&self, n: i64) -> Self {
+        self.power(&BigInt::from(n))
+    }
+}
+
+impl<'a> Power<&'a BigInt> for Unit {
+    fn power(&self, n: &BigInt) -> Self {
+        UnitBuilder::new()
+          .coef(&self.coef.clone().power(&n.clone()))
+          .xpow(&(self.xpow() * n.clone()))
+          .ypow(&(self.ypow() * n.clone()))
+          .build()
+    }
+}
+
 impl Unit {
     pub fn from(key: &UnitKey, coef: &BigInt) -> Self {
         Unit {
@@ -103,18 +120,6 @@ impl Unit {
             && &self.ypow() == &other.ypow()
     }
 
-    pub fn power(&self, n: &BigInt) -> Self {
-        UnitBuilder::new()
-          .coef(&self.coef.clone().power(&n.clone()))
-          .xpow(&(self.xpow() * n.clone()))
-          .ypow(&(self.ypow() * n.clone()))
-          .build()
-    }
-
-    pub fn power_i(&self, n: i64) -> Self {
-        self.power(&BigInt::from(n))
-    }
-
     pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
         UnitBuilder::new()
             .coef(&self.coef.power_modular(n, p))
@@ -148,6 +153,21 @@ impl Unit {
               .xpow(&self.xpow().clone())
               .ypow(&self.ypow().clone())
               .build()
+        }
+    }
+
+    pub fn modular_assign(&mut self, n: &BigInt) {
+        if n == &Zero::zero() {
+            panic!("modular zero!");
+        } else {
+            self.coef = self.coef.mod_floor(n);
+            /*
+            UnitBuilder::new()
+              .coef(&self.coef.mod_floor(n))
+              .xpow(&self.xpow().clone())
+              .ypow(&self.ypow().clone())
+              .build()
+              */
         }
     }
 
@@ -300,14 +320,14 @@ fn unit_test() {
     assert_eq_str!(u2.clone() * u3.clone(), "12");
     assert_eq_str!(&u2 * &u3, "12");
     assert_eq_str!(UnitBuilder::new()
-        .coef_i(20)
-        .xpow_i(1)
+        .coef(20)
+        .xpow(1)
         .build()
         .modular(&BigInt::from(19)), "x");
 
     // power_modular
 
-    let u11 = UnitBuilder::new().coef_i(1).xpow_i(4).ypow_i(2).build();
+    let u11 = UnitBuilder::new().coef(1).xpow(4).ypow(2).build();
     let u8 = - &u11;
     assert_eq_str!(u8, "- x^4 y^2"); 
 }

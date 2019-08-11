@@ -1,9 +1,9 @@
 use num_integer::Integer;
 use num_bigint::BigInt;
 
-pub trait Power {
-    fn power(&self, n: &BigInt) -> Self; 
-    fn power_i(&self, n: i64) -> Self;
+
+pub trait Power<T> {
+    fn power(&self, n: T) -> Self;
 }
 
 pub trait PowerModular {
@@ -14,7 +14,7 @@ pub trait Inverse {
     fn inverse(&self, p: &BigInt) -> Self;
 }
 
-impl Power for BigInt { 
+impl<'a> Power<&'a BigInt> for BigInt { 
     fn power(&self, n: &BigInt) -> Self {
         let mut t = BigInt::from(1);
         for _i in num_iter::range(BigInt::from(0), n.clone()) {
@@ -22,8 +22,10 @@ impl Power for BigInt {
         }
         t
     }
+}
 
-    fn power_i(&self, n: i64) -> Self {
+impl Power<i64> for BigInt {
+    fn power(&self, n: i64) -> Self {
         let n = BigInt::from(n);
         self.power(&n)
     }
