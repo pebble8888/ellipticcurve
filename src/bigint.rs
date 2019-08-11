@@ -18,7 +18,7 @@ impl<'a> Power<&'a BigInt> for BigInt {
     fn power(&self, n: &BigInt) -> Self {
         let mut t = BigInt::from(1);
         for _i in num_iter::range(BigInt::from(0), n.clone()) {
-            t = &t * self;
+            t *= self;
         }
         t
     }
@@ -35,9 +35,9 @@ impl PowerModular for BigInt {
     fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
         let mut t = BigInt::from(1);
         for _i in num_iter::range(BigInt::from(0), n.clone()) {
-            t = &t * self;
-            t = t.mod_floor(p);
+            t *= self;
         }
+        t = t.mod_floor(p);
         t
     }
 }

@@ -161,13 +161,6 @@ impl Unit {
             panic!("modular zero!");
         } else {
             self.coef = self.coef.mod_floor(n);
-            /*
-            UnitBuilder::new()
-              .coef(&self.coef.mod_floor(n))
-              .xpow(&self.xpow().clone())
-              .ypow(&self.ypow().clone())
-              .build()
-              */
         }
     }
 

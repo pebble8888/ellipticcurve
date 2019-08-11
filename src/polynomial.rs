@@ -423,8 +423,8 @@ impl Polynomial {
             } else {
                 t += u.clone();
             }
-            t.modular_assign(p);
         }
+        t.modular_assign(p);
         t
     }
 }

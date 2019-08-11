@@ -96,10 +96,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             p1.modular_assign(q);
             //println!("p1:{} {}", line!(), p1);
 
-            let mut p1 = p1.reduction_modular(a, b, q);
+            let p1 = p1.reduction_modular(a, b, q);
             //println!("p1:{} {}", line!(), p1);
 
-            p1.modular_assign(q);
+            //p1.modular_assign(q);
             //println!("p1:{} {}", line!(), p1);
 
             let psil = division_polynomial::psi(a, b, &l).modular(q);
@@ -153,10 +153,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
 
             let num3 = &d * (e * f.power(2) - d.clone().power(2)) - &g * division_polynomial::psi(a, b, &ql).power(3) * f.power(3);
             //println!("num3:{} {}", line!(), num3);
-            let num3 = num3.reduction_modular(a, b, q);
+            let mut num3 = num3.reduction_modular(a, b, q);
             println!("num3:{} {}", line!(), num3);
 
-            let num3 = num3 * division_polynomial::psi(a, b, &ql);
+            num3 *= division_polynomial::psi(a, b, &ql);
             let num3 = num3.reduction_modular(a, b, q);
             println!("num3:{} {}", line!(), num3);
 
@@ -189,10 +189,11 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             println!("{} p9:{}", line!(), p9);
 
             p9.modular_assign(q);
-            let psil = division_polynomial::psi(a, b, &l).modular(q);
-            println!("{} psi({}):{}", line!(), l, psil);
 
-            let p11 = p9.polynomial_modular(&psil, q);
+            let psi_l = division_polynomial::psi(a, b, &l).modular(q);
+            println!("{} psi({}):{}", line!(), l, psi_l);
+
+            let p11 = p9.polynomial_modular(&psi_l, q);
             println!("{} pol % psi({}):{}", line!(), l, p11);
 
             if p11.is_zero() {
