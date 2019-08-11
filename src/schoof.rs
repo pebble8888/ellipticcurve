@@ -45,10 +45,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
         let nn2 = nn2.reduction_modular(a, b, q);
         //println!("nn2:{} {}", line!(), nn2);
 
-        let n1 = (nn1 - nn2).power(2);
+        let mut n1 = (nn1 - nn2).power(2);
         //println!("n1:{} {}", line!(), n1);
 
-        let n1 = n1.modular(q);
+        n1.modular_assign(q);
         //println!("n1:{} {}", line!(), n1);
 
         let n2 = - (division_polynomial::phi(a, b, &ql)
@@ -61,7 +61,8 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
                        * division_polynomial::psi(a, b, &ql).power(2)).power(2);
         println!("n3:{} {}", line!(), n3);
 
-        let num1 = (n1 + n2 * n3).modular(q);
+        let mut num1 = n1 + n2 * n3;
+        num1.modular_assign(q);
         println!("num1:{} {}", line!(), num1);
 
         let num1 = num1.reduction_modular(a, b, q);
@@ -91,22 +92,21 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             let den2 = division_polynomial::psi(a, b, &j).to_frob(q).power(2);
             println!("den2:{} {}", line!(), den2);
 
-            let p1 = &num1 * &den2 - &num2 * &den1;
-            let p1 = p1.modular(q);
+            let mut p1 = &num1 * &den2 - &num2 * &den1;
+            p1.modular_assign(q);
             //println!("p1:{} {}", line!(), p1);
 
-            let p1 = p1.reduction_modular(a, b, q);
+            let mut p1 = p1.reduction_modular(a, b, q);
             //println!("p1:{} {}", line!(), p1);
 
-            let p1 = p1.modular(q);
+            p1.modular_assign(q);
             //println!("p1:{} {}", line!(), p1);
 
             let psil = division_polynomial::psi(a, b, &l).modular(q);
             println!("{} psi({}):{}", line!(), l, psil);
 
-            let p1 = p1.polynomial_modular(&psil, q);
-
-            let p1 = &p1.modular(q);
+            let mut p1 = p1.polynomial_modular(&psil, q);
+            p1.modular_assign(q);
             println!("{} pol % psi({}):{}", line!(), l, p1);
 
             if p1.is_zero() {
@@ -125,8 +125,8 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             let g = g.reduction_modular(a, b, q);
             println!("g:{} {}", line!(), g);
 
-            let omg = division_polynomial::omega(a, b, &ql);
-            let omg = omg.modular(q);
+            let mut omg = division_polynomial::omega(a, b, &ql);
+            omg.modular_assign(q);
             //println!("omg:{} {}", line!(), omg);
 
             let d = omg - &g * division_polynomial::psi(a, b, &ql).power(3);
@@ -134,18 +134,18 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             let d = d.reduction_modular(a, b, q);
             println!("d:{} {}", line!(), d);
 
-            let e = - division_polynomial::phi(a, b, &ql) +
+            let mut e = - division_polynomial::phi(a, b, &ql) +
                     UnitBuilder::new().coef(2).xpow(&q.power(2)).build()
                     * division_polynomial::psi(a, b, &ql).power(2);
-            let e = e.modular(q);
+            e.modular_assign(q);
             //println!("e:{} {}", line!(), e);
 
             let e = e.reduction_modular(a, b, q);
             println!("e:{} {}", line!(), e);
 
-            let f = division_polynomial::phi(a, b, &ql) - 
+            let mut f = division_polynomial::phi(a, b, &ql) - 
                 UnitBuilder::new().coef(1).xpow(&q.power(2)).build() * division_polynomial::psi(a, b, &ql).power(2);
-            let f = f.modular(q);
+            f.modular_assign(q);
             //println!("f:{} {}", line!(), f);
 
             let f = f.reduction_modular(a, b, q);
@@ -180,7 +180,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             let p8 = p7.reduction_modular(a, b, q);
             println!("p8:{} {}", line!(), p8);
 
-            let p9: Polynomial;
+            let mut p9: Polynomial;
             if p8.has_y() {
                 p9 = p8 / UnitBuilder::new().coef(1).ypow(1).build();
             } else {
@@ -188,7 +188,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             }
             println!("{} p9:{}", line!(), p9);
 
-            let p9 = p9.modular(q);
+            p9.modular_assign(q);
             let psil = division_polynomial::psi(a, b, &l).modular(q);
             println!("{} psi({}):{}", line!(), l, psil);
 
@@ -219,9 +219,9 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
                 println!("(d)  a = 0 mod l because of w not found (d)");
             } else {
                 // (e) x
-                let p12 = UnitBuilder::new().coef(1).xpow(&q.clone()).build()
+                let mut p12 = UnitBuilder::new().coef(1).xpow(&q.clone()).build()
                        * division_polynomial::psi(a, b, &w).power(2) - division_polynomial::phi(a, b, &w);
-                let p12 = p12.modular(q);
+                p12.modular_assign(q);
                 let p13 = p12.reduction_modular(a, b, q);
                 println!("{} p13:{}", line!(), p13);
                 let p14 = division_polynomial::psi(q, b, &l).modular(q);
@@ -234,10 +234,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
                     println!("(e) y  a = 0 mod {} because of gcd = 1 (e)", l);
                 } else {
                     // (e) y
-                    let p16 = (UnitBuilder::new().coef(1).ypow(&a.clone()).build()
+                    let mut p16 = (UnitBuilder::new().coef(1).ypow(&a.clone()).build()
                               * division_polynomial::psi(a, b, &w).power(3) - division_polynomial::omega(a, b, &w)) /
                             UnitBuilder::new().coef(1).ypow(1).build();
-                    let p16 = p16.modular(q);
+                    p16.modular_assign(q);
                     let p17 = p16.reduction_modular(a, b, q);
                     println!("{}", p17);
                     if p17.is_gcd_one(&division_polynomial::psi(a, b, &l), q) {
