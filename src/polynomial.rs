@@ -206,7 +206,7 @@ impl Polynomial {
     pub fn power(&self, n: &BigInt) -> Self {
         assert!(n >= &Zero::zero(), "n:{}", n.to_string());
         if n == &Zero::zero() {
-            UnitBuilder::new().coef_i(1).finalize().to_pol();
+            UnitBuilder::new().coef_i(1).build().to_pol();
         }
         
         let mut m = self.clone();
@@ -232,7 +232,7 @@ impl Polynomial {
     pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
         assert!(*n >= Zero::zero());
         let mut b = self.modular(p);
-        let mut r = UnitBuilder::new().coef_i(1).finalize().to_pol();
+        let mut r = UnitBuilder::new().coef_i(1).build().to_pol();
         let mut e = n.clone();
         while &e > &One::one() {
             if &e % 2 != Zero::zero() {
@@ -261,7 +261,7 @@ impl Polynomial {
             let q = UnitBuilder::new()
                     .coef(&(rh.coef.clone() * oh.coef.inverse(p)))
                     .xpow(&(rh.xpow() - oh.xpow()))
-                    .finalize().to_pol();
+                    .build().to_pol();
             let q = q.modular(&p);
             let d = (q * other).modular(&p);
             r -= d;
@@ -353,11 +353,11 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize();
+                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).build();
 
-                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).finalize()
-                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).finalize()
-                       + UnitBuilder::new().coef(&b.clone()).finalize();
+                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).build()
+                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).build()
+                       + UnitBuilder::new().coef(&b.clone()).build();
                 // power() is faster than power_modular()
                 let ee = ee.power(&yy.clone());
                 e *= ee;
@@ -376,11 +376,11 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).finalize();
+                e /= UnitBuilder::new().coef_i(1).ypow(&(yy.clone() * 2)).build();
 
-                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).finalize()
-                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).finalize()
-                       + UnitBuilder::new().coef(&b.clone()).finalize();
+                let ee = UnitBuilder::new().coef_i(1).xpow_i(3).build()
+                       + UnitBuilder::new().coef(&a.clone()).xpow_i(1).build()
+                       + UnitBuilder::new().coef(&b.clone()).build();
                 // power() is faster than power_modular()
                 let ee = ee.power_modular(&yy.clone(), p);
                 let ee = ee.reduction_modular(a, b, p);
@@ -401,8 +401,8 @@ fn polynmomial_test() {
     use super::unitbuilder;
     type UnitBuilder = unitbuilder::UnitBuilder;
 
-    let u1 = UnitBuilder::new().coef_i(1).xpow_i(4).ypow_i(2).finalize();
-    let u2 = UnitBuilder::new().coef_i(3).xpow_i(2).ypow_i(4).finalize();
+    let u1 = UnitBuilder::new().coef_i(1).xpow_i(4).ypow_i(2).build();
+    let u2 = UnitBuilder::new().coef_i(3).xpow_i(2).ypow_i(4).build();
     assert_eq_str!(u1, "x^4 y^2");
     assert_eq_str!(u2, "3 x^2 y^4");
 
@@ -435,9 +435,9 @@ fn polynmomial_test() {
     assert_eq_str!(u21, "27 x^6 y^12");
 
     // Modular
-    let u33 = UnitBuilder::new().coef_i(37).xpow_i(2).ypow_i(4).finalize();
+    let u33 = UnitBuilder::new().coef_i(37).xpow_i(2).ypow_i(4).build();
 
-    let u35 = UnitBuilder::new().coef_i(35).xpow_i(3).ypow_i(5).finalize();
+    let u35 = UnitBuilder::new().coef_i(35).xpow_i(3).ypow_i(5).build();
 
     let u34 = u33.modular(&BigInt::from(24));
     assert_eq_str!(u34, "13 x^2 y^4");
@@ -462,21 +462,21 @@ fn polynmomial_test() {
     assert_eq_str!(p40, "25 x^6 y^10 + 10 x^5 y^9 + x^4 y^8");
 
     // reduction
-    let u41 = UnitBuilder::new().coef_i(1).xpow_i(1).ypow_i(3).finalize();
+    let u41 = UnitBuilder::new().coef_i(1).xpow_i(1).ypow_i(3).build();
     let p41 = u41.to_pol();
     let p42 = p41.reduction(&BigInt::from(2), &BigInt::from(7));
     assert_eq_str!(p42, "x^4 y + 2 x^2 y + 7 x y");
 
-    let p422 = UnitBuilder::new().coef_i(2).xpow_i(3).finalize().to_pol();
+    let p422 = UnitBuilder::new().coef_i(2).xpow_i(3).build().to_pol();
     assert_eq_str!(p422.highest_unit_x(), "2 x^3");
 
     // rem
-    let u43 = UnitBuilder::new().coef_i(3).xpow_i(4).finalize();
-    let u44 = UnitBuilder::new().coef_i(2).xpow_i(1).finalize();
+    let u43 = UnitBuilder::new().coef_i(3).xpow_i(4).build();
+    let u44 = UnitBuilder::new().coef_i(2).xpow_i(1).build();
     let p47 = u43 + u44;
 
-    let u45 = UnitBuilder::new().coef_i(2).xpow_i(2).finalize();
-    let u46 = UnitBuilder::new().coef_i(3).finalize();
+    let u45 = UnitBuilder::new().coef_i(2).xpow_i(2).build();
+    let u46 = UnitBuilder::new().coef_i(3).build();
     let p48 = u45 + u46;
     assert_eq_str!(p47, "3 x^4 + 2 x");
     assert_eq_str!(p48, "2 x^2 + 3");
@@ -490,16 +490,16 @@ fn polynmomial_test() {
     assert_eq_str!(p49, "6 x^6 + 9 x^4 + 4 x^3 + 6 x");
 
     // -=
-    let mut p80 = UnitBuilder::new().coef_i(6).xpow_i(6).finalize()
-                + UnitBuilder::new().coef_i(12).xpow_i(4).finalize();
-    let p81 = UnitBuilder::new().coef_i(2).xpow_i(6).finalize().to_pol();
+    let mut p80 = UnitBuilder::new().coef_i(6).xpow_i(6).build()
+                + UnitBuilder::new().coef_i(12).xpow_i(4).build();
+    let p81 = UnitBuilder::new().coef_i(2).xpow_i(6).build().to_pol();
     p80 -= p81;
     assert_eq_str!(p80, "4 x^6 + 12 x^4");
 
     // /=
-    let u50 = UnitBuilder::new().coef_i(6).xpow_i(6).finalize();
-    let u51 = UnitBuilder::new().coef_i(12).xpow_i(4).finalize();
-    let u52 = UnitBuilder::new().coef_i(3).xpow_i(2).finalize();
+    let u50 = UnitBuilder::new().coef_i(6).xpow_i(6).build();
+    let u51 = UnitBuilder::new().coef_i(12).xpow_i(4).build();
+    let u52 = UnitBuilder::new().coef_i(3).xpow_i(2).build();
     let mut p50 = &u50 + &u51;
     let p51 = u52.to_pol();
     p50 /= &p51;

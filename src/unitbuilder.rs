@@ -48,7 +48,7 @@ impl UnitBuilder {
         self
     }
 
-    pub fn finalize(&self) -> Unit {
+    pub fn build(&self) -> Unit {
         Unit {
             coef: self.coef.clone(),
             key: UnitKey {

@@ -54,7 +54,7 @@ impl_op_ex!(/ |a: &Unit, b: &Unit| -> Unit {
         .coef(&a.coef.div_floor(&b.coef))
         .xpow(&(a.xpow() - b.xpow()))
         .ypow(&(a.ypow() - b.ypow())).
-        finalize()
+        build()
 });
 
 impl_op_ex!(- |a: &Unit| -> Unit {
@@ -62,7 +62,7 @@ impl_op_ex!(- |a: &Unit| -> Unit {
         .coef(&(-a.coef.clone()))
         .xpow(&a.xpow().clone())
         .ypow(&a.ypow().clone())
-        .finalize()
+        .build()
 });
 
 impl Unit {
@@ -82,7 +82,13 @@ impl Unit {
     }
 
     pub fn new() -> Unit {
-        UnitBuilder::new().finalize()
+        Unit {
+            coef: BigInt::from(0),
+            key: UnitKey {
+                xpow: BigInt::from(0),
+                ypow: BigInt::from(0),
+            },
+        }
     }
 
     pub fn to_pol(&self) -> Polynomial {
@@ -102,7 +108,7 @@ impl Unit {
           .coef(&self.coef.clone().power(&n.clone()))
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
-          .finalize()
+          .build()
     }
 
     pub fn power_i(&self, n: i64) -> Self {
@@ -114,7 +120,7 @@ impl Unit {
             .coef(&self.coef.power_modular(n, p))
             .xpow(&(self.xpow() * n.clone()))
             .ypow(&(self.ypow() * n.clone()))
-            .finalize()
+            .build()
     }
 
     pub fn to_frob(&self, n: &BigInt) -> Self {
@@ -122,7 +128,7 @@ impl Unit {
           .coef(&self.coef.clone())
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
-          .finalize()
+          .build()
     }
 
     pub fn to_y_power(&self, n: &BigInt) -> Self {
@@ -130,7 +136,7 @@ impl Unit {
           .coef(&self.coef.clone())
           .xpow(&self.xpow().clone())
           .ypow(&(self.ypow() * n.clone()))
-          .finalize()
+          .build()
     }
 
     pub fn modular(&self, n: &BigInt) -> Self {
@@ -141,7 +147,7 @@ impl Unit {
               .coef(&self.coef.mod_floor(n))
               .xpow(&self.xpow().clone())
               .ypow(&self.ypow().clone())
-              .finalize()
+              .build()
         }
     }
 
@@ -296,12 +302,12 @@ fn unit_test() {
     assert_eq_str!(UnitBuilder::new()
         .coef_i(20)
         .xpow_i(1)
-        .finalize()
+        .build()
         .modular(&BigInt::from(19)), "x");
 
     // power_modular
 
-    let u11 = UnitBuilder::new().coef_i(1).xpow_i(4).ypow_i(2).finalize();
+    let u11 = UnitBuilder::new().coef_i(1).xpow_i(4).ypow_i(2).build();
     let u8 = - &u11;
     assert_eq_str!(u8, "- x^4 y^2"); 
 }
