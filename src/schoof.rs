@@ -155,8 +155,8 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             let den4 = den4.reduction_modular(a, b, q);
             println!("den4:{} {}", line!(), den4);
 
-            let p7 = num3 * den4 - num4 * den3;
-            println!("p7:{} {}", line!(), p7);
+            let mut p7 = num3 * den4 - num4 * den3;
+            p7.modular_assign(q);
 
             let p8 = p7.reduction_modular(a, b, q);
             println!("p8:{} {}", line!(), p8);
