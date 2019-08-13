@@ -21,6 +21,26 @@ pub struct SchoofResult {
 
 pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
     let mut schoof_result: Vec<SchoofResult> = Vec::new();
+
+    // l = 2
+    let l: BigInt = 2.into();
+    println!("{} l:{}", line!(), l);
+    let pol_l2 = UnitBuilder::new().coef(1).xpow(q).build() - UnitBuilder::new().coef(1).xpow(1).build();
+    let pol_standard = UnitBuilder::new().coef(1).xpow(3).build() + 
+                UnitBuilder::new().coef(a).xpow(1).build() +
+                UnitBuilder::new().coef(b).build();
+    let j2: BigInt;
+    if pol_standard.is_gcd_one(&pol_l2, q) {
+        // no common root
+        j2 = BigInt::from(1); 
+    } else {
+        // has common root
+        j2 = BigInt::from(0);
+    }
+    schoof_result.push(SchoofResult { l: l.clone(), a: j2.clone() });
+    println!("a = {} mod 2", j2); 
+
+    // l >= 3
     for l in &vec![BigInt::from(3), BigInt::from(5)] {
         println!("{} l:{}", line!(), l);
         let ql = q.mod_floor(l);
@@ -172,13 +192,14 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             let p9 = p9.polynomial_modular(&psi_l, q);
             println!("{} pol % psi({}):{}", line!(), l, p9);
 
-            if p9.is_zero() {
-                schoof_result.push(SchoofResult { l: l.clone(), a: jj.clone() });
-                println!("(iii) y  a = {} mod {}", jj.clone(), l);
-            } else {
-                schoof_result.push(SchoofResult { l: l.clone(), a: - jj.clone() });
-                println!("(iii) y  a = {} mod {}", (-jj.clone()), l);
+            if !p9.is_zero() {
+                jj = -jj;
             }
+            if jj < BigInt::from(0) {
+                jj += l;
+            }
+            schoof_result.push(SchoofResult { l: l.clone(), a: jj.clone() });
+            println!("(iii) y  a = {} mod {}", jj.clone(), l);
         } else {
             // (d)
             println!("x not found");
@@ -217,15 +238,17 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
                     p16.modular_assign(q);
                     let p17 = p16.reduction_modular(a, b, q);
                     //println!("{}", p17);
+                    let mut ww: BigInt;
                     if p17.is_gcd_one(&division_polynomial::psi(a, b, &l), q) {
-                        let jj = - BigInt::from(2) * w;
-                        schoof_result.push(SchoofResult { l: l.clone(), a: jj.clone() });
-                        println!("(e) y  a = {} mod {} because of gcd is 1", &jj, l);
+                        ww = - BigInt::from(2) * w;
                     } else {
-                        let jj = BigInt::from(2) * w;
-                        schoof_result.push(SchoofResult { l: l.clone(), a: jj.clone() });
-                        println!("(e) y  a = {} mod {} because of gcd is not 1", &jj, l);
+                        ww = BigInt::from(2) * w;
                     }
+                    if ww < BigInt::from(0) {
+                        ww += l;
+                    }
+                    schoof_result.push(SchoofResult { l: l.clone(), a: ww.clone() });
+                    println!("(e) y  a = {} mod {}", &ww, l);
                 }
             }
         }
@@ -250,21 +273,25 @@ fn schoof_test01() {
 fn schoof_test7() {
     let q = 7;
     let schoof_result = schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(q));
-    assert_eq!(schoof_result.len(), 2);
-    assert_eq!(schoof_result[0].l, BigInt::from(3));
-    assert_eq!(schoof_result[0].a, BigInt::from(0));
-    assert_eq!(schoof_result[1].l, BigInt::from(5));
-    assert_eq!(schoof_result[1].a, BigInt::from(-2));
+    assert_eq!(schoof_result.len(), 3);
+    assert_eq!(schoof_result[0].l, BigInt::from(2));
+    assert_eq!(schoof_result[0].a, BigInt::from(1));
+    assert_eq!(schoof_result[1].l, BigInt::from(3));
+    assert_eq!(schoof_result[1].a, BigInt::from(0));
+    assert_eq!(schoof_result[2].l, BigInt::from(5));
+    assert_eq!(schoof_result[2].a, BigInt::from(3));
 }
 
 #[test]
 fn schoof_test19() {
     let q = 19;
     let schoof_result = schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(q));
-    assert_eq!(schoof_result.len(), 2);
-    assert_eq!(schoof_result[0].l, BigInt::from(3));
-    assert_eq!(schoof_result[0].a, BigInt::from(-1));
-    assert_eq!(schoof_result[1].l, BigInt::from(5));
-    assert_eq!(schoof_result[1].a, BigInt::from(-2));
+    assert_eq!(schoof_result.len(), 3);
+    assert_eq!(schoof_result[0].l, BigInt::from(2));
+    assert_eq!(schoof_result[0].a, BigInt::from(1));
+    assert_eq!(schoof_result[1].l, BigInt::from(3));
+    assert_eq!(schoof_result[1].a, BigInt::from(2));
+    assert_eq!(schoof_result[2].l, BigInt::from(5));
+    assert_eq!(schoof_result[2].a, BigInt::from(3));
 }
 
