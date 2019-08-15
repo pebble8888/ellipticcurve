@@ -49,6 +49,25 @@ impl Inverse for BigInt {
     }
 }
 
+/// extended euclid algorithm
+/// 
+/// a x + b y = gcd(a, b)
+///
+/// params: (a, b) 
+/// return: (gcd(a, b), x, y)
+///
+pub fn extended_gcd(a: BigInt, b: BigInt) -> (BigInt, BigInt, BigInt) {
+    if a.clone() == BigInt::from(0) {
+        return (b, BigInt::from(0), BigInt::from(1));
+    }
+    let r = b.clone() % a.clone();
+    let q = b.clone() / a.clone();
+    let (g, x, y) = extended_gcd(r, a);
+    (g, y - q * x.clone(), x.clone())
+}
+
+
+
 #[test]
 fn bigint_power_test() {
     let q = BigInt::from(2);
@@ -106,3 +125,18 @@ fn bigint_divide_test() {
     assert_eq_str!((BigInt::from(-7).mod_floor(&BigInt::from(-3))), "-1"); 
 }
 
+#[test]
+fn extended_euclid_test1() {
+    let (g, x, y) = extended_gcd(BigInt::from(8), BigInt::from(11)); 
+    assert_eq!(g, BigInt::from(1));
+    assert_eq!(x, BigInt::from(-4));
+    assert_eq!(y, BigInt::from(3));
+}
+
+#[test]
+fn extended_euclid_test2() {
+    let (g, x, y) = extended_gcd(BigInt::from(11), BigInt::from(8)); 
+    assert_eq!(g, BigInt::from(1));
+    assert_eq!(x, BigInt::from(3));
+    assert_eq!(y, BigInt::from(-4));
+}
