@@ -3,11 +3,11 @@ use num_bigint::BigInt;
 use num_traits::One;
 use num_traits::Zero;
 use super::polynomial;
-use super::unitbuilder;
-use super::unitbuilder::UnitBuildable;
+use super::termbuilder;
+use super::termbuilder::TermBuildable;
 use super::bigint::{Power};
 
-type UnitBuilder = unitbuilder::UnitBuilder;
+type TermBuilder = termbuilder::TermBuilder;
 type Polynomial = polynomial::Polynomial;
 
 pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
@@ -15,22 +15,22 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
     if *n == Zero::zero() {
         return Polynomial::new();
     } else if *n == One::one() {
-        return UnitBuilder::new().coef(1).build().to_pol();
+        return TermBuilder::new().coef(1).build().to_pol();
     } else if *n == BigInt::from(2) {
-        return UnitBuilder::new().coef(2).ypow(1).build().to_pol();
+        return TermBuilder::new().coef(2).ypow(1).build().to_pol();
     } else if *n == BigInt::from(3) {
-        UnitBuilder::new().coef(3).xpow(4).build()
-        + UnitBuilder::new().coef(&(6 * a)).xpow(2).build()
-        + UnitBuilder::new().coef(&(12 * b)).xpow(1).build()
-        + UnitBuilder::new().coef(&(- a.power(2))).build()
+        TermBuilder::new().coef(3).xpow(4).build()
+        + TermBuilder::new().coef(&(6 * a)).xpow(2).build()
+        + TermBuilder::new().coef(&(12 * b)).xpow(1).build()
+        + TermBuilder::new().coef(&(- a.power(2))).build()
     } else if *n == BigInt::from(4) {
-        UnitBuilder::new().coef(4).ypow(1).build() *
-              ( UnitBuilder::new().coef(1).xpow(6).build()
-              + UnitBuilder::new().coef(&(5 *a)).xpow(4).build()
-              + UnitBuilder::new().coef(&(20 * b)).xpow(3).build()
-              + UnitBuilder::new().coef(&(-5 * a.clone().power(2))).xpow(2).build()
-              + UnitBuilder::new().coef(&(-4 * a * b)).xpow(1).build()
-              + UnitBuilder::new().coef(&(BigInt::from(-8) * b.clone().power(2) - a.clone().power(3))).build()
+        TermBuilder::new().coef(4).ypow(1).build() *
+              ( TermBuilder::new().coef(1).xpow(6).build()
+              + TermBuilder::new().coef(&(5 *a)).xpow(4).build()
+              + TermBuilder::new().coef(&(20 * b)).xpow(3).build()
+              + TermBuilder::new().coef(&(-5 * a.clone().power(2))).xpow(2).build()
+              + TermBuilder::new().coef(&(-4 * a * b)).xpow(1).build()
+              + TermBuilder::new().coef(&(BigInt::from(-8) * b.clone().power(2) - a.clone().power(3))).build()
               ) 
         
     } else if n.mod_floor(&BigInt::from(2)) == One::one() {
@@ -49,14 +49,14 @@ pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
         let g = psi(a, b, &(m.clone()-2));
         let h = psi(a, b, &(m.clone()+1)).power(2);
         let i = psi(a, b, &m.clone()) * (e*f - g*h);
-        let j = i / UnitBuilder::new().coef(2).ypow(1).build();
+        let j = i / TermBuilder::new().coef(2).ypow(1).build();
         j.reduction(a, b)
     }
 }
 
 pub fn phi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
     assert!(*n >= One::one());
-    let i = UnitBuilder::new().coef(1).xpow(1).build() * psi(a, b, &(n.clone())).power(2)
+    let i = TermBuilder::new().coef(1).xpow(1).build() * psi(a, b, &(n.clone())).power(2)
               - psi(a, b, &(n + 1)) * psi(a, b, &(n.clone()-1));
     i.reduction(a, b)
 }
@@ -64,11 +64,11 @@ pub fn phi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
 pub fn omega(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {
     assert!(*n >= One::one());
     if *n == One::one() {
-        UnitBuilder::new().coef(1).ypow(1).build().to_pol()
+        TermBuilder::new().coef(1).ypow(1).build().to_pol()
     } else {
         let i = (psi(a, b, &(n.clone()+2)) * psi(a, b, &(n.clone()-1)).power(2)
                      - psi(a, b, &(n.clone()-2)) * psi(a, b, &(n.clone()+1)).power(2))
-                  / UnitBuilder::new().coef(4).ypow(1).build();
+                  / TermBuilder::new().coef(4).ypow(1).build();
         i.reduction(a, b)
     }
 }

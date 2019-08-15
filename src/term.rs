@@ -7,74 +7,74 @@ use std::fmt;
 use std::ops; 
 use super::polynomial;
 use super::bigint::{Power, PowerModular};
-use super::unitbuilder;
-use super::unitbuilder::UnitBuildable;
+use super::termbuilder;
+use super::termbuilder::TermBuildable;
 
 type Polynomial = polynomial::Polynomial;
-type UnitBuilder = unitbuilder::UnitBuilder;
+type TermBuilder = termbuilder::TermBuilder;
 
 // coef x^xpow y^ypow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Unit {
+pub struct Term {
     pub coef: BigInt,
-    pub key: UnitKey,
+    pub monomial: Monomial,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct UnitKey {
+pub struct Monomial {
     pub xpow: BigInt,
     pub ypow: BigInt,
 }
 
-impl_op_ex!(+ |a: &Unit, b: &Unit| -> Polynomial {
+impl_op_ex!(+ |a: &Term, b: &Term| -> Polynomial {
     let mut pol = a.clone().to_pol();
-    if let Some(av) = pol.units.get_mut(&b.key) {
+    if let Some(av) = pol.terms.get_mut(&b.monomial) {
         *av += b.coef.clone(); 
     } else {
-        pol.units.insert(b.key.clone(), b.coef.clone());
+        pol.terms.insert(b.monomial.clone(), b.coef.clone());
     }
     pol
 });
 
-impl_op_ex!(* |a: &Unit, b: &Unit| -> Unit {
-    Unit {
+impl_op_ex!(* |a: &Term, b: &Term| -> Term {
+    Term {
         coef: &a.coef * &b.coef,
-        key: UnitKey { 
+        monomial: Monomial { 
             xpow: a.xpow() + b.xpow(),
             ypow: a.ypow() + b.ypow(),
         },
     }
 });
 
-impl_op_ex!(- |a: &Unit, b: &Unit| -> Polynomial {
+impl_op_ex!(- |a: &Term, b: &Term| -> Polynomial {
     a + (-b)
 });
 
-impl_op_ex!(/ |a: &Unit, b: &Unit| -> Unit {
-    UnitBuilder::new()
+impl_op_ex!(/ |a: &Term, b: &Term| -> Term {
+    TermBuilder::new()
         .coef(&a.coef.div_floor(&b.coef))
         .xpow(&(a.xpow() - b.xpow()))
         .ypow(&(a.ypow() - b.ypow())).
         build()
 });
 
-impl_op_ex!(- |a: &Unit| -> Unit {
-    UnitBuilder::new()
+impl_op_ex!(- |a: &Term| -> Term {
+    TermBuilder::new()
         .coef(&(-a.coef.clone()))
         .xpow(&a.xpow().clone())
         .ypow(&a.ypow().clone())
         .build()
 });
 
-impl Power<i64> for Unit {
+impl Power<i64> for Term {
     fn power(&self, n: i64) -> Self {
         self.power(&BigInt::from(n))
     }
 }
 
-impl<'a> Power<&'a BigInt> for Unit {
+impl<'a> Power<&'a BigInt> for Term {
     fn power(&self, n: &BigInt) -> Self {
-        UnitBuilder::new()
+        TermBuilder::new()
           .coef(&self.coef.clone().power(&n.clone()))
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
@@ -82,26 +82,26 @@ impl<'a> Power<&'a BigInt> for Unit {
     }
 }
 
-impl Unit {
-    pub fn from(key: &UnitKey, coef: &BigInt) -> Self {
-        Unit {
+impl Term {
+    pub fn from(monomial: &Monomial, coef: &BigInt) -> Self {
+        Term {
             coef: coef.clone(),
-            key: key.clone(),
+            monomial: monomial.clone(),
         }
     }
 
     pub fn xpow(&self) -> &BigInt {
-        &self.key.xpow
+        &self.monomial.xpow
     }
 
     pub fn ypow(&self) -> &BigInt {
-        &self.key.ypow
+        &self.monomial.ypow
     }
 
-    pub fn new() -> Unit {
-        Unit {
+    pub fn new() -> Term {
+        Term {
             coef: BigInt::from(0),
-            key: UnitKey {
+            monomial: Monomial {
                 xpow: BigInt::from(0),
                 ypow: BigInt::from(0),
             },
@@ -111,7 +111,7 @@ impl Unit {
     pub fn to_pol(&self) -> Polynomial {
         let mut pol = Polynomial::new();
         let u = self.clone();
-        pol.units.insert(u.key, u.coef);
+        pol.terms.insert(u.monomial, u.coef);
         pol
     }
 
@@ -121,7 +121,7 @@ impl Unit {
     }
 
     pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
-        UnitBuilder::new()
+        TermBuilder::new()
             .coef(&self.coef.power_modular(n, p))
             .xpow(&(self.xpow() * n.clone()))
             .ypow(&(self.ypow() * n.clone()))
@@ -129,7 +129,7 @@ impl Unit {
     }
 
     pub fn to_frob(&self, n: &BigInt) -> Self {
-        UnitBuilder::new()
+        TermBuilder::new()
           .coef(&self.coef.clone())
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
@@ -137,7 +137,7 @@ impl Unit {
     }
 
     pub fn to_y_power(&self, n: &BigInt) -> Self {
-        UnitBuilder::new()
+        TermBuilder::new()
           .coef(&self.coef.clone())
           .xpow(&self.xpow().clone())
           .ypow(&(self.ypow() * n.clone()))
@@ -148,7 +148,7 @@ impl Unit {
         if n == &Zero::zero() {
             panic!("modular zero!");
         } else {
-            UnitBuilder::new()
+            TermBuilder::new()
               .coef(&self.coef.mod_floor(n))
               .xpow(&self.xpow().clone())
               .ypow(&self.ypow().clone())
@@ -173,13 +173,13 @@ impl Unit {
     }
 }
 
-impl Ord for Unit {
+impl Ord for Term {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.key.cmp(&other.key)
+        self.monomial.cmp(&other.monomial)
     }
 }
 
-impl Ord for UnitKey {
+impl Ord for Monomial {
     fn cmp(&self, other: &Self) -> Ordering {
         if self.xpow < other.xpow {
             return Ordering::Less;
@@ -195,19 +195,19 @@ impl Ord for UnitKey {
     }
 }
 
-impl PartialOrd for UnitKey {
+impl PartialOrd for Monomial {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl PartialOrd for Unit {
+impl PartialOrd for Term {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl fmt::Display for Unit {
+impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.coef == BigInt::from(1) {
             if self.xpow().is_zero() && self.ypow().is_zero() {
@@ -293,26 +293,26 @@ impl fmt::Display for Unit {
 
 #[test]
 fn unit_test() {
-    let u0: Unit = Default::default();
+    let u0: Term = Default::default();
     assert_eq_str!(u0, "0");
 
-    let u1 = Unit {
+    let u1 = Term {
         coef: BigInt::from(3),
         .. Default::default()
     };
     assert_eq_str!(u1, "3");
 
-    let u2 = Unit {
+    let u2 = Term {
         coef: BigInt::from(4),
         .. Default::default()
     };
-    let u3 = Unit {
+    let u3 = Term {
         coef: BigInt::from(3),
         .. Default::default()
     };
     assert_eq_str!(u2.clone() * u3.clone(), "12");
     assert_eq_str!(&u2 * &u3, "12");
-    assert_eq_str!(UnitBuilder::new()
+    assert_eq_str!(TermBuilder::new()
         .coef(20)
         .xpow(1)
         .build()
@@ -320,7 +320,7 @@ fn unit_test() {
 
     // power_modular
 
-    let u11 = UnitBuilder::new().coef(1).xpow(4).ypow(2).build();
+    let u11 = TermBuilder::new().coef(1).xpow(4).ypow(2).build();
     let u8 = - &u11;
     assert_eq_str!(u8, "- x^4 y^2"); 
 }
