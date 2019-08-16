@@ -233,9 +233,9 @@ impl Polynomial {
         self.power(&BigInt::from(3))
     }
 
-    pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
+    pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         assert!(*n >= Zero::zero());
-        let mut b = self.modular(p);
+        let mut b = self.modulo(p);
         let mut r = TermBuilder::new().coef(1).build().to_pol();
         let mut e = n.clone();
         while &e > &One::one() {
@@ -254,10 +254,10 @@ impl Polynomial {
 
     pub fn polynomial_modular(&self, other: &Polynomial, p: &BigInt) -> Self {
         assert!(!other.has_y(), "!other.has_y()");
-        let oh = other.highest_unit_x();
+        let oh = other.highest_term_x();
         let mut r = self.clone();
         loop {
-            let rh = r.highest_unit_x();
+            let rh = r.highest_term_x();
             if rh.xpow() < oh.xpow() {
                 break;
             }
@@ -276,7 +276,7 @@ impl Polynomial {
         r
     }
 
-    pub fn modular(&self, p: &BigInt) -> Self {
+    pub fn modulo(&self, p: &BigInt) -> Self {
         let tmp = self.clone();
         let mut pol = Polynomial::new();  
         for (k, coef) in tmp.terms {
@@ -325,14 +325,14 @@ impl Polynomial {
         }
     }
 
-    pub fn highest_unit_x(&self) -> Term {
+    pub fn highest_term_x(&self) -> Term {
         if self.is_zero() {
             return Term::new();
         }
         for (k, v) in self.terms.iter().rev() {
             return Term::from(k, v);
         }
-        panic!("highest_unit_x assert!");
+        panic!("highest_term_x assert!");
     }
 
     pub fn is_zero(&self) -> bool {
@@ -340,8 +340,8 @@ impl Polynomial {
     }
 
     pub fn is_gcd_one(&self, other: &Self, p: &BigInt) -> bool {
-        let s = self.highest_unit_x();
-        let o = other.highest_unit_x();
+        let s = self.highest_term_x();
+        let o = other.highest_term_x();
         if s.xpow() < o.xpow() {
             let m = other.polynomial_modular(self, p);
             return !m.is_zero();
@@ -392,7 +392,7 @@ impl Polynomial {
                 let ee = TermBuilder::new().coef(1).xpow(3).build()
                        + TermBuilder::new().coef(&a.clone()).xpow(1).build()
                        + TermBuilder::new().coef(&b.clone()).build();
-                // power() is faster than power_modular()
+                // power() is faster than power_modulo()
                 let ee = ee.power(&yy.clone());
                 e *= ee;
                 t += e;
@@ -415,8 +415,8 @@ impl Polynomial {
                 let ee = TermBuilder::new().coef(1).xpow(3).build()
                        + TermBuilder::new().coef(&a.clone()).xpow(1).build()
                        + TermBuilder::new().coef(&b.clone()).build();
-                // power() is faster than power_modular()
-                let ee = ee.power_modular(&yy.clone(), p);
+                // power() is faster than power_modulo()
+                let ee = ee.power_modulo(&yy.clone(), p);
                 let ee = ee.reduction_modular(a, b, p);
                 e *= ee;
                 t += e;
@@ -468,19 +468,19 @@ fn polynmomial_test() {
     let u21 = u2.power(3);
     assert_eq_str!(u21, "27 x^6 y^12");
 
-    // Modular
+    // Modulo
     let u33 = TermBuilder::new().coef(37).xpow(2).ypow(4).build();
 
     let u35 = TermBuilder::new().coef(35).xpow(3).ypow(5).build();
 
-    let u34 = u33.modular(&BigInt::from(24));
+    let u34 = u33.modulo(&BigInt::from(24));
     assert_eq_str!(u34, "13 x^2 y^4");
 
     let p36 = u33 + u35;
-    let p37 = p36.modular(&BigInt::from(6));
+    let p37 = p36.modulo(&BigInt::from(6));
     assert_eq_str!(p37, "5 x^3 y^5 + x^2 y^4");
 
-    let p38 = p36.modular(&BigInt::from(5));
+    let p38 = p36.modulo(&BigInt::from(5));
     assert_eq_str!(p38, "2 x^2 y^4");
 
     //println!("{}", line!());
@@ -502,7 +502,7 @@ fn polynmomial_test() {
     assert_eq_str!(p42, "x^4 y + 2 x^2 y + 7 x y");
 
     let p422 = TermBuilder::new().coef(2).xpow(3).build().to_pol();
-    assert_eq_str!(p422.highest_unit_x(), "2 x^3");
+    assert_eq_str!(p422.highest_term_x(), "2 x^3");
 
     // rem
     let u43 = TermBuilder::new().coef(3).xpow(4).build();

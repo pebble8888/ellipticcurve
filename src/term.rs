@@ -6,14 +6,13 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops; 
 use super::polynomial;
-use super::bigint::{Power, PowerModular};
+use super::bigint::{Power, PowerModulo};
 use super::termbuilder;
 use super::termbuilder::TermBuildable;
 
 type Polynomial = polynomial::Polynomial;
 type TermBuilder = termbuilder::TermBuilder;
 
-// coef x^xpow y^ypow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Term {
     pub coef: BigInt,
@@ -120,9 +119,9 @@ impl Term {
             && &self.ypow() == &other.ypow()
     }
 
-    pub fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
+    pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         TermBuilder::new()
-            .coef(&self.coef.power_modular(n, p))
+            .coef(&self.coef.power_modulo(n, p))
             .xpow(&(self.xpow() * n.clone()))
             .ypow(&(self.ypow() * n.clone()))
             .build()
@@ -144,9 +143,9 @@ impl Term {
           .build()
     }
 
-    pub fn modular(&self, n: &BigInt) -> Self {
+    pub fn modulo(&self, n: &BigInt) -> Self {
         if n == &Zero::zero() {
-            panic!("modular zero!");
+            panic!("modulo zero!");
         } else {
             TermBuilder::new()
               .coef(&self.coef.mod_floor(n))
@@ -158,7 +157,7 @@ impl Term {
 
     pub fn modular_assign(&mut self, n: &BigInt) {
         if n == &Zero::zero() {
-            panic!("modular zero!");
+            panic!("modulo zero!");
         } else {
             self.coef = self.coef.mod_floor(n);
         }
@@ -316,9 +315,9 @@ fn unit_test() {
         .coef(20)
         .xpow(1)
         .build()
-        .modular(&BigInt::from(19)), "x");
+        .modulo(&BigInt::from(19)), "x");
 
-    // power_modular
+    // power_modulo
 
     let u11 = TermBuilder::new().coef(1).xpow(4).ypow(2).build();
     let u8 = - &u11;

@@ -6,8 +6,8 @@ pub trait Power<T> {
     fn power(&self, n: T) -> Self;
 }
 
-pub trait PowerModular {
-    fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self;
+pub trait PowerModulo {
+    fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self;
 }
 
 pub trait Inverse {
@@ -31,8 +31,8 @@ impl Power<i64> for BigInt {
     }
 }
 
-impl PowerModular for BigInt {
-    fn power_modular(&self, n: &BigInt, p: &BigInt) -> Self {
+impl PowerModulo for BigInt {
+    fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         let mut t = BigInt::from(1);
         for _i in num_iter::range(BigInt::from(0), n.clone()) {
             t *= self;
@@ -45,7 +45,7 @@ impl PowerModular for BigInt {
 impl Inverse for BigInt {
     fn inverse(&self, p: &BigInt) -> Self {
         assert!(p >= &BigInt::from(2));
-        self.power_modular(&(p.clone()-&BigInt::from(2)), &p)
+        self.power_modulo(&(p.clone()-&BigInt::from(2)), &p)
     }
 }
 
@@ -76,11 +76,11 @@ fn bigint_power_test() {
 }
 
 #[test]
-fn bigint_power_modular_test() {
+fn bigint_power_modulo_test() {
     let p = BigInt::from(5);
-    assert_eq_str!(BigInt::from(3).power_modular(&BigInt::from(2), &p), "4");
-    assert_eq_str!(BigInt::from(3).power_modular(&BigInt::from(3), &p), "2");
-    assert_eq_str!(BigInt::from(3).power_modular(&BigInt::from(4), &p), "1");
+    assert_eq_str!(BigInt::from(3).power_modulo(&BigInt::from(2), &p), "4");
+    assert_eq_str!(BigInt::from(3).power_modulo(&BigInt::from(3), &p), "2");
+    assert_eq_str!(BigInt::from(3).power_modulo(&BigInt::from(4), &p), "1");
 }
 
 #[test]
