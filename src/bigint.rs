@@ -1,5 +1,7 @@
-use num_integer::Integer;
+use num_integer::{Integer};
 use num_bigint::BigInt;
+use num_traits::Zero;
+use num_traits::One;
 
 
 pub trait Power<T> {
@@ -16,8 +18,8 @@ pub trait Inverse {
 
 impl<'a> Power<&'a BigInt> for BigInt { 
     fn power(&self, n: &BigInt) -> Self {
-        let mut t = BigInt::from(1);
-        for _i in num_iter::range(BigInt::from(0), n.clone()) {
+        let mut t: BigInt = One::one();
+        for _i in num_iter::range(Zero::zero(), n.clone()) {
             t *= self;
         }
         t
@@ -26,8 +28,11 @@ impl<'a> Power<&'a BigInt> for BigInt {
 
 impl Power<i64> for BigInt {
     fn power(&self, n: i64) -> Self {
-        let n = BigInt::from(n);
-        self.power(&n)
+        let mut t: BigInt = One::one();
+        for _i in num_iter::range(Zero::zero(), n.clone()) {
+            t *= self;
+        }
+        t
     }
 }
 
