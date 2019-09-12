@@ -540,3 +540,36 @@ fn polynmomial_test() {
     assert_eq_str!(p50, "2 x^4 + 4 x^2");
 }
 
+#[test]
+fn isogeny_test() {
+    use super::termbuilder;
+    type TermBuilder = termbuilder::TermBuilder;
+
+    let a = BigInt::from(1132);
+    let b = BigInt::from(278);
+    let pp = BigInt::from(2003);
+
+    let e1 = TermBuilder::new().coef(1).ypow(2).build();
+
+    let p = TermBuilder::new().coef(1).xpow(2).build()
+    + TermBuilder::new().coef(301).xpow(1).build()
+    + TermBuilder::new().coef(527).build();
+
+    let q = TermBuilder::new().coef(1).xpow(1).build()
+    + TermBuilder::new().coef(301).build();
+
+    let r = TermBuilder::new().coef(1).xpow(2).build()
+    + TermBuilder::new().coef(602).xpow(1).build()
+    + TermBuilder::new().coef(1942).build();
+
+    let s = TermBuilder::new().coef(1).xpow(2).build()
+    + TermBuilder::new().coef(602).xpow(1).build()
+    + TermBuilder::new().coef(466).build();
+
+    let sum = &e1 * r.power(2) * q.power(3) 
+    - p.power(3) * s.power(2)
+    - TermBuilder::new().coef(500).build() * p * s.power(2) * q.power(2)
+    - TermBuilder::new().coef(1005).build() * s.power(2) * q.power(3);
+    let sum = sum.reduction_modular(&a, &b, &pp);
+    assert_eq_str!(sum, "0");
+}

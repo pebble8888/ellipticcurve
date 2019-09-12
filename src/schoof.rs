@@ -70,6 +70,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
                      + TermBuilder::new().coef(1).xpow(&q.power(2)).build()
                        * division_polynomial::psi(a, b, &ql).power(2));
 
+
         let n3 = (division_polynomial::phi(a, b, &ql)
                      - TermBuilder::new().coef(1).xpow(&q.power(2)).build()
                        * division_polynomial::psi(a, b, &ql).power(2)).power(2);
