@@ -1,13 +1,13 @@
+use num_bigint::BigInt;
 use num_integer::Integer;
+use num_traits::{Zero, One};
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
-use num_bigint::BigInt;
-use num_traits::{Zero, One};
 use std::{fmt, ops};
 use super::bigint::{Inverse, Power};
 use super::term;
-use super::termbuilder;
 use super::termbuilder::TermBuildable;
+use super::termbuilder;
 
 type Term = term::Term;
 type TermBuilder = termbuilder::TermBuilder;
@@ -178,7 +178,7 @@ impl_op_ex!(/= |a: &mut Polynomial, b: &Term| {
 
 impl fmt::Display for Polynomial {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let  s = self.clone();
+        let s = self.clone();
         if s.is_zero() {
             return write!(f, "0");
         }
@@ -426,6 +426,14 @@ impl Polynomial {
         }
         t.modular_assign(p);
         t
+    }
+
+    pub fn eval(&self, x:&BigInt, y:&BigInt) -> BigInt {
+        let mut sum = BigInt::from(0);
+        for (k, v) in &self.terms {
+            sum += k.eval(x, y) * v; 
+        }
+        sum
     }
 }
 

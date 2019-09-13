@@ -81,6 +81,12 @@ impl<'a> Power<&'a BigInt> for Term {
     }
 }
 
+impl Monomial {
+    pub fn eval(&self, x:&BigInt, y:&BigInt) -> BigInt {
+        x.power(&self.xpow) * y.power(&self.ypow)
+    }
+}
+
 impl Term {
     pub fn from(monomial: &Monomial, coef: &BigInt) -> Self {
         Term {
