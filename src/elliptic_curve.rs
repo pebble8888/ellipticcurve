@@ -14,8 +14,10 @@ pub struct EllipticCurve {
     pub b: BigInt,
     pub p: BigInt,
     pol: polynomial::Polynomial,
+    pub points: Vec<ECPoint>
 }
 
+#[derive(Debug, Clone)]
 pub struct ECPoint {
     pub x: BigInt,
     pub y: BigInt,
@@ -27,12 +29,14 @@ impl EllipticCurve {
         let pol = TermBuilder::new().coef(1).xpow(3).build()
         + TermBuilder::new().coef(a).xpow(1).build()
         + TermBuilder::new().coef(b).build();
-        EllipticCurve {
+        let ec = EllipticCurve {
             a: a.clone(),
             b: b.clone(),
             p: p.clone(),
             pol: pol.clone(), 
-        }
+            points: Vec::new(),
+        };
+        ec
     }
 
     pub fn is_on_curve(&self, ecpoint: &ECPoint) -> bool {
@@ -94,6 +98,35 @@ impl EllipticCurve {
             }
         }
     }
+
+    pub fn create_points(&mut self) {
+        for x in num_iter::range(BigInt::from(0), self.p.clone()) {
+            let right = x.clone().power(3)
+                + self.a.clone() * x.clone() 
+                + self.b.clone();
+            let right = right.mod_floor(&self.p);
+            let mut count = 0;
+            for y in num_iter::range(BigInt::from(0), self.p.clone()) {
+                let left = y.clone().power(2);
+                let left = left.mod_floor(&self.p);
+                if left == right {
+                    self.points.push(ECPoint::new(&x, &y));
+                    count += 1;
+                    if count == 2 {
+                        break;
+                    }
+                }
+            }
+        }
+        self.points.push(ECPoint::infinity());
+    }
+
+    pub fn points(&mut self) -> Vec<ECPoint> {
+        if self.points.len() == 0 {
+            self.create_points();
+        }
+        self.points.clone()
+    }
 }
 
 impl ECPoint {
@@ -133,7 +166,7 @@ impl fmt::Display for ECPoint {
 }
 
 #[test]
-fn elliptic_curve_test() {
+fn elliptic_curve_test1() {
     let ec2 = EllipticCurve::new(&BigInt::from(1132), &BigInt::from(278), &BigInt::from(2003));
     assert_eq_str!(ec2, "F_2003: y^2 = x^3 + 1132 x + 278");
     assert_eq!(ec2.is_on_curve(&ECPoint::new(&BigInt::from(1120), &BigInt::from(1391))), true);
@@ -153,5 +186,21 @@ fn elliptic_curve_test() {
     let p4 = ECPoint::new(&BigInt::from(565), &BigInt::from(302));
     let q4 = ECPoint::new(&BigInt::from(1818), &BigInt::from(1002));
     assert_eq_str!(ec4.plus(&p4, &q4), "(1339, 821)");
+}
 
+#[test]
+fn elliptic_cure_test2() {
+    let mut ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(5));
+    assert_eq_str!(ec, "F_5: y^2 = x^3 + x + 1");
+    let points = ec.points();
+    assert_eq!(points.len(), 9);
+    assert_eq_str!(points[0], "(0, 1)");
+    assert_eq_str!(points[1], "(0, 4)");
+    assert_eq_str!(points[2], "(2, 1)");
+    assert_eq_str!(points[3], "(2, 4)");
+    assert_eq_str!(points[4], "(3, 1)");
+    assert_eq_str!(points[5], "(3, 4)");
+    assert_eq_str!(points[6], "(4, 2)");
+    assert_eq_str!(points[7], "(4, 3)");
+    assert_eq_str!(points[8], "O");
 }

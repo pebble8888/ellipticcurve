@@ -12,7 +12,7 @@ use super::termbuilder;
 type Term = term::Term;
 type TermBuilder = termbuilder::TermBuilder;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Polynomial {
     pub terms: BTreeMap<term::Monomial, BigInt>
 }
