@@ -78,11 +78,9 @@ impl EllipticCurve {
             let m = (y2.clone() - y1.clone()) * (x2.clone() - x1.clone()).inverse(&self.p);
             let x3 = m.power(&BigInt::from(2)) - x1.clone() - x2.clone();
             let y3 = m * (x1.clone() - x3.clone()) - y1.clone(); 
-            ECPoint {
-                x: x3.mod_floor(&self.p),
-                y: y3.mod_floor(&self.p),
-                z: BigInt::from(0),
-            }
+            return ECPoint::new(
+                &x3.mod_floor(&self.p),
+                &y3.mod_floor(&self.p));
         } else {
             if y1 != y2 || y1 == BigInt::from(0) {
                 ECPoint::infinity()
@@ -90,11 +88,9 @@ impl EllipticCurve {
                 let m = (BigInt::from(3) * x1.power(&BigInt::from(2)) + self.a.clone()) * (BigInt::from(2) * y1.clone()).inverse(&self.p);
                 let x3 = m.power(&BigInt::from(2)) - BigInt::from(2) * x1.clone();
                 let y3 = m * (x1.clone() - x3.clone()) - y1.clone();
-                ECPoint {
-                    x: x3.mod_floor(&self.p),
-                    y: y3.mod_floor(&self.p),
-                    z: BigInt::from(0),
-                }
+                return ECPoint::new(
+                    &x3.mod_floor(&self.p),
+                    &y3.mod_floor(&self.p));
             }
         }
     }
@@ -134,18 +130,18 @@ impl ECPoint {
         ECPoint {
             x: x.clone(),
             y: y.clone(),
-            z: BigInt::from(0),
+            z: BigInt::from(1),
         }
     }
     pub fn infinity() -> ECPoint {
         ECPoint {
             x: BigInt::from(0),
-            y: BigInt::from(0),
-            z: BigInt::from(1),
+            y: BigInt::from(1),
+            z: BigInt::from(0),
         }
     }
     pub fn is_infinity(&self) -> bool {
-        self.z != BigInt::from(0)
+        self.z == BigInt::from(0)
     }
 }
 
