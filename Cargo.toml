@@ -1,5 +1,5 @@
 [package]
-name = "moduler-polynomial"
+name = "ellipticcurve"
 version = "0.1.0"
 authors = ["pebble8888 <pebble8888@gmail.com>"]
 edition = "2018"
@@ -10,3 +10,4 @@ num-bigint = "0.2"
 num-traits = "0.2"
 num-iter = "0.1"
 impl_ops = "0.1"
+primes = "0.2"

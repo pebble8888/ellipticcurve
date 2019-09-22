@@ -6,12 +6,7 @@ version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "impl_ops"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "moduler-polynomial"
+name = "ellipticcurve"
 version = "0.1.0"
 dependencies = [
  "impl_ops 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -19,7 +14,13 @@ dependencies = [
  "num-integer 0.1.41 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-iter 0.1.39 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "primes 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "impl_ops"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "num-bigint"
@@ -57,6 +58,11 @@ dependencies = [
  "autocfg 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
+[[package]]
+name = "primes"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
 [metadata]
 "checksum autocfg 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "0e49efa51329a5fd37e7c79db4621af617cd4e3e5bc224939808d076077077bf"
 "checksum impl_ops 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "90f97a5f38dd3ccfbe7aa80f4a0c00930f21b922c74195be0201c51028f22dcf"
@@ -64,3 +70,4 @@ dependencies = [
 "checksum num-integer 0.1.41 (registry+https://github.com/rust-lang/crates.io-index)" = "b85e541ef8255f6cf42bbfe4ef361305c6c135d10919ecc26126c4e5ae94bc09"
 "checksum num-iter 0.1.39 (registry+https://github.com/rust-lang/crates.io-index)" = "76bd5272412d173d6bf9afdf98db8612bbabc9a7a830b7bfc9c188911716132e"
 "checksum num-traits 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "6ba9a427cfca2be13aa6f6403b0b7e7368fe982bfa16fccc450ce74c46cd9b32"
+"checksum primes 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "b86865a31cec4ff702cb1e8fe2bc0ca4b31228f85156ebb2cf117c2b96d0c589"

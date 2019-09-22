@@ -16,7 +16,7 @@ pub struct EllipticCurve {
     pub b: BigInt,
     pub p: BigInt,
     pol: polynomial::Polynomial,
-    pub points: Vec<ECPoint>
+    pub points: Vec<ECPoint> // usize
 }
 
 #[derive(Debug, Clone)]
@@ -31,14 +31,22 @@ impl EllipticCurve {
         let pol = TermBuilder::new().coef(1).xpow(3).build()
         + TermBuilder::new().coef(a).xpow(1).build()
         + TermBuilder::new().coef(b).build();
-        let ec = EllipticCurve {
+        let mut ec = EllipticCurve {
             a: a.clone(),
             b: b.clone(),
             p: p.clone(),
             pol: pol.clone(), 
             points: Vec::new(),
         };
+        ec.create_points();
         ec
+    }
+
+    pub fn j_invariant(&self) -> BigInt {
+        let n = BigInt::from(4) * self.a.power(&BigInt::from(3));
+        let d = n.clone() + BigInt::from(27) * self.b.power(&BigInt::from(2)); 
+        let j = BigInt::from(1728) * n.clone() * d.clone().inverse(&self.p);
+        return j.mod_floor(&self.p);
     }
 
     pub fn is_on_curve(&self, ecpoint: &ECPoint) -> bool {
@@ -119,11 +127,48 @@ impl EllipticCurve {
         self.points.push(ECPoint::infinity());
     }
 
-    pub fn points(&mut self) -> Vec<ECPoint> {
-        if self.points.len() == 0 {
-            self.create_points();
-        }
+    pub fn points(&self) -> Vec<ECPoint> {
         self.points.clone()
+    }
+
+    /// EC order by points count
+    pub fn order(&self) -> usize {
+        return self.points.len();
+    }
+
+    /// n * P 
+    pub fn multiply_scalar(&self, point: &ECPoint, n: &BigInt) -> ECPoint {
+        if n == &Zero::zero() {
+            return ECPoint::infinity();
+        } else if n < &Zero::zero() {
+            let minus_np = self.multiply_scalar(point, &(-n));
+            return self.plus(&ECPoint::infinity(), &minus_np);
+        } else if n == &One::one() {
+            return point.clone();
+        }
+        let point_s = self.multiply_scalar(&point, &(n % BigInt::from(2)));
+        let point_r = self.multiply_scalar(&point_s, &BigInt::from(2));
+        if n.is_odd() {
+            return self.plus(&point_r, point);
+        } else {
+            return point_r;
+        }
+    }
+
+    /// order of P
+    pub fn point_order(&self, point: &ECPoint) -> BigInt {
+        if point.is_infinity() {
+            return One::one();
+        }
+        let mut x = BigInt::from(2);
+        let mut r_point = point.clone();
+        loop {
+            r_point = self.plus(point, &r_point);
+            if r_point.is_infinity() {
+                return x;
+            }
+            x += 1;
+        }
     }
 }
 
@@ -149,7 +194,8 @@ impl ECPoint {
 
 impl fmt::Display for EllipticCurve {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "F_{}: y^2 = {}", self.p, self.pol) 
+        write!(f, "F_{}: y^2 = {}, order:{}, j:{}",
+            self.p, self.pol, self.order(), self.j_invariant()) 
     }
 }
 
@@ -166,7 +212,7 @@ impl fmt::Display for ECPoint {
 #[test]
 fn elliptic_curve_test1() {
     let ec2 = EllipticCurve::new(&BigInt::from(1132), &BigInt::from(278), &BigInt::from(2003));
-    assert_eq_str!(ec2, "F_2003: y^2 = x^3 + 1132 x + 278");
+    assert_eq_str!(ec2, "F_2003: y^2 = x^3 + 1132 x + 278, order:1956, j:171");
     assert_eq!(ec2.is_on_curve(&ECPoint::new(&BigInt::from(1120), &BigInt::from(1391))), true);
     assert_eq!(ec2.is_on_curve(&ECPoint::new(&BigInt::from(1120), &BigInt::from(1392))), false);
     assert_eq!(ec2.is_on_curve(&ECPoint::new(&BigInt::from(894), &BigInt::from(1425))), true);
@@ -176,7 +222,7 @@ fn elliptic_curve_test1() {
     assert_eq_str!(ec2.plus(&p2, &q2), "(1683, 1388)");
     
     let ec4 = EllipticCurve::new(&BigInt::from(500), &BigInt::from(1005), &BigInt::from(2003));
-    assert_eq_str!(ec4, "F_2003: y^2 = x^3 + 500 x + 1005");
+    assert_eq_str!(ec4, "F_2003: y^2 = x^3 + 500 x + 1005, order:1956, j:515");
     assert_eq!(ec4.is_on_curve(&ECPoint::new(&BigInt::from(565), &BigInt::from(302))), true);
     assert_eq!(ec4.is_on_curve(&ECPoint::new(&BigInt::from(565), &BigInt::from(303))), false);
     assert_eq!(ec4.is_on_curve(&ECPoint::new(&BigInt::from(1818), &BigInt::from(1002))), true);
@@ -187,9 +233,9 @@ fn elliptic_curve_test1() {
 }
 
 #[test]
-fn elliptic_cure_test2() {
-    let mut ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(5));
-    assert_eq_str!(ec, "F_5: y^2 = x^3 + x + 1");
+fn elliptic_curve_test2() {
+    let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(5));
+    assert_eq_str!(ec, "F_5: y^2 = x^3 + x + 1, order:9, j:2");
     let points = ec.points();
     assert_eq!(points.len(), 9);
     assert_eq_str!(points[0], "(0, 1)");
@@ -202,3 +248,44 @@ fn elliptic_cure_test2() {
     assert_eq_str!(points[7], "(4, 3)");
     assert_eq_str!(points[8], "O");
 }
+
+#[test]
+fn elliptic_curve_test3() {
+    let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(5));
+    assert_eq_str!(ec, "F_5: y^2 = x^3 + x + 1, order:9, j:2");
+    assert_eq_str!(ec.point_order(&ec.points[0]), "9");
+    assert_eq_str!(ec.point_order(&ec.points[1]), "9");
+    assert_eq_str!(ec.point_order(&ec.points[2]), "3");
+    assert_eq_str!(ec.point_order(&ec.points[3]), "3");
+    assert_eq_str!(ec.point_order(&ec.points[4]), "9");
+    assert_eq_str!(ec.point_order(&ec.points[5]), "9");
+    assert_eq_str!(ec.point_order(&ec.points[6]), "9");
+    assert_eq_str!(ec.point_order(&ec.points[7]), "9");
+    assert_eq_str!(ec.point_order(&ec.points[8]), "1");
+}
+
+#[test]
+fn elliptic_curve_test4() {
+    let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(29));
+    println!("{}", ec);
+    for x in num_iter::range(0, ec.order()) {
+        println!("P{} {} order {}", x + 1, ec.points[x], ec.point_order(&ec.points[x]));       
+    }
+}
+
+#[test]
+fn elliptic_curve_test5() {
+    use primes::PrimeSet;
+    use primes::is_prime;
+
+    let mut pset = PrimeSet::new();
+    for p in pset.iter().skip(2).take(30) { 
+        let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(p));
+        print!("{}", ec);
+        if is_prime(ec.order() as u64) {
+            print!(" order is prime");
+        }
+        println!("");
+    }
+}
+
