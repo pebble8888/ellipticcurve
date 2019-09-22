@@ -6,6 +6,8 @@ use super::polynomial;
 use super::termbuilder::TermBuildable;
 use super::termbuilder;
 use crate::bigint::Inverse;
+use num_traits::Zero;
+use num_traits::One;
 
 type TermBuilder = termbuilder::TermBuilder;
 
@@ -49,7 +51,7 @@ impl EllipticCurve {
         let dd = d.mod_floor(&self.p);
         let diff = cc - dd;
         let r = diff.mod_floor(&self.p);
-        r == BigInt::from(0)
+        r == Zero::zero()
     }
 
     pub fn canonicalize(&self, point: &ECPoint) -> ECPoint {
@@ -82,7 +84,7 @@ impl EllipticCurve {
                 &x3.mod_floor(&self.p),
                 &y3.mod_floor(&self.p));
         } else {
-            if y1 != y2 || y1 == BigInt::from(0) {
+            if y1 != y2 || y1 == Zero::zero() {
                 ECPoint::infinity()
             } else {
                 let m = (BigInt::from(3) * x1.power(&BigInt::from(2)) + self.a.clone()) * (BigInt::from(2) * y1.clone()).inverse(&self.p);
@@ -130,18 +132,18 @@ impl ECPoint {
         ECPoint {
             x: x.clone(),
             y: y.clone(),
-            z: BigInt::from(1),
+            z: One::one(),
         }
     }
     pub fn infinity() -> ECPoint {
         ECPoint {
-            x: BigInt::from(0),
-            y: BigInt::from(1),
-            z: BigInt::from(0),
+            x: Zero::zero(),
+            y: One::one(),
+            z: Zero::zero(),
         }
     }
     pub fn is_infinity(&self) -> bool {
-        self.z == BigInt::from(0)
+        self.z == Zero::zero()
     }
 }
 

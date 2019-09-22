@@ -39,7 +39,7 @@ impl Power<i64> for BigInt {
 impl PowerModulo for BigInt {
     fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         let mut t = BigInt::from(1);
-        for _i in num_iter::range(BigInt::from(0), n.clone()) {
+        for _i in num_iter::range(Zero::zero(), n.clone()) {
             t *= self;
         }
         t = t.mod_floor(p);
@@ -62,8 +62,8 @@ impl Inverse for BigInt {
 /// return: (gcd(a, b), x, y)
 ///
 pub fn extended_gcd(a: BigInt, b: BigInt) -> (BigInt, BigInt, BigInt) {
-    if a.clone() == BigInt::from(0) {
-        return (b, BigInt::from(0), BigInt::from(1));
+    if a.clone() == Zero::zero() {
+        return (b, Zero::zero(), One::one());
     }
     let r = b.clone() % a.clone();
     let q = b.clone() / a.clone();

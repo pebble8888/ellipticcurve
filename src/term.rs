@@ -105,10 +105,10 @@ impl Term {
 
     pub fn new() -> Term {
         Term {
-            coef: BigInt::from(0),
+            coef: Zero::zero(), // BigInt::from(0),
             monomial: Monomial {
-                xpow: BigInt::from(0),
-                ypow: BigInt::from(0),
+                xpow: Zero::zero(), // BigInt::from(0),
+                ypow: Zero::zero(), //BigInt::from(0),
             },
         }
     }
@@ -174,7 +174,7 @@ impl Term {
     }
 
     pub fn has_y(&self) -> bool {
-        self.ypow() != &BigInt::from(0)
+        self.ypow() != &Zero::zero() // &BigInt::from(0)
     }
 }
 
@@ -214,7 +214,7 @@ impl PartialOrd for Term {
 
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.coef == BigInt::from(1) {
+        if self.coef == One::one() {
             if self.xpow().is_zero() && self.ypow().is_zero() {
                 write!(f, "1")
             } else {
