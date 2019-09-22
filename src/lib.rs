@@ -3,7 +3,7 @@
 
 pub mod bigint;
 pub mod term;
-pub mod termbuilder;
+pub mod term_builder;
 pub mod polynomial;
 pub mod division_polynomial;
 pub mod schoof;

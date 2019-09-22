@@ -6,11 +6,11 @@ use std::collections::BTreeSet;
 use std::{fmt, ops};
 use super::bigint::{Inverse, Power};
 use super::term;
-use super::termbuilder::TermBuildable;
-use super::termbuilder;
+use super::term_builder::TermBuildable;
+use super::term_builder;
 
 type Term = term::Term;
-type TermBuilder = termbuilder::TermBuilder;
+type TermBuilder = term_builder::TermBuilder;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Polynomial {
@@ -440,8 +440,8 @@ impl Polynomial {
 #[test]
 fn polynmomial_test() { 
 
-    use super::termbuilder;
-    type TermBuilder = termbuilder::TermBuilder;
+    use super::term_builder;
+    type TermBuilder = term_builder::TermBuilder;
 
     let u1 = TermBuilder::new().coef(1).xpow(4).ypow(2).build();
     let u2 = TermBuilder::new().coef(3).xpow(2).ypow(4).build();
@@ -550,8 +550,8 @@ fn polynmomial_test() {
 
 #[test]
 fn isogeny_test() {
-    use super::termbuilder;
-    type TermBuilder = termbuilder::TermBuilder;
+    use super::term_builder;
+    type TermBuilder = term_builder::TermBuilder;
 
     let a = BigInt::from(1132);
     let b = BigInt::from(278);

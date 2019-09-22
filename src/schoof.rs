@@ -5,14 +5,14 @@ extern crate num_iter;
 use num_integer::Integer;
 use num_bigint::BigInt;
 use super::polynomial;
-use super::termbuilder;
-use super::termbuilder::TermBuildable;
+use super::term_builder;
+use super::term_builder::TermBuildable;
 use super::division_polynomial;
 use crate::bigint;
 
 use crate::bigint::{Power};
 
-type TermBuilder = termbuilder::TermBuilder;
+type TermBuilder = term_builder::TermBuilder;
 type Polynomial = polynomial::Polynomial;
 
 pub struct SchoofResult {

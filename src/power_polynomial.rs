@@ -6,12 +6,12 @@ use std::collections::BTreeSet;
 use std::{fmt, ops};
 use super::bigint::{Inverse, Power};
 use super::term;
-use super::termbuilder::TermBuildable;
-use super::termbuilder;
+use super::term_builder::TermBuildable;
+use super::term_builder;
 use super::polynomial;
 
 type Term = term::Term;
-type TermBuilder = termbuilder::TermBuilder;
+type TermBuilder = term_builder::TermBuilder;
 type Polynomial = polynomial::Polynomial;
 
 /*

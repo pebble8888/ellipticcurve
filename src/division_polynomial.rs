@@ -3,11 +3,11 @@ use num_bigint::BigInt;
 use num_traits::One;
 use num_traits::Zero;
 use super::polynomial;
-use super::termbuilder;
-use super::termbuilder::TermBuildable;
+use super::term_builder;
+use super::term_builder::TermBuildable;
 use super::bigint::{Power};
 
-type TermBuilder = termbuilder::TermBuilder;
+type TermBuilder = term_builder::TermBuilder;
 type Polynomial = polynomial::Polynomial;
 
 pub fn psi(a: &BigInt, b: &BigInt, n: &BigInt) -> Polynomial {

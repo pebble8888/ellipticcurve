@@ -3,13 +3,13 @@ use num_bigint::BigInt;
 use num_integer::Integer;
 use std::fmt;
 use super::polynomial;
-use super::termbuilder::TermBuildable;
-use super::termbuilder;
+use super::term_builder::TermBuildable;
+use super::term_builder;
 use crate::bigint::Inverse;
 use num_traits::Zero;
 use num_traits::One;
 
-type TermBuilder = termbuilder::TermBuilder;
+type TermBuilder = term_builder::TermBuilder;
 
 pub struct EllipticCurve {
     pub a: BigInt,

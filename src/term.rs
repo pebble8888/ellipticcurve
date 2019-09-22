@@ -7,11 +7,11 @@ use std::fmt;
 use std::ops; 
 use super::polynomial;
 use super::bigint::{Power, PowerModulo};
-use super::termbuilder;
-use super::termbuilder::TermBuildable;
+use super::term_builder;
+use super::term_builder::TermBuildable;
 
 type Polynomial = polynomial::Polynomial;
-type TermBuilder = termbuilder::TermBuilder;
+type TermBuilder = term_builder::TermBuilder;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Term {
