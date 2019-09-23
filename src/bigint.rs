@@ -3,7 +3,6 @@ use num_bigint::BigInt;
 use num_traits::Zero;
 use num_traits::One;
 
-
 pub trait Power<T> {
     fn power(&self, n: T) -> Self;
 }
