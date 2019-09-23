@@ -268,6 +268,7 @@ impl Polynomial {
                     .build();
             q.modular_assign(&p);
             let mut d = q * other;
+
             d.modular_assign(&p);
             r -= d;
             r.modular_assign(&p);
@@ -340,14 +341,32 @@ impl Polynomial {
     }
 
     pub fn is_gcd_one(&self, other: &Self, p: &BigInt) -> bool {
+        let m = self.gcd(other, p);
+        return !m.is_zero();
+    }
+
+    pub fn gcd(&self, other: &Self, p: &BigInt) -> Polynomial {
         let s = self.highest_term_x();
         let o = other.highest_term_x();
         if s.xpow() < o.xpow() {
-            let m = other.polynomial_modular(self, p);
-            return !m.is_zero();
+            return other.gcd(self, p);
         }
-        let m = self.polynomial_modular(other, p);
-        return !m.is_zero();
+        let r = self.polynomial_modular(other, p);
+        if r.is_zero() {
+            return other.to_monic(p);
+        }
+        return other.gcd(&r, p);
+    }
+
+    pub fn to_monic(&self, p: &BigInt) -> Polynomial {
+        if self.is_zero() {
+            return self.clone();
+        }
+        let s = self.highest_term_x();
+        let inv = s.coef.inverse(p);
+        let mut pol = self * TermBuilder::new().coef(&inv).build();
+        pol.modular_assign(p);
+        pol
     }
 
     pub fn has_y(&self) -> bool {
@@ -428,12 +447,70 @@ impl Polynomial {
         t
     }
 
-    pub fn eval(&self, x:&BigInt, y:&BigInt) -> BigInt {
+    pub fn eval(&self, x: &BigInt, y: &BigInt) -> BigInt {
         let mut sum = BigInt::from(0);
         for (k, v) in &self.terms {
             sum += k.eval(x, y) * v; 
         }
         sum
+    }
+
+    pub fn eval_x(&self, x: &BigInt) -> Polynomial {
+        let mut pol = Polynomial::new();
+        for (k, coef) in &self.terms {
+            let term = Term {
+                        coef: coef * x.power(&k.xpow),
+                        monomial: term::Monomial {
+                            xpow: Zero::zero(),
+                            ypow: k.ypow.clone()
+                            }
+                       };
+            pol += term;
+        }
+        pol 
+    }
+
+    pub fn eval_y(&self, y: &BigInt) -> Polynomial {
+        let mut pol = Polynomial::new();
+        for (k, coef) in &self.terms {
+            let term = Term {
+                        coef: coef * y.power(&k.ypow),
+                        monomial: term::Monomial {
+                            xpow: k.xpow.clone(),
+                            ypow: Zero::zero()
+                            }
+                       };
+            pol += term;
+        }
+        pol 
+    }
+
+    pub fn to_scalar(&self) -> BigInt {
+        if self.terms.len() == 0 {
+            return Zero::zero();
+        }
+        if self.terms.len() >= 2 {
+            panic!();
+        }
+        for (k, coef) in &self.terms {
+            if k.xpow != Zero::zero() {
+                panic!();
+            }
+            if k.ypow != Zero::zero() {
+                panic!();
+            }
+            return coef.clone();
+        }
+        panic!();
+    }
+
+    pub fn degree(&self) -> BigInt {
+        assert!(!self.has_y());
+        if self.is_zero() {
+            return Zero::zero();
+        }
+        let s = self.highest_term_x();
+        return s.xpow().clone();
     }
 }
 
@@ -581,3 +658,4 @@ fn isogeny_test() {
     let sum = sum.reduction_modular(&a, &b, &pp);
     assert_eq_str!(sum, "0");
 }
+

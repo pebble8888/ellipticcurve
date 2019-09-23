@@ -19,7 +19,7 @@ pub struct EllipticCurve {
     pub points: Vec<ECPoint> // usize
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ECPoint {
     pub x: BigInt,
     pub y: BigInt,
@@ -105,22 +105,32 @@ impl EllipticCurve {
         }
     }
 
+    pub fn minus(&self, point: &ECPoint) -> ECPoint {
+        if point.is_infinity() {
+            return point.clone();
+        }
+        ECPoint::new(
+            &point.x,
+            &((-point.clone().y).mod_floor(&self.p)))
+    }
+
     pub fn create_points(&mut self) {
         for x in num_iter::range(BigInt::from(0), self.p.clone()) {
-            let right = x.clone().power(3)
-                + self.a.clone() * x.clone() 
+            let xpol = x.clone().power(3)
+                + self.a.clone() * x.clone()
                 + self.b.clone();
-            let right = right.mod_floor(&self.p);
-            let mut count = 0;
+            let xpol = xpol.mod_floor(&self.p);
             for y in num_iter::range(BigInt::from(0), self.p.clone()) {
-                let left = y.clone().power(2);
-                let left = left.mod_floor(&self.p);
-                if left == right {
-                    self.points.push(ECPoint::new(&x, &y));
-                    count += 1;
-                    if count == 2 {
-                        break;
+                let ypol = y.clone().power(2);
+                let ypol = ypol.mod_floor(&self.p);
+                if ypol == xpol {
+                    let point = ECPoint::new(&x, &y);
+                    self.points.push(point.clone());
+                    let minus_point = self.minus(&point);
+                    if minus_point != point {
+                        self.points.push(minus_point);
                     }
+                    break;
                 }
             }
         }

@@ -9,5 +9,6 @@ pub mod division_polynomial;
 pub mod schoof;
 pub mod elliptic_curve;
 pub mod modular_polynomial;
+pub mod schoof_elkies_atkins;
 //pub mod power_polynomial;
 
