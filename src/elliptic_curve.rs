@@ -42,6 +42,20 @@ impl EllipticCurve {
         ec
     }
 
+    pub fn new_raw(a: &BigInt, b: &BigInt, p: &BigInt) -> EllipticCurve {
+        let pol = TermBuilder::new().coef(1).xpow(3).build()
+        + TermBuilder::new().coef(a).xpow(1).build()
+        + TermBuilder::new().coef(b).build();
+        let ec = EllipticCurve {
+            a: a.clone(),
+            b: b.clone(),
+            p: p.clone(),
+            pol: pol.clone(), 
+            points: Vec::new(),
+        };
+        ec
+    }
+
     pub fn j_invariant(&self) -> BigInt {
         let n = BigInt::from(4) * self.a.power(&BigInt::from(3));
         let d = n.clone() + BigInt::from(27) * self.b.power(&BigInt::from(2)); 
@@ -219,6 +233,8 @@ impl fmt::Display for ECPoint {
     }
 }
 
+// heavy
+/*
 #[test]
 fn elliptic_curve_test1() {
     let ec2 = EllipticCurve::new(&BigInt::from(1132), &BigInt::from(278), &BigInt::from(2003));
@@ -241,6 +257,7 @@ fn elliptic_curve_test1() {
     let q4 = ECPoint::new(&BigInt::from(1818), &BigInt::from(1002));
     assert_eq_str!(ec4.plus(&p4, &q4), "(1339, 821)");
 }
+*/
 
 #[test]
 fn elliptic_curve_test2() {

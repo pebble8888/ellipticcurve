@@ -22,9 +22,7 @@ pub fn modular_polynomial(n: &BigInt) -> Polynomial {
         + TermBuilder::new().coef(40_773_375).xpow(1).ypow(1).build()
         + TermBuilder::new().coef(-157_464_000_000_000).build()
     } else if *n == BigInt::from(3) {
-        let g = BigInt::from(1_000_000_000_000_000_000_i64);
-        let c10 = BigInt::from(1_855) * g.power(1)
-                + BigInt::from(425_871_872_000_000_000_i64);
+        let c10 = BigInt::from(1_855_425_871_872_000_000_000_i128);
         let pol =
           TermBuilder::new().coef(1).xpow(4).build()
         + TermBuilder::new().coef(1).ypow(4).build()
@@ -45,39 +43,26 @@ pub fn modular_polynomial(n: &BigInt) -> Polynomial {
         + TermBuilder::new().coef(&c10).ypow(1).build();
         return pol;
     } else if *n == BigInt::from(5) {
-        let g = BigInt::from(1_000_000_000_000_000_000_i64);
-        let c00 = BigInt::from(141_359_947_154_i64) * g.power(2)
-                + BigInt::from(721_358_697_753_474_691_i64) * g.power(1)
-                + BigInt::from(071_362_751_004_672_000_i64);
-        let c10 = BigInt::from(53_274_330) * g.power(2)
-                + BigInt::from(803_424_425_450_420_160_i64) * g.power(1)
-                + BigInt::from(273_356_509_151_232_000_i64);
-        let c11 = - BigInt::from(264_073) * g.power(2)
-                - BigInt::from(457_076_620_596_259_715_i64) * g.power(1)
-                - BigInt::from(790_247_978_782_949_376_i64);
-        let c20 = BigInt::from(6_692) * g.power(2)
-                + BigInt::from(500_042_627_997_708_487_i64) * g.power(1)
-                + BigInt::from(149_415_015_068_467_200_i64);
-        let c21 = BigInt::from(36) * g.power(2)
-                + BigInt::from(554_736_583_949_629_295_i64) * g.power(1)
-                + BigInt::from(706_472_332_656_640_000_i64);
-        let c22 = BigInt::from(5_110_941_777_552_418_i64) * g.power(1)
-                + BigInt::from(083_110_765_199_360_000_i64);
-        let c30 = BigInt::from(280_244_777_828_439_527_i64) * g.power(1)
-                + BigInt::from(804_321_565_297_868_800_i64);
-        let c31 = - BigInt::from(192_457_934_618_928_i64) * g.power(1)
-                - BigInt::from(299_655_108_231_168_000_i64);
-        let c32 = BigInt::from(26_898_488_858_i64) * g.power(1)
-                + BigInt::from(380_731_577_417_728_000_i64);
-        let c33 = - BigInt::from(441_206) * g.power(1)
-                - BigInt::from(965_512_914_835_246_100_i64);
+        let b = BigInt::from(1_000_000_000_000_000_000_000_000_000_000_000_000_i128);
+        let c00 = BigInt::from(141_359_947_154_i64) * b.power(1)
+                + BigInt::from(721_358_697_753_474_691_071_362_751_004_672_000_i128);
+        let c10 = BigInt::from(53_274_330) * b.power(1)
+                + BigInt::from(803_424_425_450_420_160_273_356_509_151_232_000_i128);
+        let c11 = - BigInt::from(264_073) * b.power(1)
+                - BigInt::from(457_076_620_596_259_715_790_247_978_782_949_376_i128);
+        let c20 = BigInt::from(6_692) * b.power(1)
+                + BigInt::from(500_042_627_997_708_487_149_415_015_068_467_200_i128);
+        let c21 = BigInt::from(36) * b.power(1)
+                + BigInt::from(554_736_583_949_629_295_706_472_332_656_640_000_i128);
+        let c22 = BigInt::from(5_110_941_777_552_418_083_110_765_199_360_000_i128);
+        let c30 = BigInt::from(280_244_777_828_439_527_804_321_565_297_868_800_i128);
+        let c31 = - BigInt::from(192_457_934_618_928_299_655_108_231_168_000_i128);
+        let c32 = BigInt::from(26_898_488_858_380_731_577_417_728_000_i128);
+        let c33 = - BigInt::from(441_206_965_512_914_835_246_100_i128);
         assert_eq_str!(c33, "-441206965512914835246100");
-        let c40 = BigInt::from(1_284_733) * g.power(1)
-                + BigInt::from(132_841_424_456_253_440_i64);
-        let c41 = BigInt::from(128_541) * g.power(1)
-                + BigInt::from(798_906_828_816_384_000_i64);
-        let c42 = BigInt::from(383) * g.power(1)
-                + BigInt::from(083_609_779_811_215_375_i64);
+        let c40 = BigInt::from(1_284_733_132_841_424_456_253_440_i128);
+        let c41 = BigInt::from(128_541_798_906_828_816_384_000_i128);
+        let c42 = BigInt::from(383_083_609_779_811_215_375_i128);
         let pol = 
           TermBuilder::new().coef(1).xpow(6).build()
         + TermBuilder::new().coef(1).ypow(6).build()
