@@ -13,12 +13,14 @@ use super::term_builder::TermBuildable;
 type Polynomial = polynomial::Polynomial;
 type TermBuilder = term_builder::TermBuilder;
 
+/// coef * x^xpow * y^ypow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Term {
     pub coef: BigInt,
     pub monomial: Monomial,
 }
 
+/// x^xpow * y^ypow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Monomial {
     pub xpow: BigInt,
@@ -65,12 +67,16 @@ impl_op_ex!(- |a: &Term| -> Term {
         .build()
 });
 
+/// Term ^ n
+/// n:i64
 impl Power<i64> for Term {
     fn power(&self, n: i64) -> Self {
         self.power(&BigInt::from(n))
     }
 }
 
+/// Term ^ n
+/// n:BigInt
 impl<'a> Power<&'a BigInt> for Term {
     fn power(&self, n: &BigInt) -> Self {
         TermBuilder::new()
@@ -105,14 +111,15 @@ impl Term {
 
     pub fn new() -> Term {
         Term {
-            coef: Zero::zero(), // BigInt::from(0),
+            coef: Zero::zero(),
             monomial: Monomial {
-                xpow: Zero::zero(), // BigInt::from(0),
-                ypow: Zero::zero(), //BigInt::from(0),
+                xpow: Zero::zero(),
+                ypow: Zero::zero(),
             },
         }
     }
 
+    /// convert Term to Polynomial
     pub fn to_pol(&self) -> Polynomial {
         let mut pol = Polynomial::new();
         let u = self.clone();
@@ -120,11 +127,12 @@ impl Term {
         pol
     }
 
-    pub fn equal_order(&self, other: &Self) -> bool {
+    pub fn is_equal_order(&self, other: &Self) -> bool {
         return &self.xpow() == &other.xpow()
             && &self.ypow() == &other.ypow()
     }
 
+    /// Term^n (mod p)
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         TermBuilder::new()
             .coef(&self.coef.power_modulo(n, p))
@@ -133,6 +141,8 @@ impl Term {
             .build()
     }
 
+    /// Frobenius map of Term
+    /// coef * x^xpow * y^ypow -> coef * (x^xpow)^n * (y^ypow)^n
     pub fn to_frob(&self, n: &BigInt) -> Self {
         TermBuilder::new()
           .coef(&self.coef.clone())
@@ -149,6 +159,7 @@ impl Term {
           .build()
     }
 
+    /// Term (mod n)
     pub fn modulo(&self, n: &BigInt) -> Self {
         if n == &Zero::zero() {
             panic!("modulo zero!");
@@ -161,6 +172,7 @@ impl Term {
         }
     }
 
+    /// Term = Term (mod n)
     pub fn modular_assign(&mut self, n: &BigInt) {
         if n == &Zero::zero() {
             panic!("modulo zero!");
@@ -174,7 +186,7 @@ impl Term {
     }
 
     pub fn has_y(&self) -> bool {
-        self.ypow() != &Zero::zero() // &BigInt::from(0)
+        self.ypow() != &Zero::zero()
     }
 }
 

@@ -19,7 +19,9 @@ pub struct SEAResult {
     pub isogeny_j_invariants: Vec<BigInt>
 }
 
-pub fn sea(ec: &elliptic_curve::EllipticCurve, l: &BigInt) -> SEAResult{
+/// SEA algorithm
+/// TODO: in implementation
+pub fn sea(ec: &elliptic_curve::EllipticCurve, l: &BigInt) -> SEAResult {
     let mut mpol = modular_polynomial::modular_polynomial(&l);
     mpol.modular_assign(&ec.p);
     let mut mpol = mpol.eval_y(&ec.j_invariant());

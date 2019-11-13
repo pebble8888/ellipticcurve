@@ -20,6 +20,8 @@ pub struct SchoofResult {
     pub r: BigInt,
 }
 
+/// Calculate the order of the Elliptic curve y^2 = x^3 + a x + b
+/// schoof algorithm
 pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
     let mut schoof_result: Vec<SchoofResult> = Vec::new();
 

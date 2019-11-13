@@ -12,12 +12,13 @@ use super::term_builder;
 type Term = term::Term;
 type TermBuilder = term_builder::TermBuilder;
 
+/// Polynomial
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Polynomial {
     pub terms: BTreeMap<term::Monomial, BigInt>
 }
 
-// +
+/// +
 impl_op_ex!(+ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = a.clone();
     for (bk, bv) in &b.terms {
@@ -41,7 +42,7 @@ impl_op_ex!(+ |a: &Term, b: &Polynomial| -> Polynomial {
     a.to_pol() + b
 });
 
-// +=
+/// +=
 impl_op_ex!(+= |a: &mut Polynomial, b: &Polynomial| {
     for (bk, bv) in &b.terms {
         if let Some(av) = a.terms.get_mut(&bk) {
@@ -66,7 +67,7 @@ impl_op_ex!(+= |a: &mut Polynomial, b: &Term| {
     }
 });
 
-// -
+/// -
 impl_op_ex!(- |a: &Polynomial, b: &Polynomial| -> Polynomial {
     a.clone() + (-b.clone())
 });
@@ -79,7 +80,7 @@ impl_op_ex!(- |a: &Term, b: &Polynomial| -> Polynomial {
     a.to_pol() + (-b.clone())
 });
 
-// -=
+/// -=
 impl_op_ex!(-= |a: &mut Polynomial, b: &Polynomial| {
     for (bk, bv) in &b.terms {
         if let Some(av) = a.terms.get_mut(&bk) {
@@ -93,7 +94,7 @@ impl_op_ex!(-= |a: &mut Polynomial, b: &Polynomial| {
     }
 });
 
-// Neg
+/// Negate
 impl_op_ex!(- |a: &Polynomial| -> Polynomial {
     let mut pol = Polynomial::new();
     for (k, coef) in &a.terms {
@@ -102,7 +103,7 @@ impl_op_ex!(- |a: &Polynomial| -> Polynomial {
     pol
 });
 
-// *
+/// *
 impl_op_ex!(* |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = Polynomial::new();
     for (ik, iv) in &a.terms {
@@ -128,14 +129,14 @@ impl_op_ex!(* |a: &Term, b: &Polynomial| -> Polynomial {
     a.to_pol() * b
 });
 
-// *=
+/// *=
 impl_op_ex!(*= |a: &mut Polynomial, b: &Polynomial| {
     let c = a.clone() * b;
     a.terms.clear();
     a.terms = c.terms; 
 });
 
-// /
+/// /
 impl_op_ex!(/ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     if b.is_zero() {
         panic!("b.is_zero()");
@@ -163,7 +164,7 @@ impl_op_ex!(/ |a: &Term, b: &Polynomial| -> Polynomial {
     a.to_pol() / b
 });
 
-// /=
+/// /=
 impl_op_ex!(/= |a: &mut Polynomial, b: &Polynomial| {
     let c = a.clone() / b;
     a.terms.clear();
@@ -379,6 +380,7 @@ impl Polynomial {
         false
     }
 
+    /// frobenius map of Polynomial
     pub fn to_frob(&self, n: &BigInt) -> Self {
         let mut pol = Polynomial::new();
         for (k, v) in &self.terms {
@@ -389,6 +391,7 @@ impl Polynomial {
         pol
     }
 
+    /// y -> y^n
     pub fn to_y_power(&self, n: &BigInt) -> Self {
         let mut pol = Polynomial::new();
         for (k, v) in &self.terms {
@@ -399,6 +402,7 @@ impl Polynomial {
         pol
     }
 
+    /// reduction using y^2 = x^3 + a x + b
     pub fn reduction(&self, a: &BigInt, b: &BigInt) -> Self {
         let mut t = Polynomial::new();
         for (k, v) in &self.terms {
@@ -422,6 +426,7 @@ impl Polynomial {
         t
     }
 
+    /// reduction using y^2 = x^3 + a x + b (mod p)
     pub fn reduction_modular(&self, a: &BigInt, b: &BigInt, p: &BigInt) -> Self {
         let mut t = Polynomial::new();
         for (k, v) in &self.terms {
@@ -447,6 +452,7 @@ impl Polynomial {
         t
     }
 
+    /// evaluation using concrete x and y
     pub fn eval(&self, x: &BigInt, y: &BigInt) -> BigInt {
         let mut sum = BigInt::from(0);
         for (k, v) in &self.terms {
@@ -455,6 +461,7 @@ impl Polynomial {
         sum
     }
 
+    /// evaluation using concrete x
     pub fn eval_x(&self, x: &BigInt) -> Polynomial {
         let mut pol = Polynomial::new();
         for (k, coef) in &self.terms {
@@ -470,6 +477,7 @@ impl Polynomial {
         pol 
     }
 
+    /// evaluation using concrete y
     pub fn eval_y(&self, y: &BigInt) -> Polynomial {
         let mut pol = Polynomial::new();
         for (k, coef) in &self.terms {
@@ -504,6 +512,8 @@ impl Polynomial {
         panic!();
     }
 
+    /// get x degree
+    /// assert if y equal not zero
     pub fn degree(&self) -> BigInt {
         assert!(!self.has_y());
         if self.is_zero() {

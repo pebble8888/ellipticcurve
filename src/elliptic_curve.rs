@@ -11,14 +11,18 @@ use num_traits::One;
 
 type TermBuilder = term_builder::TermBuilder;
 
+/// y^2 = x^3 + a x + b
+/// GF(p)
 pub struct EllipticCurve {
     pub a: BigInt,
     pub b: BigInt,
     pub p: BigInt,
     pol: polynomial::Polynomial,
+    /// rational points
     pub points: Vec<ECPoint> // usize
 }
 
+/// Jacobian coordinates point
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ECPoint {
     pub x: BigInt,
@@ -84,6 +88,7 @@ impl EllipticCurve {
         }
     }
 
+    /// Elliptic curve point addition
     pub fn plus(&self, point1: &ECPoint, point2: &ECPoint) -> ECPoint {
         assert!(self.is_on_curve(point1));
         assert!(self.is_on_curve(point2));
@@ -119,7 +124,8 @@ impl EllipticCurve {
         }
     }
 
-    pub fn minus(&self, point: &ECPoint) -> ECPoint {
+    /// Point negation: -P
+    pub fn negate(&self, point: &ECPoint) -> ECPoint {
         if point.is_infinity() {
             return point.clone();
         }
@@ -128,6 +134,7 @@ impl EllipticCurve {
             &((-point.clone().y).mod_floor(&self.p)))
     }
 
+    /// create rational points 
     pub fn create_points(&mut self) {
         for x in num_iter::range(BigInt::from(0), self.p.clone()) {
             let xpol = x.clone().power(3)
@@ -140,7 +147,7 @@ impl EllipticCurve {
                 if ypol == xpol {
                     let point = ECPoint::new(&x, &y);
                     self.points.push(point.clone());
-                    let minus_point = self.minus(&point);
+                    let minus_point = self.negate(&point);
                     if minus_point != point {
                         self.points.push(minus_point);
                     }
@@ -151,6 +158,7 @@ impl EllipticCurve {
         self.points.push(ECPoint::infinity());
     }
 
+    /// get all rational points
     pub fn points(&self) -> Vec<ECPoint> {
         self.points.clone()
     }

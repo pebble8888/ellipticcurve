@@ -13,8 +13,11 @@ pub struct TermBuilder {
 }
 
 pub trait TermBuildable<T> {
+    /// coeficient
     fn coef(&mut self, coef: T) -> &mut Self;
+    /// power of x
     fn xpow(&mut self, xpow: T) -> &mut Self;
+    /// power of y
     fn ypow(&mut self, ypow: T) -> &mut Self;
 }
 

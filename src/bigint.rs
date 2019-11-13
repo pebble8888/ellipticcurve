@@ -3,14 +3,17 @@ use num_bigint::BigInt;
 use num_traits::Zero;
 use num_traits::One;
 
+/// T^n
 pub trait Power<T> {
     fn power(&self, n: T) -> Self;
 }
 
+/// T^n (mod p)
 pub trait PowerModulo {
     fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self;
 }
 
+/// 1/T (mod p)
 pub trait Inverse {
     fn inverse(&self, p: &BigInt) -> Self;
 }
