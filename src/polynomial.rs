@@ -18,7 +18,6 @@ pub struct Polynomial {
     pub terms: BTreeMap<term::Monomial, BigInt>
 }
 
-/// +
 impl_op_ex!(+ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = a.clone();
     for (bk, bv) in &b.terms {
@@ -42,7 +41,6 @@ impl_op_ex!(+ |a: &Term, b: &Polynomial| -> Polynomial {
     a.to_pol() + b
 });
 
-/// +=
 impl_op_ex!(+= |a: &mut Polynomial, b: &Polynomial| {
     for (bk, bv) in &b.terms {
         if let Some(av) = a.terms.get_mut(&bk) {
@@ -67,7 +65,6 @@ impl_op_ex!(+= |a: &mut Polynomial, b: &Term| {
     }
 });
 
-/// -
 impl_op_ex!(- |a: &Polynomial, b: &Polynomial| -> Polynomial {
     a.clone() + (-b.clone())
 });
@@ -80,7 +77,6 @@ impl_op_ex!(- |a: &Term, b: &Polynomial| -> Polynomial {
     a.to_pol() + (-b.clone())
 });
 
-/// -=
 impl_op_ex!(-= |a: &mut Polynomial, b: &Polynomial| {
     for (bk, bv) in &b.terms {
         if let Some(av) = a.terms.get_mut(&bk) {
@@ -94,7 +90,7 @@ impl_op_ex!(-= |a: &mut Polynomial, b: &Polynomial| {
     }
 });
 
-/// Negate
+// Negate
 impl_op_ex!(- |a: &Polynomial| -> Polynomial {
     let mut pol = Polynomial::new();
     for (k, coef) in &a.terms {
@@ -103,7 +99,6 @@ impl_op_ex!(- |a: &Polynomial| -> Polynomial {
     pol
 });
 
-/// *
 impl_op_ex!(* |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = Polynomial::new();
     for (ik, iv) in &a.terms {
@@ -129,14 +124,12 @@ impl_op_ex!(* |a: &Term, b: &Polynomial| -> Polynomial {
     a.to_pol() * b
 });
 
-/// *=
 impl_op_ex!(*= |a: &mut Polynomial, b: &Polynomial| {
     let c = a.clone() * b;
     a.terms.clear();
     a.terms = c.terms; 
 });
 
-/// /
 impl_op_ex!(/ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     if b.is_zero() {
         panic!("b.is_zero()");
@@ -164,7 +157,6 @@ impl_op_ex!(/ |a: &Term, b: &Polynomial| -> Polynomial {
     a.to_pol() / b
 });
 
-/// /=
 impl_op_ex!(/= |a: &mut Polynomial, b: &Polynomial| {
     let c = a.clone() / b;
     a.terms.clear();
