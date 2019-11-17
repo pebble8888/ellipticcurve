@@ -181,8 +181,10 @@ impl fmt::Display for Polynomial {
             if coef > &BigInt::from(0) && i != 0 {
                 st.push_str("+ ");
             }
-            st.push_str(&Term::from(k, coef).to_string());
-            st.push_str(" ");
+            if coef != &BigInt::from(0) {
+                st.push_str(&Term::from(k, coef).to_string());
+                st.push_str(" ");
+            }
             i = i + 1;
         }
         write!(f, "{}", st.trim_end())
@@ -216,6 +218,22 @@ impl Polynomial {
         Polynomial {
             terms: BTreeMap::new(),  
         }
+    }
+
+    pub fn zero() -> Self {
+        let zero = term_builder::TermBuilder::new()
+            .coef(&BigInt::from(0))
+            .build()
+            .to_pol();
+        zero 
+    }
+
+    pub fn one() -> Self {
+        let one = term_builder::TermBuilder::new()
+            .coef(&BigInt::from(1))
+            .build()
+            .to_pol();
+        one
     }
 
     pub fn square(&self) -> Self {
@@ -514,6 +532,24 @@ impl Polynomial {
         let s = self.highest_term_x();
         return s.xpow().clone();
     }
+
+    /// omit O(order+1) for x
+    pub fn omit_high_order(&self, order: &BigInt) -> Polynomial {
+        assert!(!self.has_y(), "has_y()");
+        let mut pol = Polynomial::zero();
+        for (k, coef) in &self.terms {
+            if &k.xpow <= order {
+                pol.terms.insert(k.clone(), coef.clone());
+            }
+        }
+        pol
+    }
+}
+
+#[test]
+fn polynmomial_test_zero_one() { 
+    assert_eq_str!(Polynomial::one(), "1");
+    assert_eq_str!(Polynomial::zero(), "0");
 }
 
 #[test]

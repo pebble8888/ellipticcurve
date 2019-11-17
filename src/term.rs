@@ -55,8 +55,8 @@ impl_op_ex!(/ |a: &Term, b: &Term| -> Term {
     TermBuilder::new()
         .coef(&a.coef.div_floor(&b.coef))
         .xpow(&(a.xpow() - b.xpow()))
-        .ypow(&(a.ypow() - b.ypow())).
-        build()
+        .ypow(&(a.ypow() - b.ypow()))
+        .build()
 });
 
 impl_op_ex!(- |a: &Term| -> Term {
@@ -122,8 +122,10 @@ impl Term {
     /// convert Term to Polynomial
     pub fn to_pol(&self) -> Polynomial {
         let mut pol = Polynomial::new();
-        let u = self.clone();
-        pol.terms.insert(u.monomial, u.coef);
+        if !self.coef.is_zero() {
+            let u = self.clone();
+            pol.terms.insert(u.monomial, u.coef);
+        }
         pol
     }
 

@@ -3,6 +3,7 @@ use num_traits::Zero;
 use crate::bigint::Power;
 
 /// The sum of positive divisors function 
+/// sigma_{power}(n)
 pub fn sigma_divisor(n: &BigInt, power: &BigInt) -> BigInt {
     if *power < Zero::zero() {
         return Zero::zero();
