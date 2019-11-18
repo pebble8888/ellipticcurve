@@ -554,7 +554,6 @@ fn polynmomial_test_zero_one() {
 
 #[test]
 fn polynmomial_test() { 
-
     use super::term_builder;
     type TermBuilder = term_builder::TermBuilder;
 
