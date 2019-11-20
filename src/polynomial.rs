@@ -663,6 +663,17 @@ fn polynmomial_test() {
 }
 
 #[test]
+fn polynomial_minus_power_test() {
+    use super::term_builder;
+    type TermBuilder = term_builder::TermBuilder;
+
+    assert_eq_str!(TermBuilder::new().coef(1).xpow(-4).build().to_pol(), "x^-4");
+    let u = TermBuilder::new().coef(3).xpow(-4).build().to_pol() +
+            TermBuilder::new().coef(4).xpow(-1).build().to_pol();
+    assert_eq_str!(u, "4 x^-1 + 3 x^-4");
+}
+
+#[test]
 fn isogeny_test() {
     use super::term_builder;
     type TermBuilder = term_builder::TermBuilder;
