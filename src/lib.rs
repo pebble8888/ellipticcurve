@@ -14,4 +14,4 @@ pub mod divisor;
 pub mod eisenstein;
 pub mod delta;
 pub mod j_invariant;
-
+pub mod subscripted_variable;

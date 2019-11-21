@@ -21,8 +21,8 @@ pub struct SEAResult {
 
 /// SEA algorithm
 /// TODO: in implementation
-pub fn sea(ec: &elliptic_curve::EllipticCurve, l: &BigInt) -> SEAResult {
-    let mut mpol = modular_polynomial::modular_polynomial(&l);
+pub fn sea(ec: &elliptic_curve::EllipticCurve, l: u64) -> SEAResult {
+    let mut mpol = modular_polynomial::modular_polynomial(l);
     mpol.modular_assign(&ec.p);
     let mut mpol = mpol.eval_y(&ec.j_invariant());
     mpol.modular_assign(&ec.p);
@@ -60,8 +60,8 @@ pub fn sea(ec: &elliptic_curve::EllipticCurve, l: &BigInt) -> SEAResult {
 fn sea_test1() {
     let p = BigInt::from(23);
     let ec = elliptic_curve::EllipticCurve::new(&BigInt::from(1), &BigInt::from(7), &p);
-    let l = BigInt::from(3);
-    let result = sea(&ec, &l);
+    let l = 3;
+    let result = sea(&ec, l);
     assert_eq_str!(result.gcd, "x^2 + 4 x + 3");
 
     assert_eq!(result.gcd.degree(), BigInt::from(2));
@@ -75,8 +75,8 @@ fn sea_test1() {
 fn sea_test2() {
     let p = BigInt::from(131);
     let ec = elliptic_curve::EllipticCurve::new(&BigInt::from(1), &BigInt::from(23), &p);
-    let l = BigInt::from(5);
-    let result = sea(&ec, &l);
+    let l = 5;
+    let result = sea(&ec, l);
     assert_eq_str!(result.gcd, "x^2 + 88 x + 49");
     assert_eq!(result.gcd.degree(), BigInt::from(2));
     assert!(result.is_elkies_prime);

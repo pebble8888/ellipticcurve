@@ -9,9 +9,11 @@ use super::polynomial;
 use super::bigint::{Power, PowerModulo};
 use super::term_builder;
 use super::term_builder::TermBuildable;
+use super::subscripted_variable;
 
 type Polynomial = polynomial::Polynomial;
 type TermBuilder = term_builder::TermBuilder;
+type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 
 /// coef * x^xpow * y^ypow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -25,6 +27,7 @@ pub struct Term {
 pub struct Monomial {
     pub xpow: BigInt,
     pub ypow: BigInt,
+    pub variable: SubscriptedVariable,
 }
 
 impl_op_ex!(+ |a: &Term, b: &Term| -> Polynomial {
@@ -38,11 +41,15 @@ impl_op_ex!(+ |a: &Term, b: &Term| -> Polynomial {
 });
 
 impl_op_ex!(* |a: &Term, b: &Term| -> Term {
+    if !a.variable().empty && !b.variable().empty {
+        panic!("can't multiply another variable!");
+    }
     Term {
         coef: &a.coef * &b.coef,
         monomial: Monomial { 
             xpow: a.xpow() + b.xpow(),
             ypow: a.ypow() + b.ypow(),
+            variable: if !a.variable().empty { a.variable() } else { b.variable() },
         },
     }
 });
@@ -52,10 +59,14 @@ impl_op_ex!(- |a: &Term, b: &Term| -> Polynomial {
 });
 
 impl_op_ex!(/ |a: &Term, b: &Term| -> Term {
+    if !b.variable().empty {
+        panic!("b is not zero!");
+    }
     TermBuilder::new()
         .coef(&a.coef.div_floor(&b.coef))
         .xpow(&(a.xpow() - b.xpow()))
         .ypow(&(a.ypow() - b.ypow()))
+        .variable(a.variable())
         .build()
 });
 
@@ -64,6 +75,7 @@ impl_op_ex!(- |a: &Term| -> Term {
         .coef(&(-a.coef.clone()))
         .xpow(&a.xpow().clone())
         .ypow(&a.ypow().clone())
+        .variable(a.variable())
         .build()
 });
 
@@ -71,6 +83,9 @@ impl_op_ex!(- |a: &Term| -> Term {
 /// n:i64
 impl Power<i64> for Term {
     fn power(&self, n: i64) -> Self {
+        if !self.variable().empty {
+            panic!("variable can't power");
+        }
         self.power(&BigInt::from(n))
     }
 }
@@ -79,6 +94,9 @@ impl Power<i64> for Term {
 /// n:BigInt
 impl<'a> Power<&'a BigInt> for Term {
     fn power(&self, n: &BigInt) -> Self {
+        if !self.variable().empty {
+            panic!("can't power non zero variable!");
+        }
         TermBuilder::new()
           .coef(&self.coef.clone().power(&n.clone()))
           .xpow(&(self.xpow() * n.clone()))
@@ -109,12 +127,21 @@ impl Term {
         &self.monomial.ypow
     }
 
+    pub fn variable(&self) -> SubscriptedVariable {
+        self.monomial.variable
+    }
+
     pub fn new() -> Term {
         Term {
             coef: Zero::zero(),
             monomial: Monomial {
                 xpow: Zero::zero(),
                 ypow: Zero::zero(),
+                variable: SubscriptedVariable {
+                    i: 0,
+                    j: 0,
+                    empty: true,
+                },
             },
         }
     }
@@ -140,6 +167,7 @@ impl Term {
             .coef(&self.coef.power_modulo(n, p))
             .xpow(&(self.xpow() * n.clone()))
             .ypow(&(self.ypow() * n.clone()))
+            .variable(self.variable())
             .build()
     }
 
@@ -150,6 +178,7 @@ impl Term {
           .coef(&self.coef.clone())
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
+          .variable(self.variable())
           .build()
     }
 
@@ -158,6 +187,7 @@ impl Term {
           .coef(&self.coef.clone())
           .xpow(&self.xpow().clone())
           .ypow(&(self.ypow() * n.clone()))
+          .variable(self.variable())
           .build()
     }
 
@@ -170,6 +200,7 @@ impl Term {
               .coef(&self.coef.mod_floor(n))
               .xpow(&self.xpow().clone())
               .ypow(&self.ypow().clone())
+              .variable(self.variable())
               .build()
         }
     }
@@ -210,6 +241,11 @@ impl Ord for Monomial {
         } else if self.ypow > other.ypow {
             return Ordering::Greater;
         }
+        if self.variable < other.variable {
+            return Ordering::Less;
+        } else if self.variable > other.variable {
+            return Ordering::Greater;
+        }
         return Ordering::Equal;
     }
 }
@@ -230,7 +266,11 @@ impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.coef == One::one() {
             if self.xpow().is_zero() && self.ypow().is_zero() {
-                write!(f, "1")
+                if self.variable().empty {
+                    write!(f, "1")
+                } else {
+                    write!(f, "{}", self.variable())
+                }
             } else {
                 let mut st = String::new();
                 if !self.xpow().is_zero() {
@@ -249,12 +289,20 @@ impl fmt::Display for Term {
                         st.push_str("y^");
                         st.push_str(&self.ypow().to_string());
                     }
+                    st.push_str(" ");
+                }
+                if !self.variable().empty {
+                    st.push_str(&self.variable().to_string());
                 }
                 write!(f, "{}", st.trim_end())
             }
         } else if self.coef == BigInt::from(-1) {
             if self.xpow().is_zero() && self.ypow().is_zero() {
-                write!(f, "- 1")
+                if self.variable().empty {
+                    write!(f, "- 1")
+                } else {
+                    write!(f, "- {}", self.variable())
+                }
             } else {
                 let mut st = String::new();
                 st.push_str("- ");
@@ -274,10 +322,13 @@ impl fmt::Display for Term {
                         st.push_str("y^");
                         st.push_str(&self.ypow().to_string());
                     }
+                    st.push_str(" ");
+                }
+                if !self.variable().empty {
+                    st.push_str(&self.variable().to_string());
                 }
                 write!(f, "{}", st.trim_end())
             }
-
         } else {
             let mut st = String::new();
             if self.coef >= Zero::zero() {
@@ -304,6 +355,10 @@ impl fmt::Display for Term {
                     st.push_str("y^");
                     st.push_str(&self.ypow().to_string());
                 }
+                st.push_str(" ");
+            }
+            if !self.variable().empty {
+                st.push_str(&self.variable().to_string());
             }
             write!(f, "{}", st.trim_end())
         }

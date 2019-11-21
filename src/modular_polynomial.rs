@@ -3,13 +3,15 @@ use super::polynomial;
 use super::term_builder;
 use super::term_builder::TermBuildable;
 use super::bigint::Power;
+use primes;
 
 type TermBuilder = term_builder::TermBuilder;
 type Polynomial = polynomial::Polynomial;
 
-pub fn modular_polynomial(n: &BigInt) -> Polynomial {
-    assert!(*n >= BigInt::from(2));
-    if *n == BigInt::from(2) {
+/// create modular polynomial
+pub fn modular_polynomial(n: u64) -> Polynomial {
+    assert!(n >= 2);
+    if n == 2 {
           TermBuilder::new().coef(1).xpow(3).build()
         + TermBuilder::new().coef(1).ypow(3).build()
         + TermBuilder::new().coef(-162_000).xpow(2).build()
@@ -21,7 +23,7 @@ pub fn modular_polynomial(n: &BigInt) -> Polynomial {
         + TermBuilder::new().coef(8_748_000_000).ypow(1).build()
         + TermBuilder::new().coef(40_773_375).xpow(1).ypow(1).build()
         + TermBuilder::new().coef(-157_464_000_000_000).build()
-    } else if *n == BigInt::from(3) {
+    } else if n == 3 {
         let c10 = BigInt::from(1_855_425_871_872_000_000_000_i128);
         let pol =
           TermBuilder::new().coef(1).xpow(4).build()
@@ -42,7 +44,7 @@ pub fn modular_polynomial(n: &BigInt) -> Polynomial {
         + TermBuilder::new().coef(&c10).xpow(1).build()
         + TermBuilder::new().coef(&c10).ypow(1).build();
         return pol;
-    } else if *n == BigInt::from(5) {
+    } else if n == 5 {
         let b = BigInt::from(1_000_000_000_000_000_000_000_000_000_000_000_000_i128);
         let c00 = BigInt::from(141_359_947_154_i64) * b.power(1)
                 + BigInt::from(721_358_697_753_474_691_071_362_751_004_672_000_i128);
@@ -108,20 +110,79 @@ pub fn modular_polynomial(n: &BigInt) -> Polynomial {
     }
 }
 
+/// calculate modular polynomial
+pub fn subscripted_variable_modular_polynomial(p: u64) -> Polynomial {
+    assert!(p >= 2);
+    assert!(primes::is_prime(p));
+    let mut pol = term_builder::TermBuilder::new()
+                .coef(&BigInt::from(1))
+                .xpow(&BigInt::from(p+1))
+                .build().to_pol();
+    pol += term_builder::TermBuilder::new()
+                .coef(&BigInt::from(1))
+                .ypow(&BigInt::from(p+1))
+                .build().to_pol();
+    pol += term_builder::TermBuilder::new()
+            .coef(&BigInt::from(-1))
+            .xpow(&BigInt::from(p))
+            .ypow(&BigInt::from(p))
+            .build().to_pol();
+    pol += term_builder::TermBuilder::new()
+            .coef(&BigInt::from(-1))
+            .xpow(&BigInt::from(1))
+            .ypow(&BigInt::from(1))
+            .build().to_pol();
+
+    for i in num_iter::range(0, p+1) {
+        pol += term_builder::TermBuilder::new()
+            .coef(&BigInt::from(p))
+            .xpow(&BigInt::from(i))
+            .ypow(&BigInt::from(i))
+            .variable_ij(i, i)
+            .build().to_pol();
+    }
+    for i in num_iter::range(0, p+1) {
+        for j in num_iter::range(i+1, p+1) {
+            pol += term_builder::TermBuilder::new()
+                .coef(&BigInt::from(p))
+                .xpow(&BigInt::from(i))
+                .ypow(&BigInt::from(j))
+                .variable_ij(i, j)
+                .build().to_pol();
+            pol += term_builder::TermBuilder::new()
+                .coef(&BigInt::from(p))
+                .xpow(&BigInt::from(j))
+                .ypow(&BigInt::from(i))
+                .variable_ij(i, j)
+                .build().to_pol();
+        }
+    }
+    pol
+}
+
 #[test]
 fn modular_polynomial_test2() {
-    let pol = modular_polynomial(&BigInt::from(2));
+    let pol = modular_polynomial(2);
     assert_eq_str!(pol, "x^3 - x^2 y^2 + 1488 x^2 y - 162000 x^2 + 1488 x y^2 + 40773375 x y + 8748000000 x + y^3 - 162000 y^2 + 8748000000 y - 157464000000000");
 }
 
 #[test]
 fn modular_polynomial_test3() {
-    let pol = modular_polynomial(&BigInt::from(3));
+    let pol = modular_polynomial(3);
     assert_eq_str!(pol, "x^4 - x^3 y^3 + 2232 x^3 y^2 - 1069956 x^3 y + 36864000 x^3 + 2232 x^2 y^3 + 2587918086 x^2 y^2 + 8900222976000 x^2 y + 452984832000000 x^2 - 1069956 x y^3 + 8900222976000 x y^2 - 770845966336000000 x y + 1855425871872000000000 x + y^4 + 36864000 y^3 + 452984832000000 y^2 + 1855425871872000000000 y");
 }
 
 #[test]
 fn modular_polynomial_test5() {
-    let pol = modular_polynomial(&BigInt::from(5));
+    let pol = modular_polynomial(5);
     assert_eq_str!(pol, "x^6 - x^5 y^5 + 3720 x^5 y^4 - 4550940 x^5 y^3 + 2028551200 x^5 y^2 - 246683410950 x^5 y + 1963211489280 x^5 + 3720 x^4 y^5 + 1665999364600 x^4 y^4 + 107878928185336800 x^4 y^3 + 383083609779811215375 x^4 y^2 + 128541798906828816384000 x^4 y + 1284733132841424456253440 x^4 - 4550940 x^3 y^5 + 107878928185336800 x^3 y^4 - 441206965512914835246100 x^3 y^3 + 26898488858380731577417728000 x^3 y^2 - 192457934618928299655108231168000 x^3 y + 280244777828439527804321565297868800 x^3 + 2028551200 x^2 y^5 + 383083609779811215375 x^2 y^4 + 26898488858380731577417728000 x^2 y^3 + 5110941777552418083110765199360000 x^2 y^2 + 36554736583949629295706472332656640000 x^2 y + 6692500042627997708487149415015068467200 x^2 - 246683410950 x y^5 + 128541798906828816384000 x y^4 - 192457934618928299655108231168000 x y^3 + 36554736583949629295706472332656640000 x y^2 - 264073457076620596259715790247978782949376 x y + 53274330803424425450420160273356509151232000 x + y^6 + 1963211489280 y^5 + 1284733132841424456253440 y^4 + 280244777828439527804321565297868800 y^3 + 6692500042627997708487149415015068467200 y^2 + 53274330803424425450420160273356509151232000 y + 141359947154721358697753474691071362751004672000");
 }
+
+#[test]
+fn subscripted_variable_modular_polynomial_test1() {
+    let pol2 = subscripted_variable_modular_polynomial(2);
+    assert_eq_str!(pol2, "x^3 + 2 x^2 y^2 c_2_2 - x^2 y^2 + 2 x^2 y c_1_2 + 2 x^2 c_0_2 + 2 x y^2 c_1_2 + 2 x y c_1_1 - x y + 2 x c_0_1 + y^3 + 2 y^2 c_0_2 + 2 y c_0_1 + 2 c_0_0");
+    let pol3 = subscripted_variable_modular_polynomial(3);
+    assert_eq_str!(pol3, "x^4 + 3 x^3 y^3 c_3_3 - x^3 y^3 + 3 x^3 y^2 c_2_3 + 3 x^3 y c_1_3 + 3 x^3 c_0_3 + 3 x^2 y^3 c_2_3 + 3 x^2 y^2 c_2_2 + 3 x^2 y c_1_2 + 3 x^2 c_0_2 + 3 x y^3 c_1_3 + 3 x y^2 c_1_2 + 3 x y c_1_1 - x y + 3 x c_0_1 + y^4 + 3 y^3 c_0_3 + 3 y^2 c_0_2 + 3 y c_0_1 + 3 c_0_0");
+}
+

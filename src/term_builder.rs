@@ -1,15 +1,18 @@
 use num_bigint::BigInt;
 use std::default::Default;
 use super::term;
+use super::subscripted_variable;
 
 type Term = term::Term;
 type Monomial = term::Monomial;
+type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 
 #[derive(Debug, Clone, Default)]
 pub struct TermBuilder {
     coef_: BigInt,
     xpow_: BigInt,
     ypow_: BigInt,
+    variable_: SubscriptedVariable, 
 }
 
 pub trait TermBuildable<T> {
@@ -56,12 +59,25 @@ impl TermBuilder {
         Default::default()
     }
 
+    pub fn variable(&mut self, variable: SubscriptedVariable) -> &mut TermBuilder {
+        self.variable_ = variable;
+        self
+    }
+
+    pub fn variable_ij(&mut self, i: u64, j: u64) -> &mut TermBuilder {
+        self.variable_.i = i;
+        self.variable_.j = j;
+        self.variable_.empty = false;
+        self
+    }
+
     pub fn build(&self) -> Term {
         Term {
             coef: self.coef_.clone(),
             monomial: Monomial {
                 xpow: self.xpow_.clone(),
                 ypow: self.ypow_.clone(),
+                variable: self.variable_,
             },
         }
     }
