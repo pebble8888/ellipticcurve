@@ -8,6 +8,7 @@ use super::bigint::{Inverse, Power};
 use super::term;
 use super::term_builder::TermBuildable;
 use super::term_builder;
+use super::polynomial;
 
 type TermBuilder = term_builder::TermBuilder;
 
@@ -380,6 +381,16 @@ impl Polynomial {
         pol
     }
 
+    pub fn has_x(&self) -> bool {
+        for (k, v) in &self.terms {
+            let i = term::Term::from(k, v);
+            if i.has_x() {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn has_y(&self) -> bool {
         for (k, v) in &self.terms {
             let i = term::Term::from(k, v);
@@ -551,15 +562,27 @@ impl Polynomial {
         return s.xpow().clone();
     }
 
-    /// omit O(order+1) for x
-    pub fn omit_high_order(&self, order: &BigInt) -> Polynomial {
+    /// omit O(order+1) for q
+    pub fn omit_high_order_q(&self, order: &BigInt) -> Polynomial {
+        assert!(!self.has_x(), "has_x()");
         assert!(!self.has_y(), "has_y()");
-        assert!(!self.has_q(), "has_q()");
         let mut pol = Polynomial::zero();
         for (k, coef) in &self.terms {
-            if &k.xpow <= order {
+            if &k.qpow <= order {
                 pol.terms.insert(k.clone(), coef.clone());
             }
+        }
+        pol
+    }
+
+    pub fn eval_x_polynomial(&self, x_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
+        let mut pol = Polynomial::zero();
+        for (k, coef) in &self.terms {
+            let t = term_builder::TermBuilder::new()
+                .coef(&coef.clone())
+                .build()
+                .to_pol();
+            pol += k.eval_x_polynomial(x_polynomial) * t;
         }
         pol
     }
@@ -690,6 +713,26 @@ fn polynomial_minus_power_test() {
     let u = TermBuilder::new().coef(3).xpow(-4).build().to_pol() +
             TermBuilder::new().coef(4).xpow(-1).build().to_pol();
     assert_eq_str!(u, "4 x^-1 + 3 x^-4");
+}
+
+#[test]
+fn polynomial_x_polynomial_test() {
+    use super::term_builder;
+    use super::subscripted_variable;
+
+    let a = term_builder::TermBuilder::new().coef(2).qpow(-1).build().to_pol();
+    let b = term_builder::TermBuilder::new().coef(3).qpow(2).build().to_pol();
+    let qpol = a + b;
+    assert_eq_str!(qpol, "3 q^2 + 2 q^-1");
+
+    let m = term::Monomial {
+        xpow: BigInt::from(2),
+        ypow: BigInt::from(3),
+        qpow: BigInt::from(4),
+        variable: subscripted_variable::SubscriptedVariable::default()
+    };
+    let t = m.eval_x_polynomial(&qpol);
+    assert_eq_str!(t, "9 y^3 q^8 + 12 y^3 q^5 + 4 y^3 q^2");
 }
 
 #[test]

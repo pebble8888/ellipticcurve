@@ -184,5 +184,6 @@ fn subscripted_variable_modular_polynomial_test1() {
     assert_eq_str!(pol2, "x^3 + 2 x^2 y^2 c_2_2 - x^2 y^2 + 2 x^2 y c_1_2 + 2 x^2 c_0_2 + 2 x y^2 c_1_2 + 2 x y c_1_1 - x y + 2 x c_0_1 + y^3 + 2 y^2 c_0_2 + 2 y c_0_1 + 2 c_0_0");
     let pol3 = subscripted_variable_modular_polynomial(3);
     assert_eq_str!(pol3, "x^4 + 3 x^3 y^3 c_3_3 - x^3 y^3 + 3 x^3 y^2 c_2_3 + 3 x^3 y c_1_3 + 3 x^3 c_0_3 + 3 x^2 y^3 c_2_3 + 3 x^2 y^2 c_2_2 + 3 x^2 y c_1_2 + 3 x^2 c_0_2 + 3 x y^3 c_1_3 + 3 x y^2 c_1_2 + 3 x y c_1_1 - x y + 3 x c_0_1 + y^4 + 3 y^3 c_0_3 + 3 y^2 c_0_2 + 3 y c_0_1 + 3 c_0_0");
+
 }
 

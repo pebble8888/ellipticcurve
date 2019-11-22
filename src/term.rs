@@ -117,6 +117,7 @@ impl Monomial {
 
     pub fn eval_x_polynomial(&self, x_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
+            .coef(&(BigInt::from(1)))
             .ypow(&(self.ypow.clone()))
             .qpow(&(self.qpow.clone()))
             .build()
@@ -126,6 +127,7 @@ impl Monomial {
 
     pub fn eval_y_polynomial(&self, y_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
+            .coef(&(BigInt::from(1)))
             .xpow(&(self.xpow.clone()))
             .qpow(&(self.qpow.clone()))
             .build()
@@ -236,6 +238,7 @@ impl Term {
               .coef(&self.coef.mod_floor(n))
               .xpow(&self.xpow().clone())
               .ypow(&self.ypow().clone())
+              .qpow(&self.qpow().clone())
               .variable(self.variable())
               .build()
         }
@@ -254,12 +257,25 @@ impl Term {
         self.coef == Zero::zero()
     }
 
+    pub fn has_x(&self) -> bool {
+        self.xpow() != &Zero::zero()
+    }
+
     pub fn has_y(&self) -> bool {
         self.ypow() != &Zero::zero()
     }
 
     pub fn has_q(&self) -> bool {
         self.qpow() != &Zero::zero()
+    }
+
+    pub fn eval_x_polynomial(&self, x_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
+        let s = term_builder::TermBuilder::new()
+            .coef(&self.coef.clone())
+            .build()
+            .to_pol();
+        let t = self.monomial.eval_x_polynomial(x_polynomial);
+        s * t
     }
 }
 
@@ -426,7 +442,7 @@ impl fmt::Display for Term {
             }
             if !self.qpow().is_zero() {
                 if self.qpow().is_one() {
-                    st.push_str("y");
+                    st.push_str("q");
                 } else {
                     st.push_str("q^");
                     st.push_str(&self.qpow().to_string());
