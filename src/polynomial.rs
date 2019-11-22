@@ -264,6 +264,7 @@ impl Polynomial {
 
     pub fn polynomial_modular(&self, other: &Polynomial, p: &BigInt) -> Self {
         assert!(!other.has_y(), "!other.has_y()");
+        assert!(!other.has_q(), "!other.has_q()");
         let oh = other.highest_term_x();
         let mut r = self.clone();
         loop {
@@ -389,6 +390,16 @@ impl Polynomial {
         false
     }
 
+    pub fn has_q(&self) -> bool {
+        for (k, v) in &self.terms {
+            let i = term::Term::from(k, v);
+            if i.has_q() {
+                return true;
+            }
+        }
+        false
+    }
+
     /// frobenius map of Polynomial
     pub fn to_frob(&self, n: &BigInt) -> Self {
         let mut pol = Polynomial::new();
@@ -462,10 +473,10 @@ impl Polynomial {
     }
 
     /// evaluation using concrete x and y
-    pub fn eval(&self, x: &BigInt, y: &BigInt) -> BigInt {
+    pub fn eval_xy(&self, x: &BigInt, y: &BigInt) -> BigInt {
         let mut sum = BigInt::from(0);
         for (k, v) in &self.terms {
-            sum += k.eval(x, y) * v; 
+            sum += k.eval_xy(x, y) * v; 
         }
         sum
     }
@@ -479,6 +490,7 @@ impl Polynomial {
                         monomial: term::Monomial {
                             xpow: Zero::zero(),
                             ypow: k.ypow.clone(),
+                            qpow: k.qpow.clone(),
                             variable: k.variable,
                             }
                        };
@@ -496,6 +508,7 @@ impl Polynomial {
                         monomial: term::Monomial {
                             xpow: k.xpow.clone(),
                             ypow: Zero::zero(),
+                            qpow: k.qpow.clone(),
                             variable: k.variable,
                             }
                        };
@@ -518,15 +531,19 @@ impl Polynomial {
             if k.ypow != Zero::zero() {
                 panic!();
             }
+            if k.qpow != Zero::zero() {
+                panic!();
+            }
             return coef.clone();
         }
         panic!();
     }
 
     /// get x degree
-    /// assert if y equal not zero
+    /// assert if y equal not zero or q equal not zero
     pub fn degree(&self) -> BigInt {
         assert!(!self.has_y());
+        assert!(!self.has_q());
         if self.is_zero() {
             return Zero::zero();
         }
@@ -537,6 +554,7 @@ impl Polynomial {
     /// omit O(order+1) for x
     pub fn omit_high_order(&self, order: &BigInt) -> Polynomial {
         assert!(!self.has_y(), "has_y()");
+        assert!(!self.has_q(), "has_q()");
         let mut pol = Polynomial::zero();
         for (k, coef) in &self.terms {
             if &k.xpow <= order {

@@ -12,6 +12,7 @@ pub struct TermBuilder {
     coef_: BigInt,
     xpow_: BigInt,
     ypow_: BigInt,
+    qpow_: BigInt,
     variable_: SubscriptedVariable, 
 }
 
@@ -22,6 +23,8 @@ pub trait TermBuildable<T> {
     fn xpow(&mut self, xpow: T) -> &mut Self;
     /// power of y
     fn ypow(&mut self, ypow: T) -> &mut Self;
+    /// power of q
+    fn qpow(&mut self, qpow: T) -> &mut Self;
 }
 
 impl<'a> TermBuildable<&'a BigInt> for TermBuilder {
@@ -37,6 +40,10 @@ impl<'a> TermBuildable<&'a BigInt> for TermBuilder {
         self.ypow_ = ypow.clone();
         self
     }
+    fn qpow(&mut self, qpow: &BigInt) -> &mut TermBuilder {
+        self.qpow_ = qpow.clone();
+        self
+    }
 }
 
 impl TermBuildable<i64> for TermBuilder {
@@ -50,6 +57,10 @@ impl TermBuildable<i64> for TermBuilder {
     }
     fn ypow(&mut self, ypow: i64) -> &mut TermBuilder {
         self.ypow_ = BigInt::from(ypow);
+        self
+    }
+    fn qpow(&mut self, qpow: i64) -> &mut TermBuilder {
+        self.qpow_ = BigInt::from(qpow);
         self
     }
 }
@@ -77,6 +88,7 @@ impl TermBuilder {
             monomial: Monomial {
                 xpow: self.xpow_.clone(),
                 ypow: self.ypow_.clone(),
+                qpow: self.qpow_.clone(),
                 variable: self.variable_,
             },
         }

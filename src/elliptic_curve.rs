@@ -71,7 +71,7 @@ impl EllipticCurve {
         if ecpoint.is_infinity() {
             return true;
         }
-        let c = self.pol.eval(&ecpoint.x, &ecpoint.y);
+        let c = self.pol.eval_xy(&ecpoint.x, &ecpoint.y);
         let cc = c.mod_floor(&self.p);
         let d = ecpoint.y.power(2);
         let dd = d.mod_floor(&self.p);

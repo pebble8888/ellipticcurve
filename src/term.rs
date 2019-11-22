@@ -15,18 +15,19 @@ type Polynomial = polynomial::Polynomial;
 type TermBuilder = term_builder::TermBuilder;
 type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 
-/// coef * x^xpow * y^ypow
+/// coef * monomial
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Term {
     pub coef: BigInt,
     pub monomial: Monomial,
 }
 
-/// x^xpow * y^ypow
+/// x^xpow * y^ypow * c_i_j * q^qpow
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Monomial {
     pub xpow: BigInt,
     pub ypow: BigInt,
+    pub qpow: BigInt,
     pub variable: SubscriptedVariable,
 }
 
@@ -49,6 +50,7 @@ impl_op_ex!(* |a: &Term, b: &Term| -> Term {
         monomial: Monomial { 
             xpow: a.xpow() + b.xpow(),
             ypow: a.ypow() + b.ypow(),
+            qpow: a.qpow() + b.qpow(),
             variable: if !a.variable().empty { a.variable() } else { b.variable() },
         },
     }
@@ -66,6 +68,7 @@ impl_op_ex!(/ |a: &Term, b: &Term| -> Term {
         .coef(&a.coef.div_floor(&b.coef))
         .xpow(&(a.xpow() - b.xpow()))
         .ypow(&(a.ypow() - b.ypow()))
+        .qpow(&(a.qpow() - b.qpow()))
         .variable(a.variable())
         .build()
 });
@@ -75,6 +78,7 @@ impl_op_ex!(- |a: &Term| -> Term {
         .coef(&(-a.coef.clone()))
         .xpow(&a.xpow().clone())
         .ypow(&a.ypow().clone())
+        .qpow(&a.qpow().clone())
         .variable(a.variable())
         .build()
 });
@@ -101,13 +105,36 @@ impl<'a> Power<&'a BigInt> for Term {
           .coef(&self.coef.clone().power(&n.clone()))
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
+          .qpow(&(self.qpow() * n.clone()))
           .build()
     }
 }
 
 impl Monomial {
-    pub fn eval(&self, x:&BigInt, y:&BigInt) -> BigInt {
+    pub fn eval_xy(&self, x: &BigInt, y: &BigInt) -> BigInt {
         x.power(&self.xpow) * y.power(&self.ypow)
+    }
+
+    pub fn eval_x_polynomial(&self, x_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
+        let t = term_builder::TermBuilder::new()
+            .ypow(&(self.ypow.clone()))
+            .qpow(&(self.qpow.clone()))
+            .build()
+            .to_pol();
+        x_polynomial.power(&self.xpow) * t
+    }
+
+    pub fn eval_y_polynomial(&self, y_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
+        let t = term_builder::TermBuilder::new()
+            .xpow(&(self.xpow.clone()))
+            .qpow(&(self.qpow.clone()))
+            .build()
+            .to_pol();
+        y_polynomial.power(&self.ypow) * t
+    }
+
+    pub fn eval_q(&self, q: &BigInt) -> BigInt {
+        q.power(&self.qpow)
     }
 }
 
@@ -127,6 +154,10 @@ impl Term {
         &self.monomial.ypow
     }
 
+    pub fn qpow(&self) -> &BigInt {
+        &self.monomial.qpow
+    }
+
     pub fn variable(&self) -> SubscriptedVariable {
         self.monomial.variable
     }
@@ -137,6 +168,7 @@ impl Term {
             monomial: Monomial {
                 xpow: Zero::zero(),
                 ypow: Zero::zero(),
+                qpow: Zero::zero(),
                 variable: SubscriptedVariable {
                     i: 0,
                     j: 0,
@@ -159,6 +191,7 @@ impl Term {
     pub fn is_equal_order(&self, other: &Self) -> bool {
         return &self.xpow() == &other.xpow()
             && &self.ypow() == &other.ypow()
+            && &self.qpow() == &other.qpow()
     }
 
     /// Term^n (mod p)
@@ -167,6 +200,7 @@ impl Term {
             .coef(&self.coef.power_modulo(n, p))
             .xpow(&(self.xpow() * n.clone()))
             .ypow(&(self.ypow() * n.clone()))
+            .qpow(&(self.qpow() * n.clone()))
             .variable(self.variable())
             .build()
     }
@@ -178,6 +212,7 @@ impl Term {
           .coef(&self.coef.clone())
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
+          .qpow(&(self.qpow().clone()))
           .variable(self.variable())
           .build()
     }
@@ -187,6 +222,7 @@ impl Term {
           .coef(&self.coef.clone())
           .xpow(&self.xpow().clone())
           .ypow(&(self.ypow() * n.clone()))
+          .qpow(&(self.qpow().clone()))
           .variable(self.variable())
           .build()
     }
@@ -221,6 +257,10 @@ impl Term {
     pub fn has_y(&self) -> bool {
         self.ypow() != &Zero::zero()
     }
+
+    pub fn has_q(&self) -> bool {
+        self.qpow() != &Zero::zero()
+    }
 }
 
 impl Ord for Term {
@@ -239,6 +279,11 @@ impl Ord for Monomial {
         if self.ypow < other.ypow {
             return Ordering::Less;
         } else if self.ypow > other.ypow {
+            return Ordering::Greater;
+        }
+        if self.qpow < other.qpow {
+            return Ordering::Less;
+        } else if self.qpow > other.qpow {
             return Ordering::Greater;
         }
         if self.variable < other.variable {
@@ -265,7 +310,9 @@ impl PartialOrd for Term {
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.coef == One::one() {
-            if self.xpow().is_zero() && self.ypow().is_zero() {
+            if self.xpow().is_zero() &&
+               self.ypow().is_zero() &&
+               self.qpow().is_zero() {
                 if self.variable().empty {
                     write!(f, "1")
                 } else {
@@ -291,13 +338,24 @@ impl fmt::Display for Term {
                     }
                     st.push_str(" ");
                 }
+                if !self.qpow().is_zero() {
+                    if self.qpow().is_one() {
+                        st.push_str("q");
+                    } else {
+                        st.push_str("q^");
+                        st.push_str(&self.qpow().to_string());
+                    }
+                    st.push_str(" ");
+                }
                 if !self.variable().empty {
                     st.push_str(&self.variable().to_string());
                 }
                 write!(f, "{}", st.trim_end())
             }
         } else if self.coef == BigInt::from(-1) {
-            if self.xpow().is_zero() && self.ypow().is_zero() {
+            if self.xpow().is_zero() &&
+               self.ypow().is_zero() &&
+               self.qpow().is_zero() {
                 if self.variable().empty {
                     write!(f, "- 1")
                 } else {
@@ -321,6 +379,15 @@ impl fmt::Display for Term {
                     } else {
                         st.push_str("y^");
                         st.push_str(&self.ypow().to_string());
+                    }
+                    st.push_str(" ");
+                }
+                if !self.qpow().is_zero() {
+                    if self.qpow().is_one() {
+                        st.push_str("q");
+                    } else {
+                        st.push_str("q^");
+                        st.push_str(&self.qpow().to_string());
                     }
                     st.push_str(" ");
                 }
@@ -354,6 +421,15 @@ impl fmt::Display for Term {
                 } else {
                     st.push_str("y^");
                     st.push_str(&self.ypow().to_string());
+                }
+                st.push_str(" ");
+            }
+            if !self.qpow().is_zero() {
+                if self.qpow().is_one() {
+                    st.push_str("y");
+                } else {
+                    st.push_str("q^");
+                    st.push_str(&self.qpow().to_string());
                 }
                 st.push_str(" ");
             }
