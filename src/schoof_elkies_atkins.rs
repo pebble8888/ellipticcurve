@@ -31,8 +31,8 @@ pub fn sea(ec: &elliptic_curve::EllipticCurve, l: u64) -> SEAResult {
     let gcd = pol.gcd(&mpol, &ec.p);
     // elkies prime for degree 1, 2, l+1
     // atkins prime for degree 0
-    let degree = gcd.clone().degree();
-    let is_elkies_prime = gcd.degree() > Zero::zero();
+    let degree = gcd.clone().degree_x();
+    let is_elkies_prime = gcd.degree_x() > Zero::zero();
     let mut isogeny_j_invariants: Vec<BigInt> = Vec::new();
     if is_elkies_prime {
         for j in num_iter::range(BigInt::from(0), ec.p.clone()) {
@@ -64,7 +64,7 @@ fn sea_test1() {
     let result = sea(&ec, l);
     assert_eq_str!(result.gcd, "x^2 + 4 x + 3");
 
-    assert_eq!(result.gcd.degree(), BigInt::from(2));
+    assert_eq!(result.gcd.degree_x(), BigInt::from(2));
     assert!(result.is_elkies_prime);
     assert_eq!(result.isogeny_j_invariants.len(), 2);
     assert_eq_str!(result.isogeny_j_invariants[0], "20");
@@ -78,7 +78,7 @@ fn sea_test2() {
     let l = 5;
     let result = sea(&ec, l);
     assert_eq_str!(result.gcd, "x^2 + 88 x + 49");
-    assert_eq!(result.gcd.degree(), BigInt::from(2));
+    assert_eq!(result.gcd.degree_x(), BigInt::from(2));
     assert!(result.is_elkies_prime);
     assert_eq!(result.isogeny_j_invariants.len(), 2);
     assert_eq_str!(result.isogeny_j_invariants[0], "17");

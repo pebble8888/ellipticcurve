@@ -115,24 +115,26 @@ impl Monomial {
         x.power(&self.xpow) * y.power(&self.ypow)
     }
 
-    pub fn eval_x_polynomial(&self, x_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
+    pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .coef(&(BigInt::from(1)))
+            .coef(&BigInt::from(1))
             .ypow(&(self.ypow.clone()))
             .qpow(&(self.qpow.clone()))
+            .variable(self.variable)
             .build()
             .to_pol();
-        x_polynomial.power(&self.xpow) * t
+        polynomial.power(&self.xpow) * t
     }
 
-    pub fn eval_y_polynomial(&self, y_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
+    pub fn eval_y_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .coef(&(BigInt::from(1)))
+            .coef(&BigInt::from(1))
             .xpow(&(self.xpow.clone()))
             .qpow(&(self.qpow.clone()))
+            .variable(self.variable)
             .build()
             .to_pol();
-        y_polynomial.power(&self.ypow) * t
+        polynomial.power(&self.ypow) * t
     }
 
     pub fn eval_q(&self, q: &BigInt) -> BigInt {
@@ -208,23 +210,35 @@ impl Term {
     }
 
     /// Frobenius map of Term
-    /// coef * x^xpow * y^ypow -> coef * (x^xpow)^n * (y^ypow)^n
+    /// x -> x^n  y -> y^n
     pub fn to_frob(&self, n: &BigInt) -> Self {
         TermBuilder::new()
           .coef(&self.coef.clone())
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
-          .qpow(&(self.qpow().clone()))
+          .qpow(&self.qpow().clone())
           .variable(self.variable())
           .build()
     }
 
+    /// y -> y^n
     pub fn to_y_power(&self, n: &BigInt) -> Self {
         TermBuilder::new()
           .coef(&self.coef.clone())
           .xpow(&self.xpow().clone())
           .ypow(&(self.ypow() * n.clone()))
-          .qpow(&(self.qpow().clone()))
+          .qpow(&self.qpow().clone())
+          .variable(self.variable())
+          .build()
+    }
+
+    /// q -> q^n
+    pub fn to_q_power(&self, n: &BigInt) -> Self {
+        TermBuilder::new()
+          .coef(&self.coef.clone())
+          .xpow(&self.xpow().clone())
+          .ypow(&self.ypow().clone())
+          .qpow(&(self.qpow() * n.clone()))
           .variable(self.variable())
           .build()
     }
@@ -269,12 +283,21 @@ impl Term {
         self.qpow() != &Zero::zero()
     }
 
-    pub fn eval_x_polynomial(&self, x_polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
+    pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let s = term_builder::TermBuilder::new()
             .coef(&self.coef.clone())
             .build()
             .to_pol();
-        let t = self.monomial.eval_x_polynomial(x_polynomial);
+        let t = self.monomial.eval_x_polynomial(polynomial);
+        s * t
+    }
+
+    pub fn eval_y_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
+        let s = term_builder::TermBuilder::new()
+            .coef(&self.coef.clone())
+            .build()
+            .to_pol();
+        let t = self.monomial.eval_y_polynomial(polynomial);
         s * t
     }
 }
@@ -490,5 +513,4 @@ fn unit_test() {
     let u8 = - &u11;
     assert_eq_str!(u8, "- x^4 y^2"); 
 }
-
 
