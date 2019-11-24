@@ -150,7 +150,6 @@ fn extended_euclid_test2() {
 
 #[test]
 fn lcm_test() {
-    let a = BigInt::from(4);
     assert_eq!(Integer::lcm(&BigInt::from(4), &BigInt::from(6)), BigInt::from(12));
     assert_eq!(Integer::lcm(&BigInt::from(-4), &BigInt::from(6)), BigInt::from(12));
     assert_eq!(Integer::lcm(&BigInt::from(-4), &BigInt::from(-6)), BigInt::from(12));
