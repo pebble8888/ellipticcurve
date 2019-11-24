@@ -9,6 +9,7 @@ use super::term;
 use super::term_builder::TermBuildable;
 use super::term_builder;
 use super::polynomial;
+use super::subscripted_variable;
 
 type TermBuilder = term_builder::TermBuilder;
 
@@ -18,6 +19,7 @@ pub struct Polynomial {
     pub terms: BTreeMap<term::Monomial, BigInt>
 }
 
+// Polynomial + Polynomial
 impl_op_ex!(+ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = a.clone();
     for (bk, bv) in &b.terms {
@@ -33,14 +35,17 @@ impl_op_ex!(+ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     pol
 });
 
+// Polynomial + Term
 impl_op_ex!(+ |a: &Polynomial, b: &term::Term| -> Polynomial {
     a + b.to_pol()
 });
 
+// Term + Polynomial
 impl_op_ex!(+ |a: &term::Term, b: &Polynomial| -> Polynomial {
     a.to_pol() + b
 });
 
+// Polynomial += Polynomial
 impl_op_ex!(+= |a: &mut Polynomial, b: &Polynomial| {
     for (bk, bv) in &b.terms {
         if let Some(av) = a.terms.get_mut(&bk) {
@@ -54,6 +59,7 @@ impl_op_ex!(+= |a: &mut Polynomial, b: &Polynomial| {
     }
 });
 
+// Polynomial += Term
 impl_op_ex!(+= |a: &mut Polynomial, b: &term::Term| {
     if let Some(av) = a.terms.get_mut(&b.monomial) {
         *av += &b.coef;
@@ -65,18 +71,22 @@ impl_op_ex!(+= |a: &mut Polynomial, b: &term::Term| {
     }
 });
 
+// Polynomial - Polynomial
 impl_op_ex!(- |a: &Polynomial, b: &Polynomial| -> Polynomial {
     a.clone() + (-b.clone())
 });
 
+// Polynomial - Term
 impl_op_ex!(- |a: &Polynomial, b: &term::Term | -> Polynomial {
     a.clone() + (-b.to_pol())
 });
 
+// Term - Polynomial
 impl_op_ex!(- |a: &term::Term, b: &Polynomial| -> Polynomial {
     a.to_pol() + (-b.clone())
 });
 
+// Polynomial -= Polynomial
 impl_op_ex!(-= |a: &mut Polynomial, b: &Polynomial| {
     for (bk, bv) in &b.terms {
         if let Some(av) = a.terms.get_mut(&bk) {
@@ -99,6 +109,7 @@ impl_op_ex!(- |a: &Polynomial| -> Polynomial {
     pol
 });
 
+// Polynomial * Polynomial
 impl_op_ex!(* |a: &Polynomial, b: &Polynomial| -> Polynomial {
     let mut pol = Polynomial::new();
     for (ik, iv) in &a.terms {
@@ -116,20 +127,24 @@ impl_op_ex!(* |a: &Polynomial, b: &Polynomial| -> Polynomial {
     pol
 });
 
+// Polynomial * Term
 impl_op_ex!(* |a: &Polynomial, b: &term::Term| -> Polynomial {
     a * b.to_pol()
 });
 
+// Term * Polynomial
 impl_op_ex!(* |a: &term::Term, b: &Polynomial| -> Polynomial {
     a.to_pol() * b
 });
 
+// Polynomial *= Polynomial
 impl_op_ex!(*= |a: &mut Polynomial, b: &Polynomial| {
     let c = a.clone() * b;
     a.terms.clear();
     a.terms = c.terms; 
 });
 
+// Polynomial / Polynomial
 impl_op_ex!(/ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     if b.is_zero() {
         panic!("b.is_zero()");
@@ -149,20 +164,24 @@ impl_op_ex!(/ |a: &Polynomial, b: &Polynomial| -> Polynomial {
     }
 });
 
+// Polynomial / Term
 impl_op_ex!(/ |a: &Polynomial, b: &term::Term| -> Polynomial {
     a / b.to_pol()
 });
 
+// Term / Polynomial
 impl_op_ex!(/ |a: &term::Term, b: &Polynomial| -> Polynomial {
     a.to_pol() / b
 });
 
+// Polynomial /= Polynomial
 impl_op_ex!(/= |a: &mut Polynomial, b: &Polynomial| {
     let c = a.clone() / b;
     a.terms.clear();
     a.terms = c.terms;
 });
 
+// Polynomial /= Term
 impl_op_ex!(/= |a: &mut Polynomial, b: &term::Term| {
     let c = a.clone() / b.to_pol();
     a.terms.clear();
@@ -191,11 +210,12 @@ impl fmt::Display for Polynomial {
     }
 }
 
+/// Polynomial ^ BigInt
 impl<'a> Power<&'a BigInt> for Polynomial {
     fn power(&self, n: &BigInt) -> Self {
         assert!(n >= &Zero::zero(), "n:{}", n.to_string());
         if n == &Zero::zero() {
-            return TermBuilder::new().coef(1).build().to_pol();
+            return TermBuilder::new().build().to_pol();
         }
         
         let mut m = self.clone();
@@ -221,11 +241,7 @@ impl Polynomial {
     }
 
     pub fn one() -> Self {
-        let one = term_builder::TermBuilder::new()
-            .coef(&BigInt::from(1))
-            .build()
-            .to_pol();
-        one
+        term_builder::TermBuilder::new().build().to_pol()
     }
 
     pub fn square(&self) -> Self {
@@ -239,7 +255,7 @@ impl Polynomial {
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         assert!(*n >= Zero::zero());
         let mut b = self.modulo(p);
-        let mut r = TermBuilder::new().coef(1).build().to_pol();
+        let mut r = TermBuilder::new().build().to_pol();
         let mut e = n.clone();
         while &e > &One::one() {
             if &e % 2 != Zero::zero() {
@@ -446,9 +462,9 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= TermBuilder::new().coef(1).ypow(&(yy.clone() * 2)).build();
+                e /= TermBuilder::new().ypow(&(yy.clone() * 2)).build();
 
-                let ee = TermBuilder::new().coef(1).xpow(3).build()
+                let ee = TermBuilder::new().xpow(3).build()
                        + TermBuilder::new().coef(&a.clone()).xpow(1).build()
                        + TermBuilder::new().coef(&b.clone()).build();
                 // power() is faster than power_modulo()
@@ -470,9 +486,9 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= TermBuilder::new().coef(1).ypow(&(yy.clone() * 2)).build();
+                e /= TermBuilder::new().ypow(&(yy.clone() * 2)).build();
 
-                let ee = TermBuilder::new().coef(1).xpow(3).build()
+                let ee = TermBuilder::new().xpow(3).build()
                        + TermBuilder::new().coef(&a.clone()).xpow(1).build()
                        + TermBuilder::new().coef(&b.clone()).build();
                 // power() is faster than power_modulo()
@@ -622,12 +638,24 @@ impl Polynomial {
         }
         pol
     }
+
+    /// get variale coeficient
+    pub fn to_variable_coef(&self, variable: subscripted_variable::SubscriptedVariable) -> BigInt {
+        assert!(!self.has_x(), "has_x()");
+        assert!(!self.has_y(), "has_y()");
+        assert!(!self.has_q(), "has_q()");
+        for (m, coef) in &self.terms {
+            if m.variable == variable {
+                return coef.clone();
+            }
+        }
+        return BigInt::from(0);
+    }
 }
 
 #[test]
 fn polynmomial_test_zero_one() { 
     assert_eq_str!(Polynomial::one(), "1");
-    //assert_eq_str!(Polynomial::zero(), "0");
 }
 
 #[test]
@@ -635,7 +663,7 @@ fn polynmomial_test() {
     use super::term_builder;
     type TermBuilder = term_builder::TermBuilder;
 
-    let u1 = TermBuilder::new().coef(1).xpow(4).ypow(2).build();
+    let u1 = TermBuilder::new().xpow(4).ypow(2).build();
     let u2 = TermBuilder::new().coef(3).xpow(2).ypow(4).build();
     assert_eq_str!(u1, "x^4 y^2");
     assert_eq_str!(u2, "3 x^2 y^4");
@@ -696,7 +724,7 @@ fn polynmomial_test() {
     assert_eq_str!(p40, "25 x^6 y^10 + 10 x^5 y^9 + x^4 y^8");
 
     // reduction
-    let u41 = TermBuilder::new().coef(1).xpow(1).ypow(3).build();
+    let u41 = TermBuilder::new().xpow(1).ypow(3).build();
     let p41 = u41.to_pol();
     let p42 = p41.reduction(&BigInt::from(2), &BigInt::from(7));
     assert_eq_str!(p42, "x^4 y + 2 x^2 y + 7 x y");
@@ -745,7 +773,7 @@ fn polynomial_minus_power_test() {
     use super::term_builder;
     type TermBuilder = term_builder::TermBuilder;
 
-    assert_eq_str!(TermBuilder::new().coef(1).xpow(-4).build().to_pol(), "x^-4");
+    assert_eq_str!(TermBuilder::new().xpow(-4).build().to_pol(), "x^-4");
     let u = TermBuilder::new().coef(3).xpow(-4).build().to_pol() +
             TermBuilder::new().coef(4).xpow(-1).build().to_pol();
     assert_eq_str!(u, "4 x^-1 + 3 x^-4");
@@ -765,16 +793,72 @@ fn polynomial_x_polynomial_test1() {
         xpow: BigInt::from(2),
         ypow: BigInt::from(3),
         qpow: BigInt::from(4),
-        variable: subscripted_variable::SubscriptedVariable::default()
+        variable: subscripted_variable::SubscriptedVariable {
+            i: 1,
+            j: 2,
+            empty: false,
+        }
     };
     let t = m.eval_x_polynomial(&qpol);
-    assert_eq_str!(t, "9 y^3 q^8 + 12 y^3 q^5 + 4 y^3 q^2");
+    assert_eq_str!(t, "9 y^3 q^8 c_1_2 + 12 y^3 q^5 c_1_2 + 4 y^3 q^2 c_1_2");
 }
+
+#[test]
+fn polynomial_y_polynomial_test1() {
+    use super::term_builder;
+    use super::subscripted_variable;
+
+    let a = term_builder::TermBuilder::new().coef(-3).qpow(-1).build().to_pol();
+    let b = term_builder::TermBuilder::new().coef(2).qpow(2).build().to_pol();
+    let qpol = a + b;
+    assert_eq_str!(qpol, "2 q^2 - 3 q^-1");
+
+    let m = term::Monomial {
+        xpow: BigInt::from(2),
+        ypow: BigInt::from(3),
+        qpow: BigInt::from(4),
+        variable: subscripted_variable::SubscriptedVariable {
+            i: 1,
+            j: 2,
+            empty: false,
+        }
+    };
+    let t = m.eval_y_polynomial(&qpol);
+    assert_eq_str!(t, "8 x^2 q^10 c_1_2 - 36 x^2 q^7 c_1_2 + 54 x^2 q^4 c_1_2 - 27 x^2 q c_1_2");
+}
+
+#[test]
+fn polynomial_y_polynomial_test2() {
+    use super::term_builder;
+    use super::subscripted_variable;
+
+    let a = term_builder::TermBuilder::new().coef(-3).qpow(-1).build().to_pol();
+    let b = term_builder::TermBuilder::new().coef(2).qpow(2).build().to_pol();
+    let qpol = a + b;
+    assert_eq_str!(qpol, "2 q^2 - 3 q^-1");
+
+    let pol = term_builder::TermBuilder::new()
+        .coef(2)
+        .xpow(2)
+        .ypow(3)
+        .qpow(4)
+        .variable(subscripted_variable::SubscriptedVariable { i: 1, j: 2, empty: false })
+        .build()
+        + term_builder::TermBuilder::new()
+        .coef(3)
+        .xpow(1)
+        .ypow(1)
+        .qpow(4)
+        .variable(subscripted_variable::SubscriptedVariable { i: 0, j: 0, empty: false })
+        .build();
+    let t = pol.eval_y_polynomial(&qpol);
+    assert_eq_str!(t, "16 x^2 q^10 c_1_2 - 72 x^2 q^7 c_1_2 + 108 x^2 q^4 c_1_2 - 54 x^2 q c_1_2 + 6 x q^6 c_0_0 - 9 x q^3 c_0_0");
+}
+
 
 #[test]
 fn polynomial_zero_power() {
     let qpol = term_builder::TermBuilder::new()
-        .coef(1)
         .qpow(-1)
         .build()
         .to_pol();
@@ -784,16 +868,13 @@ fn polynomial_zero_power() {
 #[test]
 fn polynomial_x_polynomial_test3() {
     let pol = term_builder::TermBuilder::new()
-        .coef(1)
         .xpow(3)
         .build()
         + term_builder::TermBuilder::new()
-        .coef(1)
         .ypow(3)
         .build();
     assert_eq_str!(pol, "x^3 + y^3");
     let qpol = term_builder::TermBuilder::new()
-        .coef(1)
         .qpow(-1)
         .build()
         .to_pol();
@@ -803,11 +884,9 @@ fn polynomial_x_polynomial_test3() {
 #[test]
 fn polynomial_x_polynomial_test4() {
     let pol = term_builder::TermBuilder::new()
-        .coef(1)
         .xpow(3)
         .build()
         + term_builder::TermBuilder::new()
-        .coef(1)
         .ypow(3)
         .build()
         + term_builder::TermBuilder::new()
@@ -822,12 +901,10 @@ fn polynomial_x_polynomial_test4() {
         .build();
     assert_eq_str!(pol, "x^3 - x^2 y^2 - x y + y^3");
     let j = term_builder::TermBuilder::new()
-        .coef(1)
         .qpow(-1)
         .build()
         .to_pol();
     let j2 = term_builder::TermBuilder::new()
-        .coef(1)
         .qpow(-2)
         .build()
         .to_pol();
@@ -846,20 +923,20 @@ fn isogeny_test() {
     let b = BigInt::from(278);
     let pp = BigInt::from(2003);
 
-    let e1 = TermBuilder::new().coef(1).ypow(2).build();
+    let e1 = TermBuilder::new().ypow(2).build();
 
-    let p = TermBuilder::new().coef(1).xpow(2).build()
+    let p = TermBuilder::new().xpow(2).build()
     + TermBuilder::new().coef(301).xpow(1).build()
     + TermBuilder::new().coef(527).build();
 
-    let q = TermBuilder::new().coef(1).xpow(1).build()
+    let q = TermBuilder::new().xpow(1).build()
     + TermBuilder::new().coef(301).build();
 
-    let r = TermBuilder::new().coef(1).xpow(2).build()
+    let r = TermBuilder::new().xpow(2).build()
     + TermBuilder::new().coef(602).xpow(1).build()
     + TermBuilder::new().coef(1942).build();
 
-    let s = TermBuilder::new().coef(1).xpow(2).build()
+    let s = TermBuilder::new().xpow(2).build()
     + TermBuilder::new().coef(602).xpow(1).build()
     + TermBuilder::new().coef(466).build();
 

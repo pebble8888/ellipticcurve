@@ -12,13 +12,11 @@ use crate::bigint::{Power};
 pub fn delta1(order: &BigInt) -> polynomial::Polynomial {
     let one = polynomial::Polynomial::one();
     let mut pol = term_builder::TermBuilder::new()
-        .coef(&BigInt::from(1))
         .build()
         .to_pol();
     let order_plus_1 = order.clone() + BigInt::from(1);
     for n in num_iter::range(BigInt::from(1), order_plus_1) {
         let t = term_builder::TermBuilder::new()
-            .coef(&BigInt::from(1))
             .qpow(&n)
             .build()
             .to_pol();

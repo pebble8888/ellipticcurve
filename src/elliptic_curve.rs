@@ -32,7 +32,7 @@ pub struct ECPoint {
 
 impl EllipticCurve {
     pub fn new(a: &BigInt, b: &BigInt, p: &BigInt) -> EllipticCurve {
-        let pol = TermBuilder::new().coef(1).xpow(3).build()
+        let pol = TermBuilder::new().xpow(3).build()
         + TermBuilder::new().coef(a).xpow(1).build()
         + TermBuilder::new().coef(b).build();
         let mut ec = EllipticCurve {
@@ -47,7 +47,7 @@ impl EllipticCurve {
     }
 
     pub fn new_raw(a: &BigInt, b: &BigInt, p: &BigInt) -> EllipticCurve {
-        let pol = TermBuilder::new().coef(1).xpow(3).build()
+        let pol = TermBuilder::new().xpow(3).build()
         + TermBuilder::new().coef(a).xpow(1).build()
         + TermBuilder::new().coef(b).build();
         let ec = EllipticCurve {

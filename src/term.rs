@@ -117,7 +117,6 @@ impl Monomial {
 
     pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .coef(&BigInt::from(1))
             .ypow(&(self.ypow.clone()))
             .qpow(&(self.qpow.clone()))
             .variable(self.variable)
@@ -128,7 +127,6 @@ impl Monomial {
 
     pub fn eval_y_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .coef(&BigInt::from(1))
             .xpow(&(self.xpow.clone()))
             .qpow(&(self.qpow.clone()))
             .variable(self.variable)

@@ -1,4 +1,4 @@
-use num_integer::{Integer};
+use num_integer::Integer;
 use num_bigint::BigInt;
 use num_traits::Zero;
 use num_traits::One;
@@ -147,3 +147,12 @@ fn extended_euclid_test2() {
     assert_eq!(x, BigInt::from(3));
     assert_eq!(y, BigInt::from(-4));
 }
+
+#[test]
+fn lcm_test() {
+    let a = BigInt::from(4);
+    assert_eq!(Integer::lcm(&BigInt::from(4), &BigInt::from(6)), BigInt::from(12));
+    assert_eq!(Integer::lcm(&BigInt::from(-4), &BigInt::from(6)), BigInt::from(12));
+    assert_eq!(Integer::lcm(&BigInt::from(-4), &BigInt::from(-6)), BigInt::from(12));
+}
+

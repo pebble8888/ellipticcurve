@@ -4,11 +4,17 @@ use primes::is_prime;
 
 /// subscripted variable
 /// if i = 0 and j = 0, omit it
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct SubscriptedVariable {
     pub i: u64,
     pub j: u64,
     pub empty: bool,
+}
+
+impl SubscriptedVariable {
+    pub fn new() -> Self {
+        Self { i: 0, j: 0, empty: true }
+    }
 }
 
 impl Default for SubscriptedVariable {
@@ -16,6 +22,19 @@ impl Default for SubscriptedVariable {
         Self { i: 0, j: 0, empty: true }
     }
 }
+
+impl PartialEq for SubscriptedVariable {
+    fn eq(&self, other: &Self) -> bool {
+        if self.empty != other.empty {
+            return false;
+        }
+        if self.empty && other.empty {
+            return true;
+        }
+        self.i == other.i && self.j == other.j
+    }
+}
+impl Eq for SubscriptedVariable {}
 
 impl Ord for SubscriptedVariable {
     fn cmp(&self, other: &Self) -> Ordering {
@@ -81,7 +100,7 @@ impl SubscriptedVariableConverter {
                 index += 1;
             }
         } 
-        for _i in num_iter::range(0, self.p) {
+        for _i in num_iter::range(0, self.p+1) {
             index += 1;
         }
         index
@@ -102,7 +121,7 @@ impl SubscriptedVariableConverter {
                 index += 1;
             }
         } 
-        for i in num_iter::range(0, self.p) {
+        for i in num_iter::range(0, self.p+1) {
             if variable.i == i &&
                variable.j == i {
                 return Some(index);
@@ -126,7 +145,7 @@ impl SubscriptedVariableConverter {
                 local_index += 1;
             }
         } 
-        for i in num_iter::range(0, self.p) {
+        for i in num_iter::range(0, self.p+1) {
             if local_index == index {
                 return SubscriptedVariable {
                     i: i,
@@ -136,7 +155,7 @@ impl SubscriptedVariableConverter {
             }
             local_index += 1;
         }
-        panic!(false);
+        panic!("invalid index!");
     }
 }
 
@@ -147,7 +166,6 @@ fn subscripted_variable_test1() {
     use super::term_builder::TermBuildable;
 
     let t1 = term_builder::TermBuilder::new()
-        .coef(&BigInt::from(1))
         .variable_ij(2u64, 3u64)
         .build()
         .to_pol();
@@ -175,7 +193,7 @@ fn subscripted_variable_test1() {
 #[test]
 fn subscripted_converter_test1() {
     let converter = SubscriptedVariableConverter::new(3);
-    assert_eq!(converter.count(), 9);
+    assert_eq!(converter.count(), 10);
 
     assert_eq_str!(converter.variable_from_index(0), "c_0_1");
     assert_eq_str!(converter.variable_from_index(1), "c_0_2");
@@ -186,6 +204,7 @@ fn subscripted_converter_test1() {
     assert_eq_str!(converter.variable_from_index(6), "c_0_0");
     assert_eq_str!(converter.variable_from_index(7), "c_1_1");
     assert_eq_str!(converter.variable_from_index(8), "c_2_2");
+    assert_eq_str!(converter.variable_from_index(9), "c_3_3");
 
     let v5 = converter.index_from_variable(SubscriptedVariable {
             i: 2,

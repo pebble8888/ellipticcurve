@@ -67,7 +67,10 @@ impl TermBuildable<i64> for TermBuilder {
 
 impl TermBuilder {
     pub fn new() -> TermBuilder {
-        Default::default()
+        TermBuilder {
+            coef_: BigInt::from(1),
+            .. Default::default()
+        }
     }
 
     pub fn variable(&mut self, variable: SubscriptedVariable) -> &mut TermBuilder {

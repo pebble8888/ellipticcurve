@@ -1,10 +1,12 @@
 use primes;
+use num_integer::Integer;
 use num_bigint::BigInt;
 use super::polynomial;
 use super::term_builder;
 use super::term_builder::TermBuildable;
 use super::bigint::Power;
 use super::j_invariant;
+use super::subscripted_variable;
 
 type TermBuilder = term_builder::TermBuilder;
 type Polynomial = polynomial::Polynomial;
@@ -13,8 +15,8 @@ type Polynomial = polynomial::Polynomial;
 pub fn modular_polynomial(n: u64) -> Polynomial {
     assert!(n >= 2);
     if n == 2 {
-          TermBuilder::new().coef(1).xpow(3).build()
-        + TermBuilder::new().coef(1).ypow(3).build()
+          TermBuilder::new().xpow(3).build()
+        + TermBuilder::new().ypow(3).build()
         + TermBuilder::new().coef(-162_000).xpow(2).build()
         + TermBuilder::new().coef(-162_000).ypow(2).build()
         + TermBuilder::new().coef(1_488).xpow(2).ypow(1).build()
@@ -27,8 +29,8 @@ pub fn modular_polynomial(n: u64) -> Polynomial {
     } else if n == 3 {
         let c10 = BigInt::from(1_855_425_871_872_000_000_000_i128);
         let pol =
-          TermBuilder::new().coef(1).xpow(4).build()
-        + TermBuilder::new().coef(1).ypow(4).build()
+          TermBuilder::new().xpow(4).build()
+        + TermBuilder::new().ypow(4).build()
         + TermBuilder::new().coef(-1).xpow(3).ypow(3).build()
         + TermBuilder::new().coef(2_232).xpow(3).ypow(2).build()
         + TermBuilder::new().coef(2_232).ypow(3).xpow(2).build()
@@ -67,8 +69,8 @@ pub fn modular_polynomial(n: u64) -> Polynomial {
         let c41 = BigInt::from(128_541_798_906_828_816_384_000_i128);
         let c42 = BigInt::from(383_083_609_779_811_215_375_i128);
         let pol = 
-          TermBuilder::new().coef(1).xpow(6).build()
-        + TermBuilder::new().coef(1).ypow(6).build()
+          TermBuilder::new().xpow(6).build()
+        + TermBuilder::new().ypow(6).build()
         + TermBuilder::new().coef(-1).xpow(5).ypow(5).build()
         + TermBuilder::new().coef(3_720).xpow(5).ypow(4).build()
         + TermBuilder::new().coef(3_720).ypow(5).xpow(4).build()
@@ -116,13 +118,12 @@ pub fn subscripted_variable_modular_polynomial(p: u64) -> Polynomial {
     assert!(p >= 2);
     assert!(primes::is_prime(p));
     let mut pol = term_builder::TermBuilder::new()
-                .coef(&BigInt::from(1))
                 .xpow(&BigInt::from(p+1))
                 .build().to_pol();
     pol += term_builder::TermBuilder::new()
-                .coef(&BigInt::from(1))
                 .ypow(&BigInt::from(p+1))
                 .build().to_pol();
+    /*
     pol += term_builder::TermBuilder::new()
             .coef(&BigInt::from(-1))
             .xpow(&BigInt::from(p))
@@ -133,10 +134,10 @@ pub fn subscripted_variable_modular_polynomial(p: u64) -> Polynomial {
             .xpow(&BigInt::from(1))
             .ypow(&BigInt::from(1))
             .build().to_pol();
+    */
 
-    for i in num_iter::range(0, p) {
+    for i in num_iter::range(0, p+1) {
         pol += term_builder::TermBuilder::new()
-            .coef(&BigInt::from(1))
             .xpow(&BigInt::from(i))
             .ypow(&BigInt::from(i))
             .variable_ij(i, i)
@@ -145,13 +146,11 @@ pub fn subscripted_variable_modular_polynomial(p: u64) -> Polynomial {
     for i in num_iter::range(0, p+1) {
         for j in num_iter::range(i+1, p+1) {
             pol += term_builder::TermBuilder::new()
-                .coef(&BigInt::from(1))
                 .xpow(&BigInt::from(i))
                 .ypow(&BigInt::from(j))
                 .variable_ij(i, j)
                 .build().to_pol();
             pol += term_builder::TermBuilder::new()
-                .coef(&BigInt::from(1))
                 .xpow(&BigInt::from(j))
                 .ypow(&BigInt::from(i))
                 .variable_ij(i, j)
@@ -185,6 +184,85 @@ pub fn subscripted_variable_modular_polynomial_q(p: u64) -> polynomial::Polynomi
     pol_q
 }
 
+/// solve a simultanous equation
+pub fn solve_coefficient(p: u64) -> Vec<Vec<BigInt>> {
+    let list = subscripted_variable_modular_polynomial_list(p);
+    // (i) LU
+    let converter = subscripted_variable::SubscriptedVariableConverter::new(p);
+    let row_count: usize = list.len();
+    let col_count: usize = converter.count() as usize + 1;
+    let mut a: Vec<Vec<BigInt>> = vec![vec![BigInt::from(0); col_count]; row_count];
+    for row in num_iter::range(0, row_count) {
+        for col in num_iter::range(0, col_count) {
+            if col < col_count - 1 {
+                let variable = converter.variable_from_index(col as u64);
+                let coef = list[row].to_variable_coef(variable);
+                a[row][col] = coef;
+            } else {
+                let coef = list[row].to_variable_coef(subscripted_variable::SubscriptedVariable::new());
+                a[row][col] = coef;
+            }
+        }
+    }
+
+    let mut idx: Vec<usize> = Vec::new();
+    for i in num_iter::range(0, row_count) {
+        idx.push(i);
+    }
+
+    println!("before");
+    for i in num_iter::range(0, row_count) {
+        for k in num_iter::range(0, col_count) {
+            println!("a_{}_{} {}", i, k, a[idx[i]][k]);
+        }
+    }
+
+    // 変数の種類でのループ
+    for i in num_iter::range(0, col_count - 1) {
+        // (i-I)
+        // 変数の種類
+        let variable = converter.variable_from_index(i as u64);
+        let mut found = false;
+        for j in num_iter::range(i, row_count) {
+            let coef = list[idx[j]].to_variable_coef(variable);
+            if coef != BigInt::from(0) {
+                if i != j {
+                    // row swap
+                    let b = idx[i];
+                    idx[i] = idx[j];
+                    idx[j] = b;
+                }
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            assert!(false, "not found");
+        }
+        let c1 = list[idx[i]].to_variable_coef(variable);
+        assert!(c1 != BigInt::from(0));
+        // (i-II)
+        for j in num_iter::range(i+1, row_count) {
+            let c2 = list[idx[j]].to_variable_coef(variable);
+            if c2 != BigInt::from(0) {
+                let lcm = Integer::lcm(&c1, &c2); 
+                let cc1 = lcm.clone() / c1.clone();
+                assert_eq!(cc1.clone() * c1.clone(), lcm.clone());
+                let cc2 = lcm.clone() / c2.clone();
+                assert_eq!(cc2.clone() * c2.clone(), lcm.clone());
+                for k in num_iter::range(0, col_count) {
+                    a[idx[j]][k] *= cc2.clone();
+                }
+                for k in num_iter::range(0, col_count) {
+                    let val = a[idx[i]][k].clone() * cc1.clone();
+                    a[idx[j]][k] -= val;
+                }
+            }
+        }
+    }
+    return a;
+}
+
 #[test]
 fn modular_polynomial_test2() {
     let pol = modular_polynomial(2);
@@ -207,21 +285,22 @@ fn modular_polynomial_test5() {
 fn subscripted_variable_modular_polynomial_p2_test() {
     let p = 2;
     let pol = subscripted_variable_modular_polynomial(p);
-    assert_eq_str!(pol, "x^3 - x^2 y^2 + x^2 y c_1_2 + x^2 c_0_2 + x y^2 c_1_2 + x y c_1_1 - x y + x c_0_1 + y^3 + y^2 c_0_2 + y c_0_1 + c_0_0");
+    assert_eq_str!(pol, "x^3 + x^2 y^2 c_2_2 + x^2 y c_1_2 + x^2 c_0_2 + x y^2 c_1_2 + x y c_1_1 + x c_0_1 + y^3 + y^2 c_0_2 + y c_0_1 + c_0_0");
 
     let pol_q = subscripted_variable_modular_polynomial_q(p);
-    assert_eq_str!(pol_q, "126112980648 c_1_2 + 22047296 c_1_1 + 1894608 c_0_2 + 1488 c_0_1 + c_0_0 - 941844902299520 + 1495268650 q^-1 c_1_2 + 197628 q^-1 c_1_1 + 1488 q^-1 c_0_2 + q^-1 c_0_1 - 10291427447328 q^-1 + 23548880 q^-2 c_1_2 + 744 q^-2 c_1_1 + 1489 q^-2 c_0_2 + q^-2 c_0_1 - 73882907184 q^-2 + 199860 q^-3 c_1_2 + q^-3 c_1_1 - 338165056 q^-3 + 745 q^-4 c_1_2 + q^-4 c_0_2 - 946560 q^-4 + q^-5 c_1_2 - 1488 q^-5");
+    assert_eq_str!(pol_q, "941847590656704 c_2_2 + 126112980648 c_1_2 + 22047296 c_1_1 + 1894608 c_0_2 + 1488 c_0_1 + c_0_0 + 2710404480 + 10291429500960 q^-1 c_2_2 + 1495268650 q^-1 c_1_2 + 197628 q^-1 c_1_1 + 1488 q^-1 c_0_2 + q^-1 c_0_1 + 2251260 q^-1 + 73885159932 q^-2 c_2_2 + 23548880 q^-2 c_1_2 + 744 q^-2 c_1_1 + 1489 q^-2 c_0_2 + q^-2 c_0_1 + 2253492 q^-2 + 338165056 q^-3 c_2_2 + 199860 q^-3 c_1_2 + q^-3 c_1_1 + q^-3 + 948792 q^-4 c_2_2 + 745 q^-4 c_1_2 + q^-4 c_0_2 + 2232 q^-4 + 1488 q^-5 c_2_2 + q^-5 c_1_2 + q^-6 c_2_2 + q^-6");
 
     let list = subscripted_variable_modular_polynomial_list(p);
     assert_eq!(list.len(), 6);
-    assert_eq_str!(list[0], "c_1_2 - 1488");
-    assert_eq_str!(list[1], "745 c_1_2 + c_0_2 - 946560");
-    assert_eq_str!(list[2], "199860 c_1_2 + c_1_1 - 338165056");
-    assert_eq_str!(list[3], "23548880 c_1_2 + 744 c_1_1 + 1489 c_0_2 + c_0_1 - 73882907184");
-    assert_eq_str!(list[4], "1495268650 c_1_2 + 197628 c_1_1 + 1488 c_0_2 + c_0_1 - 10291427447328");
-    assert_eq_str!(list[5], "126112980648 c_1_2 + 22047296 c_1_1 + 1894608 c_0_2 + 1488 c_0_1 + c_0_0 - 941844902299520");
+    assert_eq_str!(list[0], "1488 c_2_2 + c_1_2");
+    assert_eq_str!(list[1], "948792 c_2_2 + 745 c_1_2 + c_0_2 + 2232");
+    assert_eq_str!(list[2], "338165056 c_2_2 + 199860 c_1_2 + c_1_1 + 1");
+    assert_eq_str!(list[3], "73885159932 c_2_2 + 23548880 c_1_2 + 744 c_1_1 + 1489 c_0_2 + c_0_1 + 2253492");
+    assert_eq_str!(list[4], "10291429500960 c_2_2 + 1495268650 c_1_2 + 197628 c_1_1 + 1488 c_0_2 + c_0_1 + 2251260");
+    assert_eq_str!(list[5], "941847590656704 c_2_2 + 126112980648 c_1_2 + 22047296 c_1_1 + 1894608 c_0_2 + 1488 c_0_1 + c_0_0 + 2710404480");
 }
 
+/*
 #[test]
 fn subscripted_variable_modular_polynomial_p3_test() {
     let p = 3;
@@ -245,5 +324,30 @@ fn subscripted_variable_modular_polynomial_p3_test() {
     assert_eq_str!(list[9], "57383938307316236432 c_2_3 + 833607524819048 c_2_2 + 90830762088165 c_1_3 + 20874771304 c_1_2 + 196884 c_1_1 + 2232 c_0_3 + c_0_2 - 2319314637883533600896496");
     assert_eq_str!(list[10], "1768996792073642463801 c_2_3 + 45738435798911040 c_2_2 + 1345112306562240 c_1_3 + 437662034132 c_1_2 + 21494504 c_1_1 + 2251260 c_0_3 + 1488 c_0_2 + c_0_1 - 109642480943384827151178336");
     assert_eq_str!(list[11], "65201219062152355627872 c_2_3 + 1769523054225123330 c_2_2 + 45070853378831784 c_1_3 + 15329636199360 c_1_2 + 864853506 c_1_1 + 2710404480 c_0_3 + 1894608 c_0_2 + 1488 c_0_1 + c_0_0 - 4197391688509447725659608686");
+}
+*/
+
+#[test]
+fn solve_coefficient_test1() {
+    let a = solve_coefficient(2);
+    println!("after");
+
+    let row_count = a.len();
+    let col_count = a[0].len();
+
+    for i in num_iter::range(0, row_count) {
+        for k in num_iter::range(0, col_count) {
+            println!("a_{}_{} {}", i, k, a[i][k]);
+        }
+    }
+    assert_eq!(a.len(), 6);
+    assert_eq!(a[0].len(), 7);
+    assert_eq_str!(a[0][0], "0");
+    assert_eq_str!(a[0][1], "0");
+    assert_eq_str!(a[0][2], "0");
+    assert_eq_str!(a[0][3], "0");
+    assert_eq_str!(a[0][4], "-1");
+    assert_eq_str!(a[0][5], "-40773376");
+    assert_eq_str!(a[0][6], "-1");
 }
 

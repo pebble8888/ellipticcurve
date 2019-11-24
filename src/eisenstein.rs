@@ -8,10 +8,7 @@ use super::divisor;
 
 /// E_4(q)
 pub fn eisenstein4(max_q_order: &BigInt) -> polynomial::Polynomial {
-    let mut pol = term_builder::TermBuilder::new()
-        .coef(&BigInt::from(1))
-        .build()
-        .to_pol();
+    let mut pol = term_builder::TermBuilder::new().build().to_pol();
     let order_plus_1 = max_q_order.clone() + BigInt::from(1);
     for n in num_iter::range(BigInt::from(1), order_plus_1) {
         let sigma = divisor::sigma_divisor(&n, &(BigInt::from(3)));
