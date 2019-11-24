@@ -314,7 +314,7 @@ fn elliptic_curve_test5() {
     use primes::is_prime;
 
     let mut pset = PrimeSet::new();
-    for p in pset.iter().skip(2).take(30) { 
+    for p in pset.iter().skip(2).take(10) { 
         let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(p));
         print!("{}", ec);
         if is_prime(ec.order() as u64) {

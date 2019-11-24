@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::fmt;
+use primes::is_prime;
 
 /// subscripted variable
 /// if i = 0 and j = 0, omit it
@@ -57,6 +58,88 @@ impl fmt::Display for SubscriptedVariable {
     }
 }
 
+#[derive(Debug)]
+pub struct SubscriptedVariableConverter {
+    pub p: u64,
+}
+
+impl SubscriptedVariableConverter {
+    pub fn new(p: u64) -> Self {
+        if !is_prime(p) {
+            panic!("p must be prime!");
+        }
+
+        SubscriptedVariableConverter {
+            p: p,
+        }
+    }
+
+    pub fn count(&self) -> u64 {
+        let mut index: u64 = 0;
+        for i in num_iter::range(0, self.p+1) {
+            for _j in num_iter::range(i+1, self.p+1) {
+                index += 1;
+            }
+        } 
+        for _i in num_iter::range(0, self.p) {
+            index += 1;
+        }
+        index
+    }
+
+    pub fn index_from_variable(&self, variable: SubscriptedVariable) -> Option<u64> {
+        if variable.empty {
+            return None as Option<u64>;
+        }
+
+        let mut index: u64 = 0;
+        for i in num_iter::range(0, self.p+1) {
+            for j in num_iter::range(i+1, self.p+1) {
+                if variable.i == i &&
+                   variable.j == j {
+                    return Some(index);
+                }
+                index += 1;
+            }
+        } 
+        for i in num_iter::range(0, self.p) {
+            if variable.i == i &&
+               variable.j == i {
+                return Some(index);
+            }
+            index += 1;
+        }
+        panic!("invalid variable!");
+    }
+
+    pub fn variable_from_index(&self, index: u64) -> SubscriptedVariable {
+        let mut local_index: u64 = 0;
+        for i in num_iter::range(0, self.p+1) {
+            for j in num_iter::range(i+1, self.p+1) {
+                if local_index == index {
+                    return SubscriptedVariable {
+                        i: i,
+                        j: j,
+                        empty: false,
+                    };
+                }
+                local_index += 1;
+            }
+        } 
+        for i in num_iter::range(0, self.p) {
+            if local_index == index {
+                return SubscriptedVariable {
+                    i: i,
+                    j: i,
+                    empty: false,
+                };
+            }
+            local_index += 1;
+        }
+        panic!(false);
+    }
+}
+
 #[test]
 fn subscripted_variable_test1() {
     use num_bigint::BigInt;
@@ -87,5 +170,35 @@ fn subscripted_variable_test1() {
 
     let t4 = t1 + t2 + t3;
     assert_eq_str!(t4, "671 x^5 c_19_21 + 45 c_7_8 + c_2_3");
+}
+
+#[test]
+fn subscripted_converter_test1() {
+    let converter = SubscriptedVariableConverter::new(3);
+    assert_eq!(converter.count(), 9);
+
+    assert_eq_str!(converter.variable_from_index(0), "c_0_1");
+    assert_eq_str!(converter.variable_from_index(1), "c_0_2");
+    assert_eq_str!(converter.variable_from_index(2), "c_0_3");
+    assert_eq_str!(converter.variable_from_index(3), "c_1_2");
+    assert_eq_str!(converter.variable_from_index(4), "c_1_3");
+    assert_eq_str!(converter.variable_from_index(5), "c_2_3");
+    assert_eq_str!(converter.variable_from_index(6), "c_0_0");
+    assert_eq_str!(converter.variable_from_index(7), "c_1_1");
+    assert_eq_str!(converter.variable_from_index(8), "c_2_2");
+
+    let v5 = converter.index_from_variable(SubscriptedVariable {
+            i: 2,
+            j: 3,
+            empty: false,
+        });
+    match v5 {
+        Some(n) => {
+            assert_eq!(n, 5);
+        }
+        None => {
+            assert!(false);
+        }
+    }
 }
 

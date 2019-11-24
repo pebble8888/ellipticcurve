@@ -220,16 +220,6 @@ impl Polynomial {
         }
     }
 
-    /*
-    pub fn zero() -> Self {
-        let zero = term_builder::TermBuilder::new()
-            .coef(&BigInt::from(0))
-            .build()
-            .to_pol();
-        zero 
-    }
-    */
-
     pub fn one() -> Self {
         let one = term_builder::TermBuilder::new()
             .coef(&BigInt::from(1))
