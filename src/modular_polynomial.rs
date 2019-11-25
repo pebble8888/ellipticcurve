@@ -164,13 +164,12 @@ pub fn subscripted_variable_modular_polynomial_list(p: u64) -> Vec<polynomial::P
 pub fn subscripted_variable_modular_polynomial_q(p: u64) -> polynomial::Polynomial {
     let pol = subscripted_variable_modular_polynomial(p);
     // j-invariant q order needs p^2 + p
-    let p = BigInt::from(p);
-    let j_order = p.power(2) + p.clone();
-    let j = j_invariant::j_invariant(&j_order);
-    let j_q_power = j.to_q_power(&p.clone());
+    let j_order = p * p + p;
+    let j = j_invariant::j_invariant(j_order);
+    let j_q_power = j.to_q_power(p as i64);
     let pol1 = pol.eval_x_polynomial(&j);
     let pol2 = pol1.eval_y_polynomial(&j_q_power);
-    let pol_q = pol2.omit_high_order_q(&BigInt::from(0)); 
+    let pol_q = pol2.omit_high_order_q(0); 
     pol_q
 }
 

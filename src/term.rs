@@ -231,12 +231,12 @@ impl Term {
     }
 
     /// q -> q^n
-    pub fn to_q_power(&self, n: &BigInt) -> Self {
+    pub fn to_q_power(&self, n: i64) -> Self {
         TermBuilder::new()
           .coef(&self.coef.clone())
           .xpow(&self.xpow().clone())
           .ypow(&self.ypow().clone())
-          .qpow(&(self.qpow() * n.clone()))
+          .qpow(&(self.qpow() * n))
           .variable(self.variable())
           .build()
     }

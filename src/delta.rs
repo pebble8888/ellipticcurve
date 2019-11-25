@@ -7,30 +7,28 @@ use super::term_builder::TermBuildable;
 use crate::bigint::{Power};
 
 /// (1-q)^24 * (1-q^2)^24 * .. * (1-q^order)^24
-pub fn delta1(order: &BigInt) -> polynomial::Polynomial {
+pub fn delta1(order: u64) -> polynomial::Polynomial {
     let one = polynomial::Polynomial::one();
     let mut pol = term_builder::TermBuilder::new()
         .build()
         .to_pol();
-    let order_plus_1 = order.clone() + BigInt::from(1);
-    for n in num_iter::range(BigInt::from(1), order_plus_1) {
-        let t = term_builder::TermBuilder::new().qpow(&n).build().to_pol();
+    for n in num_iter::range(1, order + 1) {
+        let t = term_builder::TermBuilder::new().qpow(&BigInt::from(n)).build().to_pol();
         let u = (one.clone() - t).power(24);
-        let u = u.omit_high_order_q(&order);
+        let u = u.omit_high_order_q(order as i64);
         pol *= u;
-        pol = pol.omit_high_order_q(&order);
+        pol = pol.omit_high_order_q(order as i64);
     }
     pol
 }
 
 // 1/d = 1 + (1-d) + (1-d)^2 + ...
-pub fn delta1_inverse(order: &BigInt) -> polynomial::Polynomial {
-    let a = polynomial::Polynomial::one() - delta1(&order.clone());
+pub fn delta1_inverse(order: u64) -> polynomial::Polynomial {
+    let a = polynomial::Polynomial::one() - delta1(order);
     let mut pol = polynomial::Polynomial::one();
-    let order_plus_1 = order.clone() + BigInt::from(1);
-    for n in num_iter::range(BigInt::from(1), order_plus_1) {
-        let t = a.clone().power(&n);
-        let t = t.omit_high_order_q(&order);
+    for n in num_iter::range(1, order + 1) {
+        let t = a.clone().power(n as i64);
+        let t = t.omit_high_order_q(order as i64);
         pol += t;
     }
     pol
@@ -38,12 +36,12 @@ pub fn delta1_inverse(order: &BigInt) -> polynomial::Polynomial {
 
 #[test]
 fn delta1_test1() {
-    assert_eq_str!(delta1(&BigInt::from(1)), "- 24 q + 1");
-    assert_eq_str!(delta1(&BigInt::from(2)), "252 q^2 - 24 q + 1");
-    assert_eq_str!(delta1(&BigInt::from(3)), "- 1472 q^3 + 252 q^2 - 24 q + 1");
+    assert_eq_str!(delta1(1), "- 24 q + 1");
+    assert_eq_str!(delta1(2), "252 q^2 - 24 q + 1");
+    assert_eq_str!(delta1(3), "- 1472 q^3 + 252 q^2 - 24 q + 1");
 
-    assert_eq_str!(delta1_inverse(&BigInt::from(1)), "24 q + 1");
-    assert_eq_str!(delta1_inverse(&BigInt::from(2)), "324 q^2 + 24 q + 1");
-    assert_eq_str!(delta1_inverse(&BigInt::from(3)), "3200 q^3 + 324 q^2 + 24 q + 1");
+    assert_eq_str!(delta1_inverse(1), "24 q + 1");
+    assert_eq_str!(delta1_inverse(2), "324 q^2 + 24 q + 1");
+    assert_eq_str!(delta1_inverse(3), "3200 q^3 + 324 q^2 + 24 q + 1");
 }
 

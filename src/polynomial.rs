@@ -450,7 +450,7 @@ impl Polynomial {
     }
 
     /// q -> q^n
-    pub fn to_q_power(&self, n: &BigInt) -> Self {
+    pub fn to_q_power(&self, n: i64) -> Self {
         let mut pol = Polynomial::new();
         for (m, v) in &self.terms {
             let u = term::Term::from(m, v);
@@ -590,12 +590,12 @@ impl Polynomial {
     }
 
     /// omit O(order+1) for q
-    pub fn omit_high_order_q(&self, order: &BigInt) -> Polynomial {
+    pub fn omit_high_order_q(&self, order: i64) -> Polynomial {
         assert!(!self.has_x(), "has_x()");
         assert!(!self.has_y(), "has_y()");
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
-            if &m.qpow <= order {
+            if &m.qpow <= &BigInt::from(order) {
                 pol.terms.insert(m.clone(), coef.clone());
             }
         }
