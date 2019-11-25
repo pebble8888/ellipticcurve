@@ -4,11 +4,9 @@ use num_bigint::BigInt;
 use super::polynomial;
 use super::term_builder;
 use super::term_builder::TermBuildable;
-
 use crate::bigint::{Power};
 
-/// prod (1-q^n)^24
-/// order: q power stable for order - 1
+/// (1-q)^24 * (1-q^2)^24 * .. * (1-q^order)^24
 pub fn delta1(order: &BigInt) -> polynomial::Polynomial {
     let one = polynomial::Polynomial::one();
     let mut pol = term_builder::TermBuilder::new()
@@ -16,10 +14,7 @@ pub fn delta1(order: &BigInt) -> polynomial::Polynomial {
         .to_pol();
     let order_plus_1 = order.clone() + BigInt::from(1);
     for n in num_iter::range(BigInt::from(1), order_plus_1) {
-        let t = term_builder::TermBuilder::new()
-            .qpow(&n)
-            .build()
-            .to_pol();
+        let t = term_builder::TermBuilder::new().qpow(&n).build().to_pol();
         let u = (one.clone() - t).power(24);
         let u = u.omit_high_order_q(&order);
         pol *= u;

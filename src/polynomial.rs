@@ -217,12 +217,18 @@ impl<'a> Power<&'a BigInt> for Polynomial {
         if n == &Zero::zero() {
             return TermBuilder::new().build().to_pol();
         }
-        
-        let mut m = self.clone();
-        for _i in num_iter::range(BigInt::from(0), n-1) {
-            m *= self;
-        }
-        m
+        let mut e = n.clone();
+        let mut b = self.clone();
+        let mut r = term_builder::TermBuilder::new().build().to_pol();
+        while e > One::one() {
+            if e.is_odd() {
+                r *= b.clone();
+            }
+            let f = b.clone() * b.clone();
+            b = f;
+            e /= 2;
+        } 
+        r * b
     }
 }
 
