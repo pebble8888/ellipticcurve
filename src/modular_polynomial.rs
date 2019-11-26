@@ -236,7 +236,6 @@ pub fn modular_polynomial(p: u64) -> polynomial::Polynomial {
     }
 
     // (ii) Substitute
-    println!("col_count {}", col_count);
     let col_prim = col_count -1;
     for i in num_iter::range(1, col_count - 1).rev() {
         // diagonal coef
