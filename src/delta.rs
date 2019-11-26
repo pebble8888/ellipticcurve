@@ -1,10 +1,8 @@
 extern crate num_iter;
-
 use num_bigint::BigInt;
 use super::polynomial;
 use super::term_builder;
 use super::term_builder::TermBuildable;
-use crate::bigint::{Power};
 
 /// (1-q)^24 * (1-q^2)^24 * .. * (1-q^order)^24
 pub fn delta1(order: u64) -> polynomial::Polynomial {
@@ -14,8 +12,7 @@ pub fn delta1(order: u64) -> polynomial::Polynomial {
         .to_pol();
     for n in num_iter::range(1, order + 1) {
         let t = term_builder::TermBuilder::new().qpow(&BigInt::from(n)).build().to_pol();
-        let u = (one.clone() - t).power(24);
-        let u = u.omit_high_order_q(order as i64);
+        let u = (one.clone() - t).power_omit_high_order_q(24, order);
         pol *= u;
         pol = pol.omit_high_order_q(order as i64);
     }
@@ -27,8 +24,7 @@ pub fn delta1_inverse(order: u64) -> polynomial::Polynomial {
     let a = polynomial::Polynomial::one() - delta1(order);
     let mut pol = polynomial::Polynomial::one();
     for n in num_iter::range(1, order + 1) {
-        let t = a.clone().power(n as i64);
-        let t = t.omit_high_order_q(order as i64);
+        let t = a.clone().power_omit_high_order_q(n, order);
         pol += t;
     }
     pol

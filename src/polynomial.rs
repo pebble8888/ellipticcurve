@@ -277,6 +277,18 @@ impl Polynomial {
         r
     }
 
+    pub fn power_omit_high_order_q(&self, n: u64, order: u64) -> Self {
+        let mut pol = term_builder::TermBuilder::new()
+            .build()
+            .to_pol();
+        // TODO:optimise
+        for _i in num_iter::range(0, n) {
+            pol *= self.clone();
+            pol = pol.omit_high_order_q(order as i64);
+        }
+        pol
+    }
+
     pub fn polynomial_modular(&self, other: &Polynomial, p: &BigInt) -> Self {
         assert!(!other.has_y(), "!other.has_y()");
         assert!(!other.has_q(), "!other.has_q()");
@@ -918,6 +930,13 @@ fn polynomial_x_polynomial_test4() {
     assert_eq_str!(p1, "y^3 - y^2 q^-2 - y q^-1 + q^-3");
     let p2 = p1.eval_y_polynomial(&j2);
     assert_eq_str!(p2, "0");
+}
+
+#[test]
+fn power_omit_high_order_q_test1() {
+    let pol = term_builder::TermBuilder::new().build()
+        + term_builder::TermBuilder::new().qpow(1).build();
+    assert_eq_str!(pol.power_omit_high_order_q(24, 1), "24 q + 1");
 }
 
 #[test]
