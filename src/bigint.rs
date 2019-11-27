@@ -20,21 +20,41 @@ pub trait Inverse {
 
 impl<'a> Power<&'a BigInt> for BigInt { 
     fn power(&self, n: &BigInt) -> Self {
-        let mut t: BigInt = One::one();
-        for _i in num_iter::range(Zero::zero(), n.clone()) {
-            t *= self;
+        if n == &Zero::zero() {
+            return One::one();
         }
-        t
+        let mut e = n.clone();
+        let mut b = self.clone();
+        let mut r = BigInt::from(1);
+        while e > One::one() {
+            if e.is_odd() {
+                r *= b.clone();
+            }
+            let f = b.clone() * b.clone();
+            b = f;
+            e /= 2;
+        } 
+        r * b
     }
 }
 
 impl Power<i64> for BigInt {
     fn power(&self, n: i64) -> Self {
-        let mut t: BigInt = One::one();
-        for _i in num_iter::range(Zero::zero(), n.clone()) {
-            t *= self;
+        if n == 0 {
+            return One::one();
         }
-        t
+        let mut e = n;
+        let mut b = self.clone();
+        let mut r = BigInt::from(1);
+        while e > One::one() {
+            if e.is_odd() {
+                r *= b.clone();
+            }
+            let f = b.clone() * b.clone();
+            b = f;
+            e /= 2;
+        }
+        r * b
     }
 }
 
@@ -72,7 +92,6 @@ pub fn extended_gcd(a: BigInt, b: BigInt) -> (BigInt, BigInt, BigInt) {
     let (g, x, y) = extended_gcd(r, a);
     (g, y - q * x.clone(), x.clone())
 }
-
 
 
 #[test]
