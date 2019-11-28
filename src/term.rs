@@ -1,7 +1,6 @@
 use num_integer::Integer;
 use num_bigint::BigInt;
-use num_traits::One;
-use num_traits::Zero;
+use num_traits::{Zero, One};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops; 
@@ -11,8 +10,6 @@ use super::term_builder;
 use super::term_builder::TermBuildable;
 use super::subscripted_variable;
 
-type Polynomial = polynomial::Polynomial;
-type TermBuilder = term_builder::TermBuilder;
 type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 
 /// coef * monomial
@@ -31,7 +28,13 @@ pub struct Monomial {
     pub variable: SubscriptedVariable,
 }
 
-impl_op_ex!(+ |a: &Term, b: &Term| -> Polynomial {
+impl One for Term {
+    fn one() -> Self {
+        term_builder::TermBuilder::new().build()   
+    }
+}
+
+impl_op_ex!(+ |a: &Term, b: &Term| -> polynomial::Polynomial {
     let mut pol = a.clone().to_pol();
     if let Some(av) = pol.terms.get_mut(&b.monomial) {
         *av += b.coef.clone(); 
@@ -56,7 +59,7 @@ impl_op_ex!(* |a: &Term, b: &Term| -> Term {
     }
 });
 
-impl_op_ex!(- |a: &Term, b: &Term| -> Polynomial {
+impl_op_ex!(- |a: &Term, b: &Term| -> polynomial::Polynomial {
     a + (-b)
 });
 
@@ -64,7 +67,7 @@ impl_op_ex!(/ |a: &Term, b: &Term| -> Term {
     if !b.variable().empty {
         panic!("b is not zero!");
     }
-    TermBuilder::new()
+    term_builder::TermBuilder::new()
         .coef(&a.coef.div_floor(&b.coef))
         .xpow(&(a.xpow() - b.xpow()))
         .ypow(&(a.ypow() - b.ypow()))
@@ -74,7 +77,7 @@ impl_op_ex!(/ |a: &Term, b: &Term| -> Term {
 });
 
 impl_op_ex!(- |a: &Term| -> Term {
-    TermBuilder::new()
+    term_builder::TermBuilder::new()
         .coef(&(-a.coef.clone()))
         .xpow(&a.xpow().clone())
         .ypow(&a.ypow().clone())
@@ -101,7 +104,7 @@ impl<'a> Power<&'a BigInt> for Term {
         if !self.variable().empty {
             panic!("can't power non zero variable!");
         }
-        TermBuilder::new()
+        term_builder::TermBuilder::new()
           .coef(&self.coef.clone().power(&n.clone()))
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
@@ -181,8 +184,8 @@ impl Term {
     }
 
     /// convert Term to Polynomial
-    pub fn to_pol(&self) -> Polynomial {
-        let mut pol = Polynomial::new();
+    pub fn to_pol(&self) -> polynomial::Polynomial {
+        let mut pol = polynomial::Polynomial::new();
         if !self.coef.is_zero() {
             let u = self.clone();
             pol.terms.insert(u.monomial, u.coef);
@@ -198,7 +201,7 @@ impl Term {
 
     /// Term^n (mod p)
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
-        TermBuilder::new()
+        term_builder::TermBuilder::new()
             .coef(&self.coef.power_modulo(n, p))
             .xpow(&(self.xpow() * n.clone()))
             .ypow(&(self.ypow() * n.clone()))
@@ -210,7 +213,7 @@ impl Term {
     /// Frobenius map of Term
     /// x -> x^n  y -> y^n
     pub fn to_frob(&self, n: &BigInt) -> Self {
-        TermBuilder::new()
+        term_builder::TermBuilder::new()
           .coef(&self.coef.clone())
           .xpow(&(self.xpow() * n.clone()))
           .ypow(&(self.ypow() * n.clone()))
@@ -221,7 +224,7 @@ impl Term {
 
     /// y -> y^n
     pub fn to_y_power(&self, n: &BigInt) -> Self {
-        TermBuilder::new()
+        term_builder::TermBuilder::new()
           .coef(&self.coef.clone())
           .xpow(&self.xpow().clone())
           .ypow(&(self.ypow() * n.clone()))
@@ -232,7 +235,7 @@ impl Term {
 
     /// q -> q^n
     pub fn to_q_power(&self, n: i64) -> Self {
-        TermBuilder::new()
+        term_builder::TermBuilder::new()
           .coef(&self.coef.clone())
           .xpow(&self.xpow().clone())
           .ypow(&self.ypow().clone())
@@ -243,10 +246,10 @@ impl Term {
 
     /// Term (mod n)
     pub fn modulo(&self, n: &BigInt) -> Self {
-        if n == &Zero::zero() {
+        if n.is_zero() {
             panic!("modulo zero!");
         } else {
-            TermBuilder::new()
+            term_builder::TermBuilder::new()
               .coef(&self.coef.mod_floor(n))
               .xpow(&self.xpow().clone())
               .ypow(&self.ypow().clone())
@@ -258,27 +261,23 @@ impl Term {
 
     /// Term = Term (mod n)
     pub fn modular_assign(&mut self, n: &BigInt) {
-        if n == &Zero::zero() {
+        if n.is_zero() {
             panic!("modulo zero!");
         } else {
             self.coef = self.coef.mod_floor(n);
         }
     }
 
-    pub fn is_zero(&self) -> bool {
-        self.coef == Zero::zero()
-    }
-
     pub fn has_x(&self) -> bool {
-        self.xpow() != &Zero::zero()
+        !self.xpow().is_zero()
     }
 
     pub fn has_y(&self) -> bool {
-        self.ypow() != &Zero::zero()
+        !self.ypow().is_zero()
     }
 
     pub fn has_q(&self) -> bool {
-        self.qpow() != &Zero::zero()
+        !self.qpow().is_zero()
     }
 
     pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
@@ -346,7 +345,7 @@ impl PartialOrd for Term {
 
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.coef == One::one() {
+        if self.coef.is_one() {
             if self.xpow().is_zero() &&
                self.ypow().is_zero() &&
                self.qpow().is_zero() {
@@ -499,7 +498,7 @@ fn unit_test() {
     };
     assert_eq_str!(u2.clone() * u3.clone(), "12");
     assert_eq_str!(&u2 * &u3, "12");
-    assert_eq_str!(TermBuilder::new()
+    assert_eq_str!(term_builder::TermBuilder::new()
         .coef(20)
         .xpow(1)
         .build()
@@ -507,7 +506,7 @@ fn unit_test() {
 
     // power_modulo
 
-    let u11 = TermBuilder::new().coef(1).xpow(4).ypow(2).build();
+    let u11 = term_builder::TermBuilder::new().coef(1).xpow(4).ypow(2).build();
     let u8 = - &u11;
     assert_eq_str!(u8, "- x^4 y^2"); 
 }

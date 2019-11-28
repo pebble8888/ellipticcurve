@@ -10,111 +10,6 @@ use super::j_invariant;
 use super::subscripted_variable;
 use std::ops::Neg;
 
-
-/*
-/// create modular polynomial
-pub fn modular_polynomial(n: u64) -> Polynomial {
-    assert!(n >= 2);
-    if n == 2 {
-          TermBuilder::new().xpow(3).build()
-        + TermBuilder::new().ypow(3).build()
-        + TermBuilder::new().coef(-162_000).xpow(2).build()
-        + TermBuilder::new().coef(-162_000).ypow(2).build()
-        + TermBuilder::new().coef(1_488).xpow(2).ypow(1).build()
-        + TermBuilder::new().coef(1_488).ypow(2).xpow(1).build()
-        + TermBuilder::new().coef(-1).xpow(2).ypow(2).build()
-        + TermBuilder::new().coef(8_748_000_000).xpow(1).build()
-        + TermBuilder::new().coef(8_748_000_000).ypow(1).build()
-        + TermBuilder::new().coef(40_773_375).xpow(1).ypow(1).build()
-        + TermBuilder::new().coef(-157_464_000_000_000).build()
-    } else if n == 3 {
-        let c10 = BigInt::from(1_855_425_871_872_000_000_000_i128);
-        let pol =
-          TermBuilder::new().xpow(4).build()
-        + TermBuilder::new().ypow(4).build()
-        + TermBuilder::new().coef(-1).xpow(3).ypow(3).build()
-        + TermBuilder::new().coef(2_232).xpow(3).ypow(2).build()
-        + TermBuilder::new().coef(2_232).ypow(3).xpow(2).build()
-        + TermBuilder::new().coef(-1_069_956).xpow(3).ypow(1).build()
-        + TermBuilder::new().coef(-1_069_956).xpow(1).ypow(3).build()
-        + TermBuilder::new().coef(36_864_000).xpow(3).build()
-        + TermBuilder::new().coef(36_864_000).ypow(3).build()
-        + TermBuilder::new().coef(2_587_918_086).xpow(2).ypow(2).build()
-        + TermBuilder::new().coef(8_900_222_976_000).xpow(2).ypow(1).build()
-        + TermBuilder::new().coef(8_900_222_976_000).ypow(2).xpow(1).build()
-        + TermBuilder::new().coef(452_984_832_000_000).xpow(2).build()
-        + TermBuilder::new().coef(452_984_832_000_000).ypow(2).build()
-        + TermBuilder::new().coef(-770_845_966_336_000_000).xpow(1).ypow(1).build()
-        + TermBuilder::new().coef(&c10).xpow(1).build()
-        + TermBuilder::new().coef(&c10).ypow(1).build();
-        return pol;
-    } else if n == 5 {
-        let b = BigInt::from(1_000_000_000_000_000_000_000_000_000_000_000_000_i128);
-        let c00 = BigInt::from(141_359_947_154_i64) * b.power(1)
-                + BigInt::from(721_358_697_753_474_691_071_362_751_004_672_000_i128);
-        let c10 = BigInt::from(53_274_330) * b.power(1)
-                + BigInt::from(803_424_425_450_420_160_273_356_509_151_232_000_i128);
-        let c11 = - BigInt::from(264_073) * b.power(1)
-                - BigInt::from(457_076_620_596_259_715_790_247_978_782_949_376_i128);
-        let c20 = BigInt::from(6_692) * b.power(1)
-                + BigInt::from(500_042_627_997_708_487_149_415_015_068_467_200_i128);
-        let c21 = BigInt::from(36) * b.power(1)
-                + BigInt::from(554_736_583_949_629_295_706_472_332_656_640_000_i128);
-        let c22 = BigInt::from(5_110_941_777_552_418_083_110_765_199_360_000_i128);
-        let c30 = BigInt::from(280_244_777_828_439_527_804_321_565_297_868_800_i128);
-        let c31 = - BigInt::from(192_457_934_618_928_299_655_108_231_168_000_i128);
-        let c32 = BigInt::from(26_898_488_858_380_731_577_417_728_000_i128);
-        let c33 = - BigInt::from(441_206_965_512_914_835_246_100_i128);
-        assert_eq_str!(c33, "-441206965512914835246100");
-        let c40 = BigInt::from(1_284_733_132_841_424_456_253_440_i128);
-        let c41 = BigInt::from(128_541_798_906_828_816_384_000_i128);
-        let c42 = BigInt::from(383_083_609_779_811_215_375_i128);
-        let pol = 
-          TermBuilder::new().xpow(6).build()
-        + TermBuilder::new().ypow(6).build()
-        + TermBuilder::new().coef(-1).xpow(5).ypow(5).build()
-        + TermBuilder::new().coef(3_720).xpow(5).ypow(4).build()
-        + TermBuilder::new().coef(3_720).ypow(5).xpow(4).build()
-        + TermBuilder::new().coef(-4_550_940).xpow(5).ypow(3).build()
-        + TermBuilder::new().coef(-4_550_940).ypow(5).xpow(3).build()
-        + TermBuilder::new().coef(2_028_551_200).xpow(5).ypow(2).build()
-        + TermBuilder::new().coef(2_028_551_200).ypow(5).xpow(2).build()
-        + TermBuilder::new().coef(-246_683_410_950).xpow(5).ypow(1).build()
-        + TermBuilder::new().coef(-246_683_410_950).xpow(1).ypow(5).build()
-        + TermBuilder::new().coef(1_963_211_489_280).xpow(5).build()
-        + TermBuilder::new().coef(1_963_211_489_280).ypow(5).build()
-        + TermBuilder::new().coef(1_665_999_364_600).xpow(4).ypow(4).build()
-        + TermBuilder::new().coef(107_878_928_185_336_800).xpow(4).ypow(3).build()
-        + TermBuilder::new().coef(107_878_928_185_336_800).xpow(3).ypow(4).build()
-        + TermBuilder::new().coef(&c42).xpow(4).ypow(2).build()
-        + TermBuilder::new().coef(&c42).xpow(2).ypow(4).build()
-        + TermBuilder::new().coef(&c41).xpow(4).ypow(1).build()
-        + TermBuilder::new().coef(&c41).xpow(1).ypow(4).build()
-        + TermBuilder::new().coef(&c40).xpow(4).build()
-        + TermBuilder::new().coef(&c40).ypow(4).build()
-        + TermBuilder::new().coef(&c33).xpow(3).ypow(3).build()
-        + TermBuilder::new().coef(&c32).xpow(3).ypow(2).build()
-        + TermBuilder::new().coef(&c32).ypow(3).xpow(2).build()
-        + TermBuilder::new().coef(&c31).xpow(3).ypow(1).build()
-        + TermBuilder::new().coef(&c31).xpow(1).ypow(3).build()
-        + TermBuilder::new().coef(&c30).xpow(3).build()
-        + TermBuilder::new().coef(&c30).ypow(3).build()
-        + TermBuilder::new().coef(&c22).xpow(2).ypow(2).build()
-        + TermBuilder::new().coef(&c21).xpow(2).ypow(1).build()
-        + TermBuilder::new().coef(&c21).ypow(2).xpow(1).build()
-        + TermBuilder::new().coef(&c20).xpow(2).build()
-        + TermBuilder::new().coef(&c20).ypow(2).build()
-        + TermBuilder::new().coef(&c11).xpow(1).ypow(1).build()
-        + TermBuilder::new().coef(&c10).xpow(1).build()
-        + TermBuilder::new().coef(&c10).ypow(1).build()
-        + TermBuilder::new().coef(&c00).build();
-        return pol;
-    } else {
-        panic!();
-    }
-}
-*/
-
 /// calculate modular polynomial
 pub fn subscripted_variable_modular_polynomial(p: u64) -> polynomial::Polynomial {
     assert!(p >= 2);
@@ -155,7 +50,7 @@ pub fn subscripted_variable_modular_polynomial_list(p: u64) -> Vec<polynomial::P
     let pp = BigInt::from(p);
     let min = BigInt::from(- pp.power(2) - pp);
     let mut v: Vec<polynomial::Polynomial> = Vec::new();
-    for i in num_iter::range(min, BigInt::from(1)) {
+    for i in num_iter::range(min, One::one) {
         v.push(pol_q.to_q_power_coef(&i));
     }
     v

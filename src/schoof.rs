@@ -2,6 +2,7 @@ extern crate num_bigint;
 extern crate num_traits;
 extern crate num_iter;
 
+use num_traits::Zero;
 use num_integer::Integer;
 use num_bigint::BigInt;
 use super::polynomial;

@@ -1,6 +1,7 @@
 extern crate num_iter;
 
 use num_bigint::BigInt;
+use num_traits::One;
 use super::polynomial;
 use super::term_builder;
 use super::term_builder::TermBuildable;
@@ -8,7 +9,7 @@ use super::divisor;
 
 /// E_4(q)
 pub fn eisenstein4(max_q_order: u64) -> polynomial::Polynomial {
-    let mut pol = term_builder::TermBuilder::new().build().to_pol();
+    let mut pol = polynomial::Polynomial::one();
     for n in num_iter::range(1, max_q_order + 1) {
         let sigma = divisor::sigma_divisor(n, 3);
         let t = term_builder::TermBuilder::new()

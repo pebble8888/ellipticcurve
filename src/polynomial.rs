@@ -11,8 +11,6 @@ use super::term_builder;
 use super::polynomial;
 use super::subscripted_variable;
 
-type TermBuilder = term_builder::TermBuilder;
-
 /// Polynomial
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Polynomial {
@@ -200,7 +198,7 @@ impl fmt::Display for Polynomial {
             if coef > &BigInt::from(0) && i != 0 {
                 st.push_str("+ ");
             }
-            if coef != &BigInt::from(0) {
+            if !coef.is_zero() {
                 st.push_str(&term::Term::from(m, coef).to_string());
                 st.push_str(" ");
             }
@@ -214,8 +212,8 @@ impl fmt::Display for Polynomial {
 impl<'a> Power<&'a BigInt> for Polynomial {
     fn power(&self, n: &BigInt) -> Self {
         assert!(n >= &Zero::zero(), "n:{}", n.to_string());
-        if n == &Zero::zero() {
-            return TermBuilder::new().build().to_pol();
+        if n.is_zero() {
+            return term_builder::TermBuilder::new().build().to_pol();
         }
         let mut e = n.clone();
         let mut b = self.clone();
@@ -239,15 +237,27 @@ impl Power<i64> for Polynomial {
     }
 }
 
+impl Zero for polynomial::Polynomial {
+    fn zero() -> Self {
+        polynomial::Polynomial::new()
+    }
+
+    fn is_zero(&self) -> bool {
+        self.terms.len() == 0
+    }
+}
+
+impl One for Polynomial {
+    fn one() -> Self {
+        term::Term::one().to_pol()
+    }
+}
+
 impl Polynomial {
     pub fn new() -> Self {
         Polynomial {
             terms: BTreeMap::new(),  
         }
-    }
-
-    pub fn one() -> Self {
-        term_builder::TermBuilder::new().build().to_pol()
     }
 
     pub fn square(&self) -> Self {
@@ -261,10 +271,10 @@ impl Polynomial {
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         assert!(*n >= Zero::zero());
         let mut b = self.modulo(p);
-        let mut r = TermBuilder::new().build().to_pol();
+        let mut r = term_builder::TermBuilder::new().build().to_pol();
         let mut e = n.clone();
         while &e > &One::one() {
-            if &e % 2 != Zero::zero() {
+            if e.is_odd() {
                 r *= &b;
                 r.modular_assign(p);
             }
@@ -278,9 +288,7 @@ impl Polynomial {
     }
 
     pub fn power_omit_high_order_q(&self, n: u64, order: u64) -> Self {
-        let mut pol = term_builder::TermBuilder::new()
-            .build()
-            .to_pol();
+        let mut pol = polynomial::Polynomial::one();
         // TODO:optimise
         for _i in num_iter::range(0, n) {
             pol *= self.clone();
@@ -299,7 +307,7 @@ impl Polynomial {
             if rh.xpow() < oh.xpow() {
                 break;
             }
-            let mut q = TermBuilder::new()
+            let mut q = term_builder::TermBuilder::new()
                     .coef(&(rh.coef.clone() * oh.coef.inverse(p)))
                     .xpow(&(rh.xpow() - oh.xpow()))
                     .ypow(&(rh.ypow().clone()))
@@ -375,9 +383,11 @@ impl Polynomial {
         panic!("highest_term_x assert!");
     }
 
+    /*
     pub fn is_zero(&self) -> bool {
         self.terms.len() == 0
     }
+    */
 
     pub fn is_gcd_one(&self, other: &Self, p: &BigInt) -> bool {
         let m = self.gcd(other, p);
@@ -403,7 +413,7 @@ impl Polynomial {
         }
         let s = self.highest_term_x();
         let inv = s.coef.inverse(p);
-        let mut pol = self * TermBuilder::new().coef(&inv).build();
+        let mut pol = self * term_builder::TermBuilder::new().coef(&inv).build();
         pol.modular_assign(p);
         pol
     }
@@ -480,11 +490,11 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= TermBuilder::new().ypow(&(yy.clone() * 2)).build();
+                e /= term_builder::TermBuilder::new().ypow(&(yy.clone() * 2)).build();
 
-                let ee = TermBuilder::new().xpow(3).build()
-                       + TermBuilder::new().coef(&a.clone()).xpow(1).build()
-                       + TermBuilder::new().coef(&b.clone()).build();
+                let ee = term_builder::TermBuilder::new().xpow(3).build()
+                       + term_builder::TermBuilder::new().coef(&a.clone()).xpow(1).build()
+                       + term_builder::TermBuilder::new().coef(&b.clone()).build();
                 // power() is faster than power_modulo()
                 let ee = ee.power(&yy.clone());
                 e *= ee;
@@ -504,11 +514,11 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= TermBuilder::new().ypow(&(yy.clone() * 2)).build();
+                e /= term_builder::TermBuilder::new().ypow(&(yy.clone() * 2)).build();
 
-                let ee = TermBuilder::new().xpow(3).build()
-                       + TermBuilder::new().coef(&a.clone()).xpow(1).build()
-                       + TermBuilder::new().coef(&b.clone()).build();
+                let ee = term_builder::TermBuilder::new().xpow(3).build()
+                       + term_builder::TermBuilder::new().coef(&a.clone()).xpow(1).build()
+                       + term_builder::TermBuilder::new().coef(&b.clone()).build();
                 // power() is faster than power_modulo()
                 let ee = ee.power_modulo(&yy.clone(), p);
                 let ee = ee.reduction_modular(a, b, p);
@@ -575,13 +585,13 @@ impl Polynomial {
             panic!();
         }
         for (m, coef) in &self.terms {
-            if m.xpow != Zero::zero() {
+            if !m.xpow.is_zero() {
                 panic!();
             }
-            if m.ypow != Zero::zero() {
+            if !m.ypow.is_zero() {
                 panic!();
             }
-            if m.qpow != Zero::zero() {
+            if !m.qpow.is_zero() {
                 panic!();
             }
             return coef.clone();
@@ -667,7 +677,7 @@ impl Polynomial {
                 return coef.clone();
             }
         }
-        return BigInt::from(0);
+        Zero::zero()
     }
 }
 
