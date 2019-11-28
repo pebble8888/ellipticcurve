@@ -1,8 +1,7 @@
 extern crate num_bigint;
 extern crate num_traits;
 extern crate num_iter;
-
-use num_traits::Zero;
+use num_traits::{Zero, One};
 use num_integer::Integer;
 use num_bigint::BigInt;
 use super::polynomial;
@@ -10,7 +9,6 @@ use super::term_builder;
 use super::term_builder::TermBuildable;
 use super::division_polynomial;
 use crate::bigint;
-
 use crate::bigint::{Power};
 
 type TermBuilder = term_builder::TermBuilder;
@@ -36,10 +34,10 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
     let j2: BigInt;
     if pol_standard.is_gcd_one(&pol_l2, q) {
         // no common root
-        j2 = BigInt::from(1); 
+        j2 = One::one();
     } else {
         // has common root
-        j2 = BigInt::from(0);
+        j2 = Zero::zero();
     }
     schoof_result.push(SchoofResult { l: l.clone(), r: j2.clone() });
     println!("a = {} mod 2", j2); 
@@ -93,7 +91,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
         println!("{} psi({}):{}", line!(), l, psi_l);
 
         let mut found = false;
-        let mut jj: BigInt = BigInt::from(0);
+        let mut jj: BigInt = Zero::zero();
         for j in num_iter::range(BigInt::from(1), jmax + BigInt::from(1)) {
             println!("{} j:{}", line!(), j);
             // x
@@ -244,8 +242,8 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
 /// return: (r, l)
 ///
 pub fn chinese_reminder(schoof_result: &Vec<SchoofResult>) -> (BigInt, BigInt) {
-    let mut l: BigInt = BigInt::from(1);
-    let mut r: BigInt = BigInt::from(1); 
+    let mut l: BigInt = One::one();
+    let mut r: BigInt = One::one();
     for res in schoof_result.iter() {
         let (_, p, _) = bigint::extended_gcd(l.clone(), res.l.clone());
         r += (res.r.clone() - r.clone()) * l.clone() * p;

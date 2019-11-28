@@ -1,5 +1,5 @@
 use num_bigint::BigInt;
-use num_traits::Zero;
+use num_traits::{Zero};
 use crate::bigint::Power;
 
 /// The sum of positive divisors function 
@@ -11,7 +11,7 @@ pub fn sigma_divisor(n: u64, power: u64) -> BigInt {
     if n < Zero::zero() {
         return Zero::zero();
     }
-    let mut sum = BigInt::from(0);
+    let mut sum: BigInt = Zero::zero();
     for i in num_iter::range(1, n + 1) {
         if n % i == Zero::zero() {
             sum += BigInt::from(i).power(power as i64);

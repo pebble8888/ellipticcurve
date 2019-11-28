@@ -50,7 +50,7 @@ pub fn subscripted_variable_modular_polynomial_list(p: u64) -> Vec<polynomial::P
     let pp = BigInt::from(p);
     let min = BigInt::from(- pp.power(2) - pp);
     let mut v: Vec<polynomial::Polynomial> = Vec::new();
-    for i in num_iter::range(min, One::one) {
+    for i in num_iter::range(min, One::one()) {
         v.push(pol_q.to_q_power_coef(&i));
     }
     v
@@ -69,6 +69,7 @@ pub fn subscripted_variable_modular_polynomial_q(p: u64) -> polynomial::Polynomi
 }
 
 pub fn modular_polynomial(p: u64) -> polynomial::Polynomial {
+    // TODO: solver simultanous equation1 to another file
     let list = subscripted_variable_modular_polynomial_list(p);
     // (i) LU
     let converter = subscripted_variable::SubscriptedVariableConverter::new(p);
