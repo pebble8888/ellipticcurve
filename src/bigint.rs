@@ -93,6 +93,29 @@ pub fn extended_gcd(a: BigInt, b: BigInt) -> (BigInt, BigInt, BigInt) {
     (g, y - q * x.clone(), x.clone())
 }
 
+/// x (mod l) = r
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ModResult {
+    pub l: BigInt,
+    pub r: BigInt,
+}
+
+/// Chinese remainder thereom
+/// if x mod l1 = r1, x mod l2 = r2, ... x mod ln = rn
+/// then x mod (l1 * l2 * ... * ln) = R
+///
+/// return: l1 * l2 * ... * ln, R
+pub fn chinese_remainder(mod_result: &Vec<ModResult>) -> ModResult {
+    let mut l: BigInt = One::one();
+    let mut r: BigInt = One::one();
+    for res in mod_result.iter() {
+        let (_, p, _) = extended_gcd(l.clone(), res.l.clone());
+        r += (res.r.clone() - r.clone()) * l.clone() * p;
+        l *= res.l.clone();
+        println!("r:{} l:{}", r, l);
+    }
+    ModResult { l, r }
+}
 
 #[test]
 fn bigint_power_test() {
@@ -172,5 +195,28 @@ fn lcm_test() {
     assert_eq!(Integer::lcm(&BigInt::from(4), &BigInt::from(6)), BigInt::from(12));
     assert_eq!(Integer::lcm(&BigInt::from(-4), &BigInt::from(6)), BigInt::from(12));
     assert_eq!(Integer::lcm(&BigInt::from(-4), &BigInt::from(-6)), BigInt::from(12));
+}
+
+#[test]
+fn chinese_remainder_test() {
+    use self::chinese_remainder;
+    let mod_result = vec![
+        ModResult {
+            l: BigInt::from(3),
+            r: BigInt::from(2),
+        },
+        ModResult {
+            l: BigInt::from(5),
+            r: BigInt::from(3),
+        },
+        ModResult {
+            l: BigInt::from(7),
+            r: BigInt::from(2),
+        }];
+    assert_eq!(chinese_remainder(&mod_result), 
+               ModResult { 
+                   l: BigInt::from(3*5*7), 
+                   r: BigInt::from(23 - 3*5*7) 
+               });
 }
 

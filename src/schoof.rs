@@ -14,15 +14,10 @@ use crate::bigint::{Power};
 type TermBuilder = term_builder::TermBuilder;
 type Polynomial = polynomial::Polynomial;
 
-pub struct SchoofResult {
-    pub l: BigInt,
-    pub r: BigInt,
-}
-
 /// Calculate the order of the Elliptic curve y^2 = x^3 + a x + b
 /// schoof algorithm
-pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
-    let mut schoof_result: Vec<SchoofResult> = Vec::new();
+pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
+    let mut mod_result: Vec<bigint::ModResult> = Vec::new();
 
     // l = 2
     let l: BigInt = 2.into();
@@ -39,10 +34,11 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
         // has common root
         j2 = Zero::zero();
     }
-    schoof_result.push(SchoofResult { l: l.clone(), r: j2.clone() });
+    mod_result.push(bigint::ModResult { l: l.clone(), r: j2.clone() });
     println!("a = {} mod 2", j2); 
 
     // l >= 3
+    // TODO:
     for l in &vec![BigInt::from(3), BigInt::from(5)] {
         println!("{} l:{}", line!(), l);
         let ql = q.mod_floor(l);
@@ -180,7 +176,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
             if jj < BigInt::from(0) {
                 jj += l;
             }
-            schoof_result.push(SchoofResult { l: l.clone(), r: jj.clone() });
+            mod_result.push(bigint::ModResult { l: l.clone(), r: jj.clone() });
             println!("(iii) y  a = {} mod {}", jj.clone(), l);
         } else {
             // (d)
@@ -195,7 +191,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
                 }
             }
             if !found {
-                schoof_result.push(SchoofResult { l: l.clone(), r: BigInt::from(0) });
+                mod_result.push(bigint::ModResult { l: l.clone(), r: BigInt::from(0) });
                 println!("(d)  a = 0 mod l because of w not found (d)");
             } else {
                 // (e) x
@@ -209,7 +205,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
                 let p15 = p13.polynomial_modular(&p14, q);
 
                 if !p15.is_zero() {
-                    schoof_result.push(SchoofResult { l: l.clone(), r: BigInt::from(0) });
+                    mod_result.push(bigint::ModResult { l: l.clone(), r: BigInt::from(0) });
                     println!("(e) y  a = 0 mod {}", l);
                 } else {
                     // (e) y
@@ -227,68 +223,51 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<SchoofResult> {
                     if ww < BigInt::from(0) {
                         ww += l;
                     }
-                    schoof_result.push(SchoofResult { l: l.clone(), r: ww.clone() });
+                    mod_result.push(bigint::ModResult { l: l.clone(), r: ww.clone() });
                     println!("(e) y  a = {} mod {}", &ww, l);
                 }
             }
         }
     }
-    schoof_result
+    mod_result
 }
 
-///
-/// x mod l = r
-///
-/// return: (r, l)
-///
-pub fn chinese_reminder(schoof_result: &Vec<SchoofResult>) -> (BigInt, BigInt) {
-    let mut l: BigInt = One::one();
-    let mut r: BigInt = One::one();
-    for res in schoof_result.iter() {
-        let (_, p, _) = bigint::extended_gcd(l.clone(), res.l.clone());
-        r += (res.r.clone() - r.clone()) * l.clone() * p;
-        l *= res.l.clone();
-        println!("r:{} l:{}", r, l);
-    }
-    (r, l)
-}
-
-/*
 #[test]
+#[ignore]
 fn schoof_test7() {
+    use crate::bigint::chinese_remainder;
+
     let q = 7;
-    let schoof_result = schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(q));
-    assert_eq!(schoof_result.len(), 3);
-    assert_eq!(schoof_result[0].l, BigInt::from(2));
-    assert_eq!(schoof_result[0].r, BigInt::from(1));
-    assert_eq!(schoof_result[1].l, BigInt::from(3));
-    assert_eq!(schoof_result[1].r, BigInt::from(0));
-    assert_eq!(schoof_result[2].l, BigInt::from(5));
-    assert_eq!(schoof_result[2].r, BigInt::from(3));
+    let mod_result = schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(q));
+    assert_eq!(mod_result.len(), 3);
+    assert_eq!(mod_result[0].l, BigInt::from(2));
+    assert_eq!(mod_result[0].r, BigInt::from(1));
+    assert_eq!(mod_result[1].l, BigInt::from(3));
+    assert_eq!(mod_result[1].r, BigInt::from(0));
+    assert_eq!(mod_result[2].l, BigInt::from(5));
+    assert_eq!(mod_result[2].r, BigInt::from(3));
 
-    let (r, l) = chinese_reminder(&schoof_result);
-    assert_eq!(r, BigInt::from(3));
-    assert_eq!(l, BigInt::from(30)); // 2 * 3 * 5
+    let result = chinese_remainder(&mod_result);
+    assert_eq!(result.r, BigInt::from(3));
+    assert_eq!(result.l, BigInt::from(30)); // 2 * 3 * 5
 }
-*/
 
-/*
 #[test]
+#[ignore]
 fn schoof_test19() {
+    use crate::bigint::chinese_remainder;
     let q = 19;
-    let schoof_result = schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(q));
-    assert_eq!(schoof_result.len(), 3);
-    assert_eq!(schoof_result[0].l, BigInt::from(2));
-    assert_eq!(schoof_result[0].r, BigInt::from(1));
-    assert_eq!(schoof_result[1].l, BigInt::from(3));
-    assert_eq!(schoof_result[1].r, BigInt::from(2));
-    assert_eq!(schoof_result[2].l, BigInt::from(5));
-    assert_eq!(schoof_result[2].r, BigInt::from(3));
+    let mod_result = schoof(&BigInt::from(2), &BigInt::from(1), &BigInt::from(q));
+    assert_eq!(mod_result.len(), 3);
+    assert_eq!(mod_result[0].l, BigInt::from(2));
+    assert_eq!(mod_result[0].r, BigInt::from(1));
+    assert_eq!(mod_result[1].l, BigInt::from(3));
+    assert_eq!(mod_result[1].r, BigInt::from(2));
+    assert_eq!(mod_result[2].l, BigInt::from(5));
+    assert_eq!(mod_result[2].r, BigInt::from(3));
 
-    let (r, l) = chinese_reminder(&schoof_result);
-    assert_eq!(r, BigInt::from(23));
-    assert_eq!(l, BigInt::from(30)); // 2 * 3 * 5
+    let result = chinese_remainder(&mod_result);
+    assert_eq!(result.r, BigInt::from(23));
+    assert_eq!(result.l, BigInt::from(30)); // 2 * 3 * 5
 }
-*/
-
 

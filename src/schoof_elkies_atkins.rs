@@ -72,6 +72,7 @@ fn sea_test1() {
 }
 
 #[test]
+#[ignore]
 fn sea_test2() {
     let p = BigInt::from(131);
     let ec = elliptic_curve::EllipticCurve::new(&BigInt::from(1), &BigInt::from(23), &p);
