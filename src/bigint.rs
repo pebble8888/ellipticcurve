@@ -4,6 +4,7 @@ use num_traits::Zero;
 use num_traits::One;
 
 /// T^n
+/// NOTE: BigInt::Pow is not enough functionality, so implement by myself.
 pub trait Power<T> {
     fn power(&self, n: T) -> Self;
 }
