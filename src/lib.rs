@@ -15,3 +15,4 @@ pub mod eisenstein;
 pub mod delta;
 pub mod j_invariant;
 pub mod subscripted_variable;
+pub mod simultaneous_equation;

@@ -1,7 +1,6 @@
 use primes;
-use num_integer::Integer;
 use num_bigint::BigInt;
-use num_traits::{One, Zero};
+use num_traits::One;
 use super::polynomial;
 use super::term_builder;
 use super::term_builder::TermBuildable;
@@ -9,6 +8,7 @@ use super::bigint::Power;
 use super::j_invariant;
 use super::subscripted_variable;
 use std::ops::Neg;
+use super::simultaneous_equation;
 
 /// calculate modular polynomial
 pub fn subscripted_variable_modular_polynomial(p: u64) -> polynomial::Polynomial {
@@ -71,7 +71,7 @@ pub fn subscripted_variable_modular_polynomial_q(p: u64) -> polynomial::Polynomi
 pub fn modular_polynomial(p: u64) -> polynomial::Polynomial {
     // TODO: solver simultanous equation1 to another file
     let list = subscripted_variable_modular_polynomial_list(p);
-    // (i) LU
+
     let converter = subscripted_variable::SubscriptedVariableConverter::new(p);
     let row_count: usize = list.len();
     let col_count: usize = converter.count() as usize + 1;
@@ -91,69 +91,12 @@ pub fn modular_polynomial(p: u64) -> polynomial::Polynomial {
         }
     }
 
-    let mut row: Vec<usize> = Vec::new();
-    for i in num_iter::range(0, row_count) {
-        row.push(i);
-    }
-
-    for i in num_iter::range(0, col_count - 1) {
-        // (I)
-        for j in num_iter::range(i, row_count) {
-            if a[row[j]][i] != BigInt::from(0) {
-                if i != j {
-                    // row swap
-                    let b = row[i];
-                    row[i] = row[j];
-                    row[j] = b;
-                }
-                break;
-            }
-        }
-        let c1 = a[row[i]][i].clone();
-        assert!(c1 != BigInt::from(0));
-        // (II)
-        for j in num_iter::range(i+1, row_count) {
-            let c2 = a[row[j]][i].clone();
-            if c2 != BigInt::from(0) {
-                let lcm = Integer::lcm(&c1, &c2); 
-                let cc1 = lcm.clone() / c1.clone();
-                //assert_eq!(cc1.clone() * c1.clone(), lcm.clone());
-                let cc2 = lcm.clone() / c2.clone();
-                //assert_eq!(cc2.clone() * c2.clone(), lcm.clone());
-                for k in num_iter::range(0, col_count) {
-                    a[row[j]][k] *= cc2.clone();
-                }
-                for k in num_iter::range(0, col_count) {
-                    let val = a[row[i]][k].clone() * cc1.clone();
-                    a[row[j]][k] -= val;
-                }
-            }
-        }
-    }
-
-    // (ii) Substitute
-    let col_prim = col_count -1;
-    for i in num_iter::range(1, col_count - 1).rev() {
-        // diagonal coef
-        let diag = a[row[i]][i].clone();
-        let prim = a[row[i]][col_prim].clone();
-        //assert_eq!(prim.mod_floor(&diag.clone()), BigInt::from(0));
-        if diag != One::one() {
-            a[row[i]][i] = 1.into();
-            a[row[i]][col_prim] = prim / diag;
-        }
-        let val = a[row[i]][col_prim].clone();
-        for j in num_iter::range(0, i) {
-            let t_val = a[row[j]][i].clone();
-            a[row[j]][col_prim] -= t_val * val.clone();
-            a[row[j]][i] = Zero::zero();
-        }
-    }
+    let b = simultaneous_equation::solve(&a);
 
     let mut pol = polynomial::Polynomial::new();
     for i in num_iter::range(0, col_count - 1) {
         let variable = converter.variable_from_index(i as u64);
-        let val = a[row[i]][col_prim].clone();
+        let val = b[i][col_count-1].clone();
         pol += term_builder::TermBuilder::new()
             .coef(&val.clone().neg())
             .xpow(variable.i as i64)
