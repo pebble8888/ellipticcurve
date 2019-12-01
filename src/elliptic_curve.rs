@@ -61,8 +61,8 @@ impl EllipticCurve {
     }
 
     pub fn j_invariant(&self) -> BigInt {
-        let n = BigInt::from(4) * self.a.power(&BigInt::from(3));
-        let d = n.clone() + BigInt::from(27) * self.b.power(&BigInt::from(2)); 
+        let n = BigInt::from(4) * self.a.power(3);
+        let d = n.clone() + BigInt::from(27) * self.b.power(2); 
         let j = BigInt::from(1728) * n.clone() * d.clone().inverse(&self.p);
         return j.mod_floor(&self.p);
     }
@@ -105,7 +105,7 @@ impl EllipticCurve {
         let y2 = p2.y.clone();
         if p1.x != p2.x {
             let m = (y2.clone() - y1.clone()) * (x2.clone() - x1.clone()).inverse(&self.p);
-            let x3 = m.power(&BigInt::from(2)) - x1.clone() - x2.clone();
+            let x3 = m.power(BigInt::from(2)) - x1.clone() - x2.clone();
             let y3 = m * (x1.clone() - x3.clone()) - y1.clone(); 
             return ECPoint::new(
                 &x3.mod_floor(&self.p),
@@ -114,8 +114,8 @@ impl EllipticCurve {
             if y1 != y2 || y1 == Zero::zero() {
                 ECPoint::infinity()
             } else {
-                let m = (BigInt::from(3) * x1.power(&BigInt::from(2)) + self.a.clone()) * (BigInt::from(2) * y1.clone()).inverse(&self.p);
-                let x3 = m.power(&BigInt::from(2)) - BigInt::from(2) * x1.clone();
+                let m = (BigInt::from(3) * x1.power(BigInt::from(2)) + self.a.clone()) * (BigInt::from(2) * y1.clone()).inverse(&self.p);
+                let x3 = m.power(BigInt::from(2)) - BigInt::from(2) * x1.clone();
                 let y3 = m * (x1.clone() - x3.clone()) - y1.clone();
                 return ECPoint::new(
                     &x3.mod_floor(&self.p),

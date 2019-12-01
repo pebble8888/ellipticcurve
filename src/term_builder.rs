@@ -46,6 +46,25 @@ impl<'a> TermBuildable<&'a BigInt> for TermBuilder {
     }
 }
 
+impl<'a> TermBuildable<BigInt> for TermBuilder {
+    fn coef(&mut self, coef: BigInt) -> &mut TermBuilder {
+        self.coef_ = coef.clone();
+        self
+    }
+    fn xpow(&mut self, xpow: BigInt) -> &mut TermBuilder {
+        self.xpow_ = xpow.clone();
+        self
+    }
+    fn ypow(&mut self, ypow: BigInt) -> &mut TermBuilder {
+        self.ypow_ = ypow.clone();
+        self
+    }
+    fn qpow(&mut self, qpow: BigInt) -> &mut TermBuilder {
+        self.qpow_ = qpow.clone();
+        self
+    }
+}
+
 impl TermBuildable<i64> for TermBuilder {
     fn coef(&mut self, coef: i64) -> &mut TermBuilder {
         self.coef_ = BigInt::from(coef);
@@ -78,7 +97,9 @@ impl TermBuilder {
         self
     }
 
-    pub fn variable_ij(&mut self, i: u64, j: u64) -> &mut TermBuilder {
+    pub fn variable_ij(&mut self, i: i64, j: i64) -> &mut TermBuilder {
+        assert!(i >= 0);
+        assert!(j >= 0);
         self.variable_.i = i;
         self.variable_.j = j;
         self.variable_.empty = false;

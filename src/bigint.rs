@@ -19,6 +19,12 @@ pub trait Inverse {
     fn inverse(&self, p: &BigInt) -> Self;
 }
 
+impl Power<BigInt> for BigInt { 
+    fn power(&self, n: BigInt) -> Self {
+        self.power(&n)
+    }
+}
+
 impl<'a> Power<&'a BigInt> for BigInt { 
     fn power(&self, n: &BigInt) -> Self {
         if n == &Zero::zero() {

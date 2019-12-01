@@ -6,8 +6,8 @@ use primes::is_prime;
 /// if i = 0 and j = 0, omit it
 #[derive(Debug, Clone, Copy)]
 pub struct SubscriptedVariable {
-    pub i: u64,
-    pub j: u64,
+    pub i: i64,
+    pub j: i64,
     pub empty: bool,
 }
 
@@ -79,12 +79,13 @@ impl fmt::Display for SubscriptedVariable {
 
 #[derive(Debug)]
 pub struct SubscriptedVariableConverter {
-    pub p: u64,
+    pub p: i64,
 }
 
 impl SubscriptedVariableConverter {
-    pub fn new(p: u64) -> Self {
-        if !is_prime(p) {
+    pub fn new(p: i64) -> Self {
+        assert!(p >= 2);
+        if !is_prime(p as u64) {
             panic!("p must be prime!");
         }
 
@@ -132,10 +133,10 @@ impl SubscriptedVariableConverter {
     }
 
     pub fn variable_from_index(&self, index: u64) -> SubscriptedVariable {
-        let mut local_index: u64 = 0;
+        let mut local_index: i64 = 0;
         for i in num_iter::range(0, self.p+1) {
             for j in num_iter::range(i+1, self.p+1) {
-                if local_index == index {
+                if local_index == index as i64 {
                     return SubscriptedVariable {
                         i: i,
                         j: j,
@@ -146,7 +147,7 @@ impl SubscriptedVariableConverter {
             }
         } 
         for i in num_iter::range(0, self.p+1) {
-            if local_index == index {
+            if local_index == index as i64 {
                 return SubscriptedVariable {
                     i: i,
                     j: i,
@@ -161,26 +162,25 @@ impl SubscriptedVariableConverter {
 
 #[test]
 fn subscripted_variable_test1() {
-    use num_bigint::BigInt;
     use super::term_builder;
     use super::term_builder::TermBuildable;
 
     let t1 = term_builder::TermBuilder::new()
-        .variable_ij(2u64, 3u64)
+        .variable_ij(2, 3)
         .build()
         .to_pol();
     assert_eq_str!(t1, "c_2_3");
 
     let t2 = term_builder::TermBuilder::new()
-        .coef(&BigInt::from(45))
-        .variable_ij(7u64, 8u64)
+        .coef(45)
+        .variable_ij(7, 8)
         .build()
         .to_pol();
     assert_eq_str!(t2, "45 c_7_8");
 
     let t3 = term_builder::TermBuilder::new()
-        .coef(&BigInt::from(671))
-        .variable_ij(19u64, 21u64)
+        .coef(671)
+        .variable_ij(19, 21)
         .xpow(5)
         .build()
         .to_pol();

@@ -209,6 +209,11 @@ impl fmt::Display for Polynomial {
 }
 
 /// Polynomial ^ BigInt
+impl Power<BigInt> for Polynomial {
+    fn power(&self, n: BigInt) -> Self {
+        self.power(&n)
+    }
+}
 impl<'a> Power<&'a BigInt> for Polynomial {
     fn power(&self, n: &BigInt) -> Self {
         assert!(n >= &Zero::zero(), "n:{}", n.to_string());
@@ -261,11 +266,11 @@ impl Polynomial {
     }
 
     pub fn square(&self) -> Self {
-        self.power(&BigInt::from(2))
+        self.power(BigInt::from(2))
     }
 
     pub fn cube(&self) -> Self {
-        self.power(&BigInt::from(3))
+        self.power(BigInt::from(3))
     }
 
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
@@ -287,7 +292,7 @@ impl Polynomial {
         r
     }
 
-    pub fn power_omit_high_order_q(&self, n: u64, order: u64) -> Self {
+    pub fn power_omit_high_order_q(&self, n: i64, order: i64) -> Self {
         let mut pol = polynomial::Polynomial::one();
         // TODO:optimise
         for _i in num_iter::range(0, n) {
@@ -308,10 +313,10 @@ impl Polynomial {
                 break;
             }
             let mut q = term_builder::TermBuilder::new()
-                    .coef(&(rh.coef.clone() * oh.coef.inverse(p)))
-                    .xpow(&(rh.xpow() - oh.xpow()))
-                    .ypow(&(rh.ypow().clone()))
-                    .qpow(&(rh.qpow().clone()))
+                    .coef(rh.coef.clone() * oh.coef.inverse(p))
+                    .xpow(rh.xpow() - oh.xpow())
+                    .ypow(rh.ypow().clone())
+                    .qpow(rh.qpow().clone())
                     .build();
             q.modular_assign(&p);
             let mut d = q * other;
@@ -490,13 +495,13 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= term_builder::TermBuilder::new().ypow(&(yy.clone() * 2)).build();
+                e /= term_builder::TermBuilder::new().ypow(yy.clone() * 2).build();
 
                 let ee = term_builder::TermBuilder::new().xpow(3).build()
-                       + term_builder::TermBuilder::new().coef(&a.clone()).xpow(1).build()
-                       + term_builder::TermBuilder::new().coef(&b.clone()).build();
+                       + term_builder::TermBuilder::new().coef(a.clone()).xpow(1).build()
+                       + term_builder::TermBuilder::new().coef(b.clone()).build();
                 // power() is faster than power_modulo()
-                let ee = ee.power(&yy.clone());
+                let ee = ee.power(yy.clone());
                 e *= ee;
                 t += e;
             } else {
@@ -514,11 +519,11 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= term_builder::TermBuilder::new().ypow(&(yy.clone() * 2)).build();
+                e /= term_builder::TermBuilder::new().ypow(yy.clone() * 2).build();
 
                 let ee = term_builder::TermBuilder::new().xpow(3).build()
-                       + term_builder::TermBuilder::new().coef(&a.clone()).xpow(1).build()
-                       + term_builder::TermBuilder::new().coef(&b.clone()).build();
+                       + term_builder::TermBuilder::new().coef(a.clone()).xpow(1).build()
+                       + term_builder::TermBuilder::new().coef(b.clone()).build();
                 // power() is faster than power_modulo()
                 let ee = ee.power_modulo(&yy.clone(), p);
                 let ee = ee.reduction_modular(a, b, p);
@@ -628,7 +633,7 @@ impl Polynomial {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let t = term_builder::TermBuilder::new()
-                .coef(&coef.clone())
+                .coef(coef.clone())
                 .build()
                 .to_pol();
             pol += m.eval_x_polynomial(polynomial) * t;
@@ -640,7 +645,7 @@ impl Polynomial {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let t = term_builder::TermBuilder::new()
-                .coef(&coef.clone())
+                .coef(coef.clone())
                 .build()
                 .to_pol();
             pol += m.eval_y_polynomial(polynomial) * t;

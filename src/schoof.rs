@@ -22,7 +22,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
     // l = 2
     let l: BigInt = 2.into();
     println!("{} l:{}", line!(), l);
-    let pol_l2 = TermBuilder::new().xpow(q).build() - TermBuilder::new().coef(1).xpow(1).build();
+    let pol_l2 = TermBuilder::new().xpow(q).build() - TermBuilder::new().xpow(1).build();
     let pol_standard = TermBuilder::new().xpow(3).build() + 
                 TermBuilder::new().coef(a).xpow(1).build() +
                 TermBuilder::new().coef(b).build();
@@ -54,7 +54,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
 
         let nn1 = nn1.reduction_modular(a, b, q);
 
-        let nn2 = TermBuilder::new().ypow(&q.power(2)).build()
+        let nn2 = TermBuilder::new().ypow(q.power(2)).build()
                 * division_polynomial::psi(a, b, &ql).power(3);
 
         let nn2 = nn2.reduction_modular(a, b, q);
@@ -64,12 +64,12 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
         n1.modular_assign(q);
 
         let n2 = - (division_polynomial::phi(a, b, &ql)
-                     + TermBuilder::new().xpow(&q.power(2)).build()
+                     + TermBuilder::new().xpow(q.power(2)).build()
                        * division_polynomial::psi(a, b, &ql).power(2));
 
 
         let n3 = (division_polynomial::phi(a, b, &ql)
-                     - TermBuilder::new().xpow(&q.power(2)).build()
+                     - TermBuilder::new().xpow(q.power(2)).build()
                        * division_polynomial::psi(a, b, &ql).power(2)).power(2);
 
         let mut num1 = n1 + n2 * n3;
@@ -78,7 +78,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
 
         let den1 = (division_polynomial::psi(a, b, &ql).power(2))
                  * ((division_polynomial::phi(a, b, &ql) - 
-                        TermBuilder::new().xpow(&q.power(2)).build()
+                        TermBuilder::new().xpow(q.power(2)).build()
                    * division_polynomial::psi(a, b, &ql).power(2)).power(2));
         
         let den1 = den1.reduction_modular(a, b, q);
@@ -116,7 +116,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
             // iii
             println!("x found");
             // y
-            let g = TermBuilder::new().ypow(&q.power(2)).build().to_pol();
+            let g = TermBuilder::new().ypow(q.power(2)).build().to_pol();
             let g = g.reduction_modular(a, b, q);
 
             let mut omg = division_polynomial::omega(a, b, &ql);
@@ -126,14 +126,14 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
             let d = d.reduction_modular(a, b, q);
 
             let mut e = - division_polynomial::phi(a, b, &ql) +
-                    TermBuilder::new().coef(2).xpow(&q.power(2)).build()
+                    TermBuilder::new().coef(2).xpow(q.power(2)).build()
                     * division_polynomial::psi(a, b, &ql).power(2);
             e.modular_assign(q);
 
             let e = e.reduction_modular(a, b, q);
 
             let mut f = division_polynomial::phi(a, b, &ql) - 
-                TermBuilder::new().xpow(&q.power(2)).build() * division_polynomial::psi(a, b, &ql).power(2);
+                TermBuilder::new().xpow(q.power(2)).build() * division_polynomial::psi(a, b, &ql).power(2);
             f.modular_assign(q);
 
             let f = f.reduction_modular(a, b, q);
@@ -195,7 +195,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
                 println!("(d)  a = 0 mod l because of w not found (d)");
             } else {
                 // (e) x
-                let mut p12 = TermBuilder::new().xpow(&q.clone()).build()
+                let mut p12 = TermBuilder::new().xpow(q).build()
                        * division_polynomial::psi(a, b, &w).power(2) - division_polynomial::phi(a, b, &w);
                 p12.modular_assign(q);
                 let p13 = p12.reduction_modular(a, b, q);
@@ -209,7 +209,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
                     println!("(e) y  a = 0 mod {}", l);
                 } else {
                     // (e) y
-                    let mut p16 = (TermBuilder::new().ypow(&a.clone()).build()
+                    let mut p16 = (TermBuilder::new().ypow(a.clone()).build()
                               * division_polynomial::psi(a, b, &w).power(3) - division_polynomial::omega(a, b, &w)) /
                             TermBuilder::new().ypow(1).build();
                     p16.modular_assign(q);

@@ -11,33 +11,33 @@ use std::ops::Neg;
 use super::simultaneous_equation;
 
 /// calculate modular polynomial
-pub fn subscripted_variable_modular_polynomial(p: u64) -> polynomial::Polynomial {
+pub fn subscripted_variable_modular_polynomial(p: i64) -> polynomial::Polynomial {
     assert!(p >= 2);
-    assert!(primes::is_prime(p));
+    assert!(primes::is_prime(p as u64));
     let mut pol = term_builder::TermBuilder::new()
-                .xpow(&BigInt::from(p+1))
+                .xpow(p as i64 +1)
                 .build().to_pol();
     pol += term_builder::TermBuilder::new()
-                .ypow(&BigInt::from(p+1))
+                .ypow(p as i64 +1)
                 .build().to_pol();
 
     for i in num_iter::range(0, p+1) {
         pol += term_builder::TermBuilder::new()
-            .xpow(&BigInt::from(i))
-            .ypow(&BigInt::from(i))
+            .xpow(i)
+            .ypow(i)
             .variable_ij(i, i)
             .build().to_pol();
     }
     for i in num_iter::range(0, p+1) {
         for j in num_iter::range(i+1, p+1) {
             pol += term_builder::TermBuilder::new()
-                .xpow(&BigInt::from(i))
-                .ypow(&BigInt::from(j))
+                .xpow(i)
+                .ypow(j)
                 .variable_ij(i, j)
                 .build().to_pol();
             pol += term_builder::TermBuilder::new()
-                .xpow(&BigInt::from(j))
-                .ypow(&BigInt::from(i))
+                .xpow(j)
+                .ypow(i)
                 .variable_ij(i, j)
                 .build().to_pol();
         }
@@ -45,7 +45,7 @@ pub fn subscripted_variable_modular_polynomial(p: u64) -> polynomial::Polynomial
     pol
 }
 
-pub fn subscripted_variable_modular_polynomial_list(p: u64) -> Vec<polynomial::Polynomial> {
+pub fn subscripted_variable_modular_polynomial_list(p: i64) -> Vec<polynomial::Polynomial> {
     let pol_q = subscripted_variable_modular_polynomial_q(p);
     let pp = BigInt::from(p);
     let min = BigInt::from(- pp.power(2) - pp);
@@ -56,22 +56,21 @@ pub fn subscripted_variable_modular_polynomial_list(p: u64) -> Vec<polynomial::P
     v
 }
 
-pub fn subscripted_variable_modular_polynomial_q(p: u64) -> polynomial::Polynomial {
+pub fn subscripted_variable_modular_polynomial_q(p: i64) -> polynomial::Polynomial {
     let pol = subscripted_variable_modular_polynomial(p);
     // j-invariant q order needs p^2 + p
     let j_order = p * p + p;
     let j = j_invariant::j_invariant(j_order);
-    let j_q_power = j.to_q_power(p as i64);
+    let j_q_power = j.to_q_power(p);
     let pol1 = pol.eval_x_polynomial(&j);
     let pol2 = pol1.eval_y_polynomial(&j_q_power);
     let pol_q = pol2.omit_high_order_q(0); 
     pol_q
 }
 
-pub fn modular_polynomial(p: u64) -> polynomial::Polynomial {
+pub fn modular_polynomial(p: i64) -> polynomial::Polynomial {
     // TODO: solver simultanous equation1 to another file
     let list = subscripted_variable_modular_polynomial_list(p);
-
     let converter = subscripted_variable::SubscriptedVariableConverter::new(p);
     let row_count: usize = list.len();
     let col_count: usize = converter.count() as usize + 1;
@@ -99,8 +98,8 @@ pub fn modular_polynomial(p: u64) -> polynomial::Polynomial {
         let val = b[i][col_count-1].clone();
         pol += term_builder::TermBuilder::new()
             .coef(&val.clone().neg())
-            .xpow(variable.i as i64)
-            .ypow(variable.j as i64)
+            .xpow(variable.i)
+            .ypow(variable.j)
             .build();
         if variable.i != variable.j {
             pol += term_builder::TermBuilder::new()

@@ -21,12 +21,12 @@ pub struct SEAResult {
 
 /// SEA algorithm
 /// TODO: in implementation
-pub fn sea(ec: &elliptic_curve::EllipticCurve, l: u64) -> SEAResult {
+pub fn sea(ec: &elliptic_curve::EllipticCurve, l: i64) -> SEAResult {
     let mut mpol = modular_polynomial::modular_polynomial(l);
     mpol.modular_assign(&ec.p);
     let mut mpol = mpol.eval_y(&ec.j_invariant());
     mpol.modular_assign(&ec.p);
-    let pol = TermBuilder::new().xpow(&ec.p.clone()).build()
+    let pol = TermBuilder::new().xpow(ec.p.clone()).build()
             - TermBuilder::new().xpow(1).build();
     let gcd = pol.gcd(&mpol, &ec.p);
     // elkies prime for degree 1, 2, l+1

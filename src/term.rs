@@ -68,47 +68,50 @@ impl_op_ex!(/ |a: &Term, b: &Term| -> Term {
         panic!("b is not zero!");
     }
     term_builder::TermBuilder::new()
-        .coef(&a.coef.div_floor(&b.coef))
-        .xpow(&(a.xpow() - b.xpow()))
-        .ypow(&(a.ypow() - b.ypow()))
-        .qpow(&(a.qpow() - b.qpow()))
+        .coef(a.coef.div_floor(&b.coef))
+        .xpow(a.xpow() - b.xpow())
+        .ypow(a.ypow() - b.ypow())
+        .qpow(a.qpow() - b.qpow())
         .variable(a.variable())
         .build()
 });
 
 impl_op_ex!(- |a: &Term| -> Term {
     term_builder::TermBuilder::new()
-        .coef(&(-a.coef.clone()))
-        .xpow(&a.xpow().clone())
-        .ypow(&a.ypow().clone())
-        .qpow(&a.qpow().clone())
+        .coef(-a.coef.clone())
+        .xpow(a.xpow())
+        .ypow(a.ypow())
+        .qpow(a.qpow())
         .variable(a.variable())
         .build()
 });
 
 /// Term ^ n
-/// n:i64
 impl Power<i64> for Term {
     fn power(&self, n: i64) -> Self {
         if !self.variable().empty {
             panic!("variable can't power");
         }
-        self.power(&BigInt::from(n))
+        self.power(BigInt::from(n))
     }
 }
 
-/// Term ^ n
-/// n:BigInt
+impl Power<BigInt> for Term {
+    fn power(&self, n: BigInt) -> Self {
+        self.power(&n)
+    }
+}
+
 impl<'a> Power<&'a BigInt> for Term {
     fn power(&self, n: &BigInt) -> Self {
         if !self.variable().empty {
             panic!("can't power non zero variable!");
         }
         term_builder::TermBuilder::new()
-          .coef(&self.coef.clone().power(&n.clone()))
-          .xpow(&(self.xpow() * n.clone()))
-          .ypow(&(self.ypow() * n.clone()))
-          .qpow(&(self.qpow() * n.clone()))
+          .coef(self.coef.clone().power(&n.clone()))
+          .xpow(self.xpow() * n.clone())
+          .ypow(self.ypow() * n.clone())
+          .qpow(self.qpow() * n.clone())
           .build()
     }
 }
@@ -120,8 +123,8 @@ impl Monomial {
 
     pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .ypow(&(self.ypow.clone()))
-            .qpow(&(self.qpow.clone()))
+            .ypow(self.ypow.clone())
+            .qpow(self.qpow.clone())
             .variable(self.variable)
             .build()
             .to_pol();
@@ -130,8 +133,8 @@ impl Monomial {
 
     pub fn eval_y_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .xpow(&(self.xpow.clone()))
-            .qpow(&(self.qpow.clone()))
+            .xpow(self.xpow.clone())
+            .qpow(self.qpow.clone())
             .variable(self.variable)
             .build()
             .to_pol();
@@ -202,10 +205,10 @@ impl Term {
     /// Term^n (mod p)
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         term_builder::TermBuilder::new()
-            .coef(&self.coef.power_modulo(n, p))
-            .xpow(&(self.xpow() * n.clone()))
-            .ypow(&(self.ypow() * n.clone()))
-            .qpow(&(self.qpow() * n.clone()))
+            .coef(self.coef.power_modulo(n, p))
+            .xpow(self.xpow() * n.clone())
+            .ypow(self.ypow() * n.clone())
+            .qpow(self.qpow() * n.clone())
             .variable(self.variable())
             .build()
     }
@@ -214,10 +217,10 @@ impl Term {
     /// x -> x^n  y -> y^n
     pub fn to_frob(&self, n: &BigInt) -> Self {
         term_builder::TermBuilder::new()
-          .coef(&self.coef.clone())
-          .xpow(&(self.xpow() * n.clone()))
-          .ypow(&(self.ypow() * n.clone()))
-          .qpow(&self.qpow().clone())
+          .coef(self.coef.clone())
+          .xpow(self.xpow() * n.clone())
+          .ypow(self.ypow() * n.clone())
+          .qpow(self.qpow().clone())
           .variable(self.variable())
           .build()
     }
@@ -225,10 +228,10 @@ impl Term {
     /// y -> y^n
     pub fn to_y_power(&self, n: &BigInt) -> Self {
         term_builder::TermBuilder::new()
-          .coef(&self.coef.clone())
-          .xpow(&self.xpow().clone())
-          .ypow(&(self.ypow() * n.clone()))
-          .qpow(&self.qpow().clone())
+          .coef(self.coef.clone())
+          .xpow(self.xpow().clone())
+          .ypow(self.ypow() * n.clone())
+          .qpow(self.qpow().clone())
           .variable(self.variable())
           .build()
     }
@@ -236,10 +239,10 @@ impl Term {
     /// q -> q^n
     pub fn to_q_power(&self, n: i64) -> Self {
         term_builder::TermBuilder::new()
-          .coef(&self.coef.clone())
-          .xpow(&self.xpow().clone())
-          .ypow(&self.ypow().clone())
-          .qpow(&(self.qpow() * n))
+          .coef(self.coef.clone())
+          .xpow(self.xpow().clone())
+          .ypow(self.ypow().clone())
+          .qpow(self.qpow() * n)
           .variable(self.variable())
           .build()
     }
@@ -250,10 +253,10 @@ impl Term {
             panic!("modulo zero!");
         } else {
             term_builder::TermBuilder::new()
-              .coef(&self.coef.mod_floor(n))
-              .xpow(&self.xpow().clone())
-              .ypow(&self.ypow().clone())
-              .qpow(&self.qpow().clone())
+              .coef(self.coef.mod_floor(n))
+              .xpow(self.xpow().clone())
+              .ypow(self.ypow().clone())
+              .qpow(self.qpow().clone())
               .variable(self.variable())
               .build()
         }
@@ -282,7 +285,7 @@ impl Term {
 
     pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let s = term_builder::TermBuilder::new()
-            .coef(&self.coef.clone())
+            .coef(self.coef.clone())
             .build()
             .to_pol();
         let t = self.monomial.eval_x_polynomial(polynomial);
@@ -291,7 +294,7 @@ impl Term {
 
     pub fn eval_y_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let s = term_builder::TermBuilder::new()
-            .coef(&self.coef.clone())
+            .coef(self.coef.clone())
             .build()
             .to_pol();
         let t = self.monomial.eval_y_polynomial(polynomial);
