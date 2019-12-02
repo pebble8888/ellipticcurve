@@ -300,6 +300,32 @@ impl Term {
         let t = self.monomial.eval_y_polynomial(polynomial);
         s * t
     }
+
+    pub fn derivative_x(&self) -> Term {
+        assert!(self.xpow() >= &Zero::zero());
+        let mut t = self.clone();
+        if t.xpow() > &Zero::zero() { 
+            let c = t.xpow().clone(); 
+            t.monomial.xpow = c.clone() - BigInt::from(1);
+            t.coef *= c;
+        } else {
+            return term_builder::TermBuilder::new().coef(0).build();
+        }
+        t
+    }
+
+    pub fn derivative_y(&self) -> Term {
+        assert!(self.ypow() >= &Zero::zero());
+        let mut t = self.clone();
+        if t.ypow() > &Zero::zero() { 
+            let c = t.ypow().clone(); 
+            t.monomial.ypow = c.clone() - BigInt::from(1);
+            t.coef *= c;
+        } else {
+            return term_builder::TermBuilder::new().coef(0).build();
+        }
+        t
+    }
 }
 
 impl Ord for Term {
