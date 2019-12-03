@@ -24,7 +24,7 @@ impl_op_ex!(+ |a: &Polynomial, b: &Polynomial| -> Polynomial {
         if let Some(av) = pol.terms.get_mut(&bk) {
             *av += bv;
             if av.is_zero() {
-                pol.terms.remove(&bk.clone());
+                pol.terms.remove(&bk);
             }
         } else {
             pol.terms.insert(bk.clone(), bv.clone());
