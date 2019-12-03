@@ -218,11 +218,11 @@ impl<'a> Power<&'a BigInt> for Polynomial {
     fn power(&self, n: &BigInt) -> Self {
         assert!(n >= &Zero::zero(), "n:{}", n.to_string());
         if n.is_zero() {
-            return term_builder::TermBuilder::new().build().to_pol();
+            return One::one();
         }
         let mut e = n.clone();
         let mut b = self.clone();
-        let mut r = term_builder::TermBuilder::new().build().to_pol();
+        let mut r: Polynomial = One::one();
         while e > One::one() {
             if e.is_odd() {
                 r *= b.clone();
@@ -276,7 +276,7 @@ impl Polynomial {
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         assert!(*n >= Zero::zero());
         let mut b = self.modulo(p);
-        let mut r = term_builder::TermBuilder::new().build().to_pol();
+        let mut r: Polynomial = One::one();
         let mut e = n.clone();
         while &e > &One::one() {
             if e.is_odd() {
@@ -313,10 +313,10 @@ impl Polynomial {
                 break;
             }
             let mut q = term_builder::TermBuilder::new()
-                    .coef(rh.coef.clone() * oh.coef.inverse(p))
+                    .coef(&rh.coef * oh.coef.inverse(p))
                     .xpow(rh.xpow() - oh.xpow())
-                    .ypow(rh.ypow().clone())
-                    .qpow(rh.qpow().clone())
+                    .ypow(rh.ypow())
+                    .qpow(rh.qpow())
                     .build();
             q.modular_assign(&p);
             let mut d = q * other;
