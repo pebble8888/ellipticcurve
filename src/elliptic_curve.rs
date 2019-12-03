@@ -104,9 +104,9 @@ impl EllipticCurve {
         let y1 = p1.y.clone();
         let y2 = p2.y.clone();
         if p1.x != p2.x {
-            let m = (y2.clone() - y1.clone()) * (x2.clone() - x1.clone()).inverse(&self.p);
-            let x3 = m.power(BigInt::from(2)) - x1.clone() - x2.clone();
-            let y3 = m * (x1.clone() - x3.clone()) - y1.clone(); 
+            let m = (&y2 - &y1) * (&x2 - &x1).inverse(&self.p);
+            let x3 = m.power(2) - &x1 - &x2;
+            let y3 = m * (&x1 - &x3) - &y1; 
             return ECPoint::new(
                 &x3.mod_floor(&self.p),
                 &y3.mod_floor(&self.p));
@@ -114,9 +114,9 @@ impl EllipticCurve {
             if y1 != y2 || y1 == Zero::zero() {
                 ECPoint::infinity()
             } else {
-                let m = (BigInt::from(3) * x1.power(BigInt::from(2)) + self.a.clone()) * (BigInt::from(2) * y1.clone()).inverse(&self.p);
-                let x3 = m.power(BigInt::from(2)) - BigInt::from(2) * x1.clone();
-                let y3 = m * (x1.clone() - x3.clone()) - y1.clone();
+                let m = (BigInt::from(3) * x1.power(2) + self.a.clone()) * (BigInt::from(2) * y1.clone()).inverse(&self.p);
+                let x3 = m.power(2) - BigInt::from(2) * &x1;
+                let y3 = m * (&x1 - &x3) - &y1;
                 return ECPoint::new(
                     &x3.mod_floor(&self.p),
                     &y3.mod_floor(&self.p));
@@ -137,12 +137,12 @@ impl EllipticCurve {
     /// create rational points 
     pub fn create_points(&mut self) {
         for x in num_iter::range(BigInt::from(0), self.p.clone()) {
-            let xpol = x.clone().power(3)
+            let xpol = x.power(3)
                 + self.a.clone() * x.clone()
                 + self.b.clone();
             let xpol = xpol.mod_floor(&self.p);
             for y in num_iter::range(BigInt::from(0), self.p.clone()) {
-                let ypol = y.clone().power(2);
+                let ypol = y.power(2);
                 let ypol = ypol.mod_floor(&self.p);
                 if ypol == xpol {
                     let point = ECPoint::new(&x, &y);

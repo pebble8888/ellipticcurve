@@ -138,7 +138,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: &BigInt) -> Vec<bigint::ModResult> {
 
             let f = f.reduction_modular(a, b, q);
 
-            let num3 = &d * (e * f.power(2) - d.clone().power(2)) - &g * division_polynomial::psi(a, b, &ql).power(3) * f.power(3);
+            let num3 = &d * (e * f.power(2) - d.power(2)) - &g * division_polynomial::psi(a, b, &ql).power(3) * f.power(3);
             let mut num3 = num3.reduction_modular(a, b, q);
 
             num3 *= division_polynomial::psi(a, b, &ql);

@@ -108,10 +108,10 @@ impl<'a> Power<&'a BigInt> for Term {
             panic!("can't power non zero variable!");
         }
         term_builder::TermBuilder::new()
-          .coef(self.coef.clone().power(&n.clone()))
-          .xpow(self.xpow() * n.clone())
-          .ypow(self.ypow() * n.clone())
-          .qpow(self.qpow() * n.clone())
+          .coef(self.coef.power(n))
+          .xpow(self.xpow() * n)
+          .ypow(self.ypow() * n)
+          .qpow(self.qpow() * n)
           .build()
     }
 }
@@ -123,8 +123,8 @@ impl Monomial {
 
     pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .ypow(self.ypow.clone())
-            .qpow(self.qpow.clone())
+            .ypow(&self.ypow)
+            .qpow(&self.qpow)
             .variable(self.variable)
             .build()
             .to_pol();
@@ -133,8 +133,8 @@ impl Monomial {
 
     pub fn eval_y_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .xpow(self.xpow.clone())
-            .qpow(self.qpow.clone())
+            .xpow(&self.xpow)
+            .qpow(&self.qpow)
             .variable(self.variable)
             .build()
             .to_pol();

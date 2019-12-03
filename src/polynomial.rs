@@ -266,11 +266,11 @@ impl Polynomial {
     }
 
     pub fn square(&self) -> Self {
-        self.power(BigInt::from(2))
+        self.power(2)
     }
 
     pub fn cube(&self) -> Self {
-        self.power(BigInt::from(3))
+        self.power(3)
     }
 
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
@@ -511,13 +511,13 @@ impl Polynomial {
             if u.ypow() >= &BigInt::from(2) {
                 let yy = u.ypow().clone().div_floor(&BigInt::from(2));
                 let mut e = u.clone().to_pol();
-                e /= term_builder::TermBuilder::new().ypow(yy.clone() * 2).build();
+                e /= term_builder::TermBuilder::new().ypow(&yy * 2).build();
 
                 let ee = term_builder::TermBuilder::new().xpow(3).build()
                        + term_builder::TermBuilder::new().coef(a.clone()).xpow(1).build()
                        + term_builder::TermBuilder::new().coef(b.clone()).build();
                 // power() is faster than power_modulo()
-                let ee = ee.power(yy.clone());
+                let ee = ee.power(&yy);
                 e *= ee;
                 t += e;
             } else {
