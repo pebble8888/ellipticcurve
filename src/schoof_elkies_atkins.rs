@@ -10,8 +10,6 @@ use super::modular_polynomial;
 use super::elliptic_curve;
 use super::polynomial;
 
-type TermBuilder = term_builder::TermBuilder;
-
 pub struct SEAResult {
     pub gcd: polynomial::Polynomial,
     pub degree_of_gcd: BigInt, 
@@ -26,8 +24,8 @@ pub fn sea(ec: &elliptic_curve::EllipticCurve, l: i64) -> SEAResult {
     mpol.modular_assign(&ec.p);
     let mut mpol = mpol.eval_y(&ec.j_invariant());
     mpol.modular_assign(&ec.p);
-    let pol = TermBuilder::new().xpow(ec.p.clone()).build()
-            - TermBuilder::new().xpow(1).build();
+    let pol = term_builder::TermBuilder::new().xpow(ec.p.clone()).build()
+            - term_builder::TermBuilder::new().xpow(1).build();
     let gcd = pol.gcd(&mpol, &ec.p);
     // elkies prime for degree 1, 2, l+1
     // atkins prime for degree 0

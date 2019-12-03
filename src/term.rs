@@ -1,6 +1,6 @@
 use num_integer::Integer;
 use num_bigint::BigInt;
-use num_traits::{Zero, One};
+use num_traits::{Zero, One, ToPrimitive};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops; 
@@ -9,6 +9,7 @@ use super::bigint::{Power, PowerModulo};
 use super::term_builder;
 use super::term_builder::TermBuildable;
 use super::subscripted_variable;
+use std::convert::TryInto;
 
 type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 
@@ -24,7 +25,7 @@ pub struct Term {
 pub struct Monomial {
     pub xpow: BigInt,
     pub ypow: BigInt,
-    pub qpow: BigInt,
+    pub qpow: i64,
     pub variable: SubscriptedVariable,
 }
 
@@ -107,11 +108,12 @@ impl<'a> Power<&'a BigInt> for Term {
         if !self.variable().empty {
             panic!("can't power non zero variable!");
         }
+        let nn: i64 = n.to_i64().unwrap();
         term_builder::TermBuilder::new()
           .coef(self.coef.power(n))
           .xpow(self.xpow() * n)
           .ypow(self.ypow() * n)
-          .qpow(self.qpow() * n)
+          .qpow(self.qpow() * nn)
           .build()
     }
 }
@@ -124,7 +126,7 @@ impl Monomial {
     pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
             .ypow(&self.ypow)
-            .qpow(&self.qpow)
+            .qpow(self.qpow)
             .variable(self.variable)
             .build()
             .to_pol();
@@ -134,15 +136,15 @@ impl Monomial {
     pub fn eval_y_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
             .xpow(&self.xpow)
-            .qpow(&self.qpow)
+            .qpow(self.qpow)
             .variable(self.variable)
             .build()
             .to_pol();
         polynomial.power(&self.ypow) * t
     }
 
-    pub fn eval_q(&self, q: &BigInt) -> BigInt {
-        q.power(&self.qpow)
+    pub fn eval_q(&self, q: i64) -> i64 {
+        q.pow(self.qpow.try_into().unwrap())
     }
 }
 
@@ -162,8 +164,8 @@ impl Term {
         &self.monomial.ypow
     }
 
-    pub fn qpow(&self) -> &BigInt {
-        &self.monomial.qpow
+    pub fn qpow(&self) -> i64 {
+        self.monomial.qpow
     }
 
     pub fn variable(&self) -> SubscriptedVariable {
@@ -204,11 +206,12 @@ impl Term {
 
     /// Term^n (mod p)
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
+        let nn = n.to_i64().unwrap();
         term_builder::TermBuilder::new()
             .coef(self.coef.power_modulo(n, p))
             .xpow(self.xpow() * n.clone())
             .ypow(self.ypow() * n.clone())
-            .qpow(self.qpow() * n.clone())
+            .qpow(self.qpow() * nn)
             .variable(self.variable())
             .build()
     }

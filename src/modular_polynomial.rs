@@ -4,7 +4,6 @@ use num_traits::One;
 use super::polynomial;
 use super::term_builder;
 use super::term_builder::TermBuildable;
-use super::bigint::Power;
 use super::j_invariant;
 use super::subscripted_variable;
 use std::ops::Neg;
@@ -47,11 +46,10 @@ pub fn subscripted_variable_modular_polynomial(p: i64) -> polynomial::Polynomial
 
 pub fn subscripted_variable_modular_polynomial_list(p: i64) -> Vec<polynomial::Polynomial> {
     let pol_q = subscripted_variable_modular_polynomial_q(p);
-    let pp = BigInt::from(p);
-    let min = BigInt::from(- pp.power(2) - pp);
+    let min = - p.pow(2) - p;
     let mut v: Vec<polynomial::Polynomial> = Vec::new();
     for i in num_iter::range(min, One::one()) {
-        v.push(pol_q.to_q_power_coef(&i));
+        v.push(pol_q.to_q_power_coef(i));
     }
     v
 }
@@ -127,7 +125,6 @@ fn modular_polynomial_test3() {
 }
 
 #[test]
-#[ignore]
 fn modular_polynomial_test5() {
     let pol = modular_polynomial(5);
     assert_eq_str!(pol, "x^6 - x^5 y^5 + 3720 x^5 y^4 - 4550940 x^5 y^3 + 2028551200 x^5 y^2 - 246683410950 x^5 y + 1963211489280 x^5 + 3720 x^4 y^5 + 1665999364600 x^4 y^4 + 107878928185336800 x^4 y^3 + 383083609779811215375 x^4 y^2 + 128541798906828816384000 x^4 y + 1284733132841424456253440 x^4 - 4550940 x^3 y^5 + 107878928185336800 x^3 y^4 - 441206965512914835246100 x^3 y^3 + 26898488858380731577417728000 x^3 y^2 - 192457934618928299655108231168000 x^3 y + 280244777828439527804321565297868800 x^3 + 2028551200 x^2 y^5 + 383083609779811215375 x^2 y^4 + 26898488858380731577417728000 x^2 y^3 + 5110941777552418083110765199360000 x^2 y^2 + 36554736583949629295706472332656640000 x^2 y + 6692500042627997708487149415015068467200 x^2 - 246683410950 x y^5 + 128541798906828816384000 x y^4 - 192457934618928299655108231168000 x y^3 + 36554736583949629295706472332656640000 x y^2 - 264073457076620596259715790247978782949376 x y + 53274330803424425450420160273356509151232000 x + y^6 + 1963211489280 y^5 + 1284733132841424456253440 y^4 + 280244777828439527804321565297868800 y^3 + 6692500042627997708487149415015068467200 y^2 + 53274330803424425450420160273356509151232000 y + 141359947154721358697753474691071362751004672000");

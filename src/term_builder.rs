@@ -4,7 +4,6 @@ use super::term;
 use super::subscripted_variable;
 
 type Term = term::Term;
-type Monomial = term::Monomial;
 type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 
 #[derive(Debug, Clone, Default)]
@@ -12,7 +11,7 @@ pub struct TermBuilder {
     coef_: BigInt,
     xpow_: BigInt,
     ypow_: BigInt,
-    qpow_: BigInt,
+    qpow_: i64,
     variable_: SubscriptedVariable, 
 }
 
@@ -23,8 +22,6 @@ pub trait TermBuildable<T> {
     fn xpow(&mut self, xpow: T) -> &mut Self;
     /// power of y
     fn ypow(&mut self, ypow: T) -> &mut Self;
-    /// power of q
-    fn qpow(&mut self, qpow: T) -> &mut Self;
 }
 
 impl<'a> TermBuildable<&'a BigInt> for TermBuilder {
@@ -38,10 +35,6 @@ impl<'a> TermBuildable<&'a BigInt> for TermBuilder {
     }
     fn ypow(&mut self, ypow: &BigInt) -> &mut TermBuilder {
         self.ypow_ = ypow.clone();
-        self
-    }
-    fn qpow(&mut self, qpow: &BigInt) -> &mut TermBuilder {
-        self.qpow_ = qpow.clone();
         self
     }
 }
@@ -59,10 +52,6 @@ impl<'a> TermBuildable<BigInt> for TermBuilder {
         self.ypow_ = ypow.clone();
         self
     }
-    fn qpow(&mut self, qpow: BigInt) -> &mut TermBuilder {
-        self.qpow_ = qpow.clone();
-        self
-    }
 }
 
 impl TermBuildable<i64> for TermBuilder {
@@ -78,10 +67,6 @@ impl TermBuildable<i64> for TermBuilder {
         self.ypow_ = BigInt::from(ypow);
         self
     }
-    fn qpow(&mut self, qpow: i64) -> &mut TermBuilder {
-        self.qpow_ = BigInt::from(qpow);
-        self
-    }
 }
 
 impl TermBuilder {
@@ -90,6 +75,11 @@ impl TermBuilder {
             coef_: BigInt::from(1),
             .. Default::default()
         }
+    }
+
+    pub fn qpow(&mut self, qpow: i64) -> &mut TermBuilder {
+        self.qpow_ = qpow;
+        self
     }
 
     pub fn variable(&mut self, variable: SubscriptedVariable) -> &mut TermBuilder {
@@ -109,7 +99,7 @@ impl TermBuilder {
     pub fn build(&self) -> Term {
         Term {
             coef: self.coef_.clone(),
-            monomial: Monomial {
+            monomial: term::Monomial {
                 xpow: self.xpow_.clone(),
                 ypow: self.ypow_.clone(),
                 qpow: self.qpow_.clone(),

@@ -1,6 +1,4 @@
-use num_bigint::BigInt;
 use crate::bigint::Power;
-use crate::term_builder::TermBuildable;
 
 use super::polynomial;
 use super::eisenstein;
@@ -20,7 +18,7 @@ pub fn j_invariant1(order: i64) -> polynomial::Polynomial {
 pub fn j_invariant(order: i64) -> polynomial::Polynomial {
     let j1 = j_invariant1(order + 1);
     let t = term_builder::TermBuilder::new()
-            .qpow(&BigInt::from(-1))
+            .qpow(-1)
             .build()
             .to_pol();
     j1 * t

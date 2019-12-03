@@ -9,8 +9,6 @@ use crate::bigint::Inverse;
 use num_traits::Zero;
 use num_traits::One;
 
-type TermBuilder = term_builder::TermBuilder;
-
 /// y^2 = x^3 + a x + b
 /// GF(p)
 pub struct EllipticCurve {
@@ -32,9 +30,9 @@ pub struct ECPoint {
 
 impl EllipticCurve {
     pub fn new(a: &BigInt, b: &BigInt, p: &BigInt) -> EllipticCurve {
-        let pol = TermBuilder::new().xpow(3).build()
-        + TermBuilder::new().coef(a).xpow(1).build()
-        + TermBuilder::new().coef(b).build();
+        let pol = term_builder::TermBuilder::new().xpow(3).build()
+        + term_builder::TermBuilder::new().coef(a).xpow(1).build()
+        + term_builder::TermBuilder::new().coef(b).build();
         let mut ec = EllipticCurve {
             a: a.clone(),
             b: b.clone(),
@@ -47,9 +45,9 @@ impl EllipticCurve {
     }
 
     pub fn new_raw(a: &BigInt, b: &BigInt, p: &BigInt) -> EllipticCurve {
-        let pol = TermBuilder::new().xpow(3).build()
-        + TermBuilder::new().coef(a).xpow(1).build()
-        + TermBuilder::new().coef(b).build();
+        let pol = term_builder::TermBuilder::new().xpow(3).build()
+        + term_builder::TermBuilder::new().coef(a).xpow(1).build()
+        + term_builder::TermBuilder::new().coef(b).build();
         let ec = EllipticCurve {
             a: a.clone(),
             b: b.clone(),

@@ -638,7 +638,7 @@ impl Polynomial {
         assert!(!self.has_y(), "has_y()");
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
-            if &m.qpow <= &BigInt::from(order) {
+            if m.qpow <= order {
                 pol.terms.insert(m.clone(), coef.clone());
             }
         }
@@ -670,12 +670,12 @@ impl Polynomial {
     }
 
     /// get q power coeficient
-    pub fn to_q_power_coef(&self, power: &BigInt) -> polynomial::Polynomial {
+    pub fn to_q_power_coef(&self, power: i64) -> polynomial::Polynomial {
         assert!(!self.has_x(), "has_x()");
         assert!(!self.has_y(), "has_y()");
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
-            if &m.qpow == power {
+            if m.qpow == power {
                 let mm = term::Monomial {
                     xpow: Zero::zero(),
                     ypow: Zero::zero(),
@@ -841,7 +841,7 @@ fn polynomial_x_polynomial_test1() {
     let m = term::Monomial {
         xpow: BigInt::from(2),
         ypow: BigInt::from(3),
-        qpow: BigInt::from(4),
+        qpow: 4,
         variable: subscripted_variable::SubscriptedVariable {
             i: 1,
             j: 2,
@@ -865,7 +865,7 @@ fn polynomial_y_polynomial_test1() {
     let m = term::Monomial {
         xpow: BigInt::from(2),
         ypow: BigInt::from(3),
-        qpow: BigInt::from(4),
+        qpow: 4,
         variable: subscripted_variable::SubscriptedVariable {
             i: 1,
             j: 2,

@@ -1,9 +1,7 @@
 extern crate num_iter;
-//use num_bigint::BigInt;
 use num_traits::One;
 use super::polynomial;
 use super::term_builder;
-use super::term_builder::TermBuildable;
 
 /// (1-q)^24 * (1-q^2)^24 * .. * (1-q^order)^24
 pub fn delta1(order: i64) -> polynomial::Polynomial {
