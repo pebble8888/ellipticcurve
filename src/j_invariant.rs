@@ -9,9 +9,9 @@ use super::term_builder;
 pub fn j_invariant1(order: i64) -> polynomial::Polynomial {
     let di = delta::delta1_inverse(order);
     let e4 = eisenstein::eisenstein4(order).power(3);
-    let e4 = e4.omit_high_order_q(order as i64);
+    let e4 = e4.omit_high_order_q(order);
     let j = di * e4;
-    j.omit_high_order_q(order as i64)
+    j.omit_high_order_q(order)
 }
 
 // j_invariant

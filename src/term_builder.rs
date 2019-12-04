@@ -9,8 +9,8 @@ type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 #[derive(Debug, Clone, Default)]
 pub struct TermBuilder {
     coef_: BigInt,
-    xpow_: BigInt,
-    ypow_: BigInt,
+    xpow_: i64,
+    ypow_: i64,
     qpow_: i64,
     variable_: SubscriptedVariable, 
 }
@@ -18,23 +18,11 @@ pub struct TermBuilder {
 pub trait TermBuildable<T> {
     /// coeficient
     fn coef(&mut self, coef: T) -> &mut Self;
-    /// power of x
-    fn xpow(&mut self, xpow: T) -> &mut Self;
-    /// power of y
-    fn ypow(&mut self, ypow: T) -> &mut Self;
 }
 
 impl<'a> TermBuildable<&'a BigInt> for TermBuilder {
     fn coef(&mut self, coef: &BigInt) -> &mut TermBuilder {
         self.coef_ = coef.clone();
-        self
-    }
-    fn xpow(&mut self, xpow: &BigInt) -> &mut TermBuilder {
-        self.xpow_ = xpow.clone();
-        self
-    }
-    fn ypow(&mut self, ypow: &BigInt) -> &mut TermBuilder {
-        self.ypow_ = ypow.clone();
         self
     }
 }
@@ -44,27 +32,11 @@ impl<'a> TermBuildable<BigInt> for TermBuilder {
         self.coef_ = coef.clone();
         self
     }
-    fn xpow(&mut self, xpow: BigInt) -> &mut TermBuilder {
-        self.xpow_ = xpow.clone();
-        self
-    }
-    fn ypow(&mut self, ypow: BigInt) -> &mut TermBuilder {
-        self.ypow_ = ypow.clone();
-        self
-    }
 }
 
 impl TermBuildable<i64> for TermBuilder {
     fn coef(&mut self, coef: i64) -> &mut TermBuilder {
         self.coef_ = BigInt::from(coef);
-        self
-    }
-    fn xpow(&mut self, xpow: i64) -> &mut TermBuilder {
-        self.xpow_ = BigInt::from(xpow); 
-        self
-    }
-    fn ypow(&mut self, ypow: i64) -> &mut TermBuilder {
-        self.ypow_ = BigInt::from(ypow);
         self
     }
 }
@@ -75,6 +47,16 @@ impl TermBuilder {
             coef_: BigInt::from(1),
             .. Default::default()
         }
+    }
+
+    pub fn xpow(&mut self, xpow: i64) -> &mut TermBuilder {
+        self.xpow_ = xpow;
+        self
+    }
+
+    pub fn ypow(&mut self, ypow: i64) -> &mut TermBuilder {
+        self.ypow_ = ypow;
+        self
     }
 
     pub fn qpow(&mut self, qpow: i64) -> &mut TermBuilder {

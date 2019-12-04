@@ -3,16 +3,17 @@ extern crate num_traits;
 extern crate num_iter;
 
 use num_bigint::BigInt;
-use num_traits::{Zero};
+use num_traits::{Zero, ToPrimitive};
 use super::term_builder;
-use super::term_builder::TermBuildable;
+//use super::term_builder::TermBuildable;
 use super::modular_polynomial;
 use super::elliptic_curve;
 use super::polynomial;
+use std::convert::TryInto;
 
 pub struct SEAResult {
     pub gcd: polynomial::Polynomial,
-    pub degree_of_gcd: BigInt, 
+    pub degree_of_gcd: i64, 
     pub is_elkies_prime: bool,
     pub isogeny_j_invariants: Vec<BigInt>
 }
@@ -24,7 +25,8 @@ pub fn sea(ec: &elliptic_curve::EllipticCurve, l: i64) -> SEAResult {
     mpol.modular_assign(&ec.p);
     let mut mpol = mpol.eval_y(&ec.j_invariant());
     mpol.modular_assign(&ec.p);
-    let pol = term_builder::TermBuilder::new().xpow(ec.p.clone()).build()
+    let pp: i64 = ec.p.to_i64().unwrap();
+    let pol = term_builder::TermBuilder::new().xpow(pp).build()
             - term_builder::TermBuilder::new().xpow(1).build();
     let gcd = pol.gcd(&mpol, &ec.p);
     // elkies prime for degree 1, 2, l+1
@@ -38,7 +40,7 @@ pub fn sea(ec: &elliptic_curve::EllipticCurve, l: i64) -> SEAResult {
             tmp.modular_assign(&ec.p);
             if tmp.is_zero() {
                 isogeny_j_invariants.push(j);
-                if degree.clone() == BigInt::from(isogeny_j_invariants.len()) ||
+                if degree.clone() == isogeny_j_invariants.len().try_into().unwrap() ||
                    isogeny_j_invariants.len() == 2
                 {
                     break;
@@ -62,7 +64,7 @@ fn sea_test1() {
     let result = sea(&ec, l);
     assert_eq_str!(result.gcd, "x^2 + 4 x + 3");
 
-    assert_eq!(result.gcd.degree_x(), BigInt::from(2));
+    assert_eq!(result.gcd.degree_x(), 2);
     assert!(result.is_elkies_prime);
     assert_eq!(result.isogeny_j_invariants.len(), 2);
     assert_eq_str!(result.isogeny_j_invariants[0], "20");
@@ -77,7 +79,7 @@ fn sea_test2() {
     let l = 5;
     let result = sea(&ec, l);
     assert_eq_str!(result.gcd, "x^2 + 88 x + 49");
-    assert_eq!(result.gcd.degree_x(), BigInt::from(2));
+    assert_eq!(result.gcd.degree_x(), 2);
     assert!(result.is_elkies_prime);
     assert_eq!(result.isogeny_j_invariants.len(), 2);
     assert_eq_str!(result.isogeny_j_invariants[0], "17");

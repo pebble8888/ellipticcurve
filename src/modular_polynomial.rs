@@ -14,10 +14,10 @@ pub fn subscripted_variable_modular_polynomial(p: i64) -> polynomial::Polynomial
     assert!(p >= 2);
     assert!(primes::is_prime(p as u64));
     let mut pol = term_builder::TermBuilder::new()
-                .xpow(p as i64 +1)
+                .xpow(p+1)
                 .build().to_pol();
     pol += term_builder::TermBuilder::new()
-                .ypow(p as i64 +1)
+                .ypow(p+1)
                 .build().to_pol();
 
     for i in num_iter::range(0, p+1) {

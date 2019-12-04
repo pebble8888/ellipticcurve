@@ -21,10 +21,10 @@ pub struct Term {
 }
 
 /// x^xpow * y^ypow * c_i_j * q^qpow
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Copy)]
 pub struct Monomial {
-    pub xpow: BigInt,
-    pub ypow: BigInt,
+    pub xpow: i64,
+    pub ypow: i64,
     pub qpow: i64,
     pub variable: SubscriptedVariable,
 }
@@ -111,8 +111,8 @@ impl<'a> Power<&'a BigInt> for Term {
         let nn: i64 = n.to_i64().unwrap();
         term_builder::TermBuilder::new()
           .coef(self.coef.power(n))
-          .xpow(self.xpow() * n)
-          .ypow(self.ypow() * n)
+          .xpow(self.xpow() * nn)
+          .ypow(self.ypow() * nn)
           .qpow(self.qpow() * nn)
           .build()
     }
@@ -120,27 +120,27 @@ impl<'a> Power<&'a BigInt> for Term {
 
 impl Monomial {
     pub fn eval_xy(&self, x: &BigInt, y: &BigInt) -> BigInt {
-        x.power(&self.xpow) * y.power(&self.ypow)
+        x.power(self.xpow) * y.power(self.ypow)
     }
 
     pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .ypow(&self.ypow)
+            .ypow(self.ypow)
             .qpow(self.qpow)
             .variable(self.variable)
             .build()
             .to_pol();
-        polynomial.power(&self.xpow) * t
+        polynomial.power(self.xpow) * t
     }
 
     pub fn eval_y_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new()
-            .xpow(&self.xpow)
+            .xpow(self.xpow)
             .qpow(self.qpow)
             .variable(self.variable)
             .build()
             .to_pol();
-        polynomial.power(&self.ypow) * t
+        polynomial.power(self.ypow) * t
     }
 
     pub fn eval_q(&self, q: i64) -> i64 {
@@ -156,12 +156,12 @@ impl Term {
         }
     }
 
-    pub fn xpow(&self) -> &BigInt {
-        &self.monomial.xpow
+    pub fn xpow(&self) -> i64 {
+        self.monomial.xpow
     }
 
-    pub fn ypow(&self) -> &BigInt {
-        &self.monomial.ypow
+    pub fn ypow(&self) -> i64 {
+        self.monomial.ypow
     }
 
     pub fn qpow(&self) -> i64 {
@@ -199,9 +199,9 @@ impl Term {
     }
 
     pub fn is_equal_order(&self, other: &Self) -> bool {
-        return &self.xpow() == &other.xpow()
-            && &self.ypow() == &other.ypow()
-            && &self.qpow() == &other.qpow()
+        return self.xpow() == other.xpow()
+            && self.ypow() == other.ypow()
+            && self.qpow() == other.qpow()
     }
 
     /// Term^n (mod p)
@@ -209,8 +209,8 @@ impl Term {
         let nn = n.to_i64().unwrap();
         term_builder::TermBuilder::new()
             .coef(self.coef.power_modulo(n, p))
-            .xpow(self.xpow() * n.clone())
-            .ypow(self.ypow() * n.clone())
+            .xpow(self.xpow() * nn)
+            .ypow(self.ypow() * nn)
             .qpow(self.qpow() * nn)
             .variable(self.variable())
             .build()
@@ -218,23 +218,23 @@ impl Term {
 
     /// Frobenius map of Term
     /// x -> x^n  y -> y^n
-    pub fn to_frob(&self, n: &BigInt) -> Self {
+    pub fn to_frob(&self, n: i64) -> Self {
         term_builder::TermBuilder::new()
           .coef(self.coef.clone())
-          .xpow(self.xpow() * n.clone())
-          .ypow(self.ypow() * n.clone())
-          .qpow(self.qpow().clone())
+          .xpow(self.xpow() * n)
+          .ypow(self.ypow() * n)
+          .qpow(self.qpow())
           .variable(self.variable())
           .build()
     }
 
     /// y -> y^n
-    pub fn to_y_power(&self, n: &BigInt) -> Self {
+    pub fn to_y_power(&self, n: i64) -> Self {
         term_builder::TermBuilder::new()
           .coef(self.coef.clone())
-          .xpow(self.xpow().clone())
-          .ypow(self.ypow() * n.clone())
-          .qpow(self.qpow().clone())
+          .xpow(self.xpow())
+          .ypow(self.ypow() * n)
+          .qpow(self.qpow())
           .variable(self.variable())
           .build()
     }
@@ -243,8 +243,8 @@ impl Term {
     pub fn to_q_power(&self, n: i64) -> Self {
         term_builder::TermBuilder::new()
           .coef(self.coef.clone())
-          .xpow(self.xpow().clone())
-          .ypow(self.ypow().clone())
+          .xpow(self.xpow())
+          .ypow(self.ypow())
           .qpow(self.qpow() * n)
           .variable(self.variable())
           .build()
@@ -257,9 +257,9 @@ impl Term {
         } else {
             term_builder::TermBuilder::new()
               .coef(self.coef.mod_floor(n))
-              .xpow(self.xpow().clone())
-              .ypow(self.ypow().clone())
-              .qpow(self.qpow().clone())
+              .xpow(self.xpow())
+              .ypow(self.ypow())
+              .qpow(self.qpow())
               .variable(self.variable())
               .build()
         }
@@ -305,12 +305,12 @@ impl Term {
     }
 
     pub fn derivative_x(&self) -> Term {
-        assert!(self.xpow() >= &Zero::zero());
+        assert!(self.xpow() >= Zero::zero());
         let mut t = self.clone();
-        if t.xpow() > &Zero::zero() { 
-            let c = t.xpow().clone(); 
-            t.monomial.xpow = c.clone() - BigInt::from(1);
-            t.coef *= c;
+        if t.xpow() > Zero::zero() { 
+            let c: i64 = t.xpow();
+            t.monomial.xpow = c - 1i64;
+            t.coef *= BigInt::from(c);
         } else {
             return term_builder::TermBuilder::new().coef(0).build();
         }
@@ -318,11 +318,11 @@ impl Term {
     }
 
     pub fn derivative_y(&self) -> Term {
-        assert!(self.ypow() >= &Zero::zero());
+        assert!(self.ypow() >= Zero::zero());
         let mut t = self.clone();
-        if t.ypow() > &Zero::zero() { 
-            let c = t.ypow().clone(); 
-            t.monomial.ypow = c.clone() - BigInt::from(1);
+        if t.ypow() > Zero::zero() { 
+            let c: i64 = t.ypow(); 
+            t.monomial.ypow = c - 1;
             t.coef *= c;
         } else {
             return term_builder::TermBuilder::new().coef(0).build();

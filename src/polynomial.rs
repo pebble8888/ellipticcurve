@@ -258,6 +258,38 @@ impl One for Polynomial {
     }
 }
 
+impl ops::Rem<i64> for &Polynomial {
+    type Output = Polynomial;
+    fn rem(self, p: i64) -> Self::Output {
+        let p = BigInt::from(p);
+        self.rem(&p)
+    }
+}
+
+impl ops::Rem<&BigInt> for &Polynomial {
+    type Output = Polynomial;
+    fn rem(self, p: &BigInt) -> Self::Output {
+        let tmp = self.clone();
+        let mut pol = Polynomial::new();  
+        for (m, coef) in tmp.terms {
+            let c = coef.mod_floor(p);
+            if p != &Zero::zero() {
+                assert!(&c < p, "c {}", &c);
+            }
+            if !c.is_zero() {
+                pol.terms.insert(m, c);
+            }
+        }
+
+        for (_, coef) in &pol.terms {
+            if p != &Zero::zero() {
+                assert!(coef < p, "{} {}", &coef, pol.to_string());
+            }
+        }
+        pol
+    }
+}
+
 impl Polynomial {
     pub fn new() -> Self {
         Polynomial {
@@ -275,7 +307,7 @@ impl Polynomial {
 
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
         assert!(*n >= Zero::zero());
-        let mut b = self.modulo(p);
+        let mut b = self % p;
         let mut r: Polynomial = One::one();
         let mut e = n.clone();
         while &e > &One::one() {
@@ -329,26 +361,8 @@ impl Polynomial {
         r
     }
 
-    pub fn modulo(&self, p: &BigInt) -> Self {
-        let tmp = self.clone();
-        let mut pol = Polynomial::new();  
-        for (m, coef) in tmp.terms {
-            let c = coef.mod_floor(p);
-            if p != &Zero::zero() {
-                assert!(&c < p, "c {}", &c);
-            }
-            if !c.is_zero() {
-                pol.terms.insert(m, c);
-            }
-        }
-
-        for (_, coef) in &pol.terms {
-            if p != &Zero::zero() {
-                assert!(coef < p, "{} {}", &coef, pol.to_string());
-            }
-        }
-        pol
-    }
+    //pub fn modulo(&self, p: i64) -> Self {
+    //}
 
     pub fn modular_assign(&mut self, p: &BigInt) {
         let mut del: BTreeSet<term::Monomial> = BTreeSet::new();
@@ -471,7 +485,7 @@ impl Polynomial {
 
     /// frobenius map of Polynomial
     /// x -> x^n  y -> y^n
-    pub fn to_frob(&self, n: &BigInt) -> Self {
+    pub fn to_frob(&self, n: i64) -> Self {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let u = term::Term::from(m, coef);
@@ -482,7 +496,7 @@ impl Polynomial {
     }
 
     /// y -> y^n
-    pub fn to_y_power(&self, n: &BigInt) -> Self {
+    pub fn to_y_power(&self, n: i64) -> Self {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let u = term::Term::from(m, coef);
@@ -508,10 +522,11 @@ impl Polynomial {
         let mut t = Polynomial::new();
         for (m, coef) in &self.terms {
             let u = term::Term::from(m, coef);
-            if u.ypow() >= &BigInt::from(2) {
-                let yy = u.ypow().clone().div_floor(&BigInt::from(2));
+            if u.ypow() >= 2 {
+                let y = u.ypow().div_floor(&2);
+                let yy = BigInt::from(y);
                 let mut e = u.clone().to_pol();
-                e /= term_builder::TermBuilder::new().ypow(&yy * 2).build();
+                e /= term_builder::TermBuilder::new().ypow(y * 2).build();
 
                 let ee = term_builder::TermBuilder::new().xpow(3).build()
                        + term_builder::TermBuilder::new().coef(a.clone()).xpow(1).build()
@@ -528,20 +543,22 @@ impl Polynomial {
     }
 
     /// reduction using y^2 = x^3 + a x + b (mod p)
-    pub fn reduction_modular(&self, a: &BigInt, b: &BigInt, p: &BigInt) -> Self {
+    pub fn reduction_modular(&self, a: &BigInt, b: &BigInt, p: i64) -> Self {
+        let pp = BigInt::from(p);
         let mut t = Polynomial::new();
         for (m, coef) in &self.terms {
             let u = term::Term::from(m, coef);
-            if u.ypow() >= &BigInt::from(2) {
-                let yy = u.ypow().clone().div_floor(&BigInt::from(2));
+            if u.ypow() >= 2 {
+                let y = u.ypow().div_floor(&2);
+                let yy = BigInt::from(y);
                 let mut e = u.clone().to_pol();
-                e /= term_builder::TermBuilder::new().ypow(yy.clone() * 2).build();
+                e /= term_builder::TermBuilder::new().ypow(y * 2).build();
 
                 let ee = term_builder::TermBuilder::new().xpow(3).build()
                        + term_builder::TermBuilder::new().coef(a.clone()).xpow(1).build()
                        + term_builder::TermBuilder::new().coef(b.clone()).build();
                 // power() is faster than power_modulo()
-                let ee = ee.power_modulo(&yy.clone(), p);
+                let ee = ee.power_modulo(&yy, &pp);
                 let ee = ee.reduction_modular(a, b, p);
                 e *= ee;
                 t += e;
@@ -549,7 +566,7 @@ impl Polynomial {
                 t += u.clone();
             }
         }
-        t.modular_assign(p);
+        t.modular_assign(&pp);
         t
     }
 
@@ -567,7 +584,7 @@ impl Polynomial {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let term = term::Term {
-                        coef: coef * x.power(&m.xpow),
+                        coef: coef * x.power(m.xpow),
                         monomial: term::Monomial {
                             xpow: Zero::zero(),
                             ypow: m.ypow.clone(),
@@ -585,7 +602,7 @@ impl Polynomial {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let term = term::Term {
-                        coef: coef * y.power(&m.ypow),
+                        coef: coef * y.power(m.ypow),
                         monomial: term::Monomial {
                             xpow: m.xpow.clone(),
                             ypow: Zero::zero(),
@@ -622,14 +639,14 @@ impl Polynomial {
 
     /// get x degree
     /// assert if y equal not zero or q equal not zero
-    pub fn degree_x(&self) -> BigInt {
+    pub fn degree_x(&self) -> i64 {
         assert!(!self.has_y());
         assert!(!self.has_q());
         if self.is_zero() {
             return Zero::zero();
         }
         let s = self.highest_term_x();
-        return s.xpow().clone();
+        s.xpow()
     }
 
     /// omit O(order+1) for q
@@ -754,10 +771,10 @@ fn polynmomial_test() {
     assert_eq_str!(u34, "13 x^2 y^4");
 
     let p36 = u33 + u35;
-    let p37 = p36.modulo(&BigInt::from(6));
+    let p37 = &p36 % 6;
     assert_eq_str!(p37, "5 x^3 y^5 + x^2 y^4");
 
-    let p38 = p36.modulo(&BigInt::from(5));
+    let p38 = &p36 % 5;
     assert_eq_str!(p38, "2 x^2 y^4");
 
     //println!("{}", line!());
@@ -839,8 +856,8 @@ fn polynomial_x_polynomial_test1() {
     assert_eq_str!(qpol, "3 q^2 + 2 q^-1");
 
     let m = term::Monomial {
-        xpow: BigInt::from(2),
-        ypow: BigInt::from(3),
+        xpow: 2,
+        ypow: 3,
         qpow: 4,
         variable: subscripted_variable::SubscriptedVariable {
             i: 1,
@@ -863,8 +880,8 @@ fn polynomial_y_polynomial_test1() {
     assert_eq_str!(qpol, "2 q^2 - 3 q^-1");
 
     let m = term::Monomial {
-        xpow: BigInt::from(2),
-        ypow: BigInt::from(3),
+        xpow: 2,
+        ypow: 3,
         qpow: 4,
         variable: subscripted_variable::SubscriptedVariable {
             i: 1,
@@ -977,7 +994,7 @@ fn isogeny_test() {
 
     let a = BigInt::from(1132);
     let b = BigInt::from(278);
-    let pp = BigInt::from(2003);
+    let pp: i64 = 2003;
 
     let e1 = TermBuilder::new().ypow(2).build();
 
@@ -1000,7 +1017,7 @@ fn isogeny_test() {
     - p.power(3) * s.power(2)
     - TermBuilder::new().coef(500).build() * p * s.power(2) * q.power(2)
     - TermBuilder::new().coef(1005).build() * s.power(2) * q.power(3);
-    let sum = sum.reduction_modular(&a, &b, &pp);
+    let sum = sum.reduction_modular(&a, &b, pp);
     assert_eq_str!(sum, "0");
 }
 

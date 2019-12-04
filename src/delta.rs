@@ -8,10 +8,10 @@ pub fn delta1(order: i64) -> polynomial::Polynomial {
     let one = polynomial::Polynomial::one();
     let mut pol = polynomial::Polynomial::one();
     for n in num_iter::range(1, order + 1) {
-        let t = term_builder::TermBuilder::new().qpow(n as i64).build().to_pol();
+        let t = term_builder::TermBuilder::new().qpow(n).build().to_pol();
         let u = (one.clone() - t).power_omit_high_order_q(24, order);
         pol *= u;
-        pol = pol.omit_high_order_q(order as i64);
+        pol = pol.omit_high_order_q(order);
     }
     pol
 }
