@@ -45,8 +45,8 @@ impl<'a> Power<&'a BigInt> for BigInt {
     }
 }
 
-impl Power<i64> for BigInt {
-    fn power(&self, n: i64) -> Self {
+impl Power<i32> for BigInt {
+    fn power(&self, n: i32) -> Self {
         if n == 0 {
             return One::one();
         }

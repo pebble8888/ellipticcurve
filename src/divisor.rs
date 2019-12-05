@@ -4,7 +4,7 @@ use crate::bigint::Power;
 
 /// The sum of positive divisors function 
 /// sigma_{power}(n)
-pub fn sigma_divisor(n: i64, power: i64) -> BigInt {
+pub fn sigma_divisor(n: i32, power: i32) -> BigInt {
     if power < Zero::zero() {
         return Zero::zero();
     }
@@ -14,7 +14,7 @@ pub fn sigma_divisor(n: i64, power: i64) -> BigInt {
     let mut sum: BigInt = Zero::zero();
     for i in num_iter::range(1, n + 1) {
         if n % i == Zero::zero() {
-            sum += BigInt::from(i).power(power as i64);
+            sum += BigInt::from(i).power(power);
         }
     }
     sum

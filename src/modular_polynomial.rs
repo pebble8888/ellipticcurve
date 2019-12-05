@@ -10,7 +10,7 @@ use std::ops::Neg;
 use super::simultaneous_equation;
 
 /// calculate modular polynomial
-pub fn subscripted_variable_modular_polynomial(p: i64) -> polynomial::Polynomial {
+pub fn subscripted_variable_modular_polynomial(p: i32) -> polynomial::Polynomial {
     assert!(p >= 2);
     assert!(primes::is_prime(p as u64));
     let mut pol = term_builder::TermBuilder::new()
@@ -44,7 +44,7 @@ pub fn subscripted_variable_modular_polynomial(p: i64) -> polynomial::Polynomial
     pol
 }
 
-pub fn subscripted_variable_modular_polynomial_list(p: i64) -> Vec<polynomial::Polynomial> {
+pub fn subscripted_variable_modular_polynomial_list(p: i32) -> Vec<polynomial::Polynomial> {
     let pol_q = subscripted_variable_modular_polynomial_q(p);
     let min = - p.pow(2) - p;
     let mut v: Vec<polynomial::Polynomial> = Vec::new();
@@ -54,7 +54,7 @@ pub fn subscripted_variable_modular_polynomial_list(p: i64) -> Vec<polynomial::P
     v
 }
 
-pub fn subscripted_variable_modular_polynomial_q(p: i64) -> polynomial::Polynomial {
+pub fn subscripted_variable_modular_polynomial_q(p: i32) -> polynomial::Polynomial {
     let pol = subscripted_variable_modular_polynomial(p);
     // j-invariant q order needs p^2 + p
     let j_order = p * p + p;
@@ -66,8 +66,7 @@ pub fn subscripted_variable_modular_polynomial_q(p: i64) -> polynomial::Polynomi
     pol_q
 }
 
-pub fn modular_polynomial(p: i64) -> polynomial::Polynomial {
-    // TODO: solver simultanous equation1 to another file
+pub fn modular_polynomial(p: i32) -> polynomial::Polynomial {
     let list = subscripted_variable_modular_polynomial_list(p);
     let converter = subscripted_variable::SubscriptedVariableConverter::new(p);
     let row_count: usize = list.len();
@@ -102,13 +101,13 @@ pub fn modular_polynomial(p: i64) -> polynomial::Polynomial {
         if variable.i != variable.j {
             pol += term_builder::TermBuilder::new()
                 .coef(&val.clone().neg())
-                .xpow(variable.j as i64)
-                .ypow(variable.i as i64)
+                .xpow(variable.j as i32)
+                .ypow(variable.i as i32)
                 .build();
         }
     }
-    pol += term_builder::TermBuilder::new().xpow((p as i64)+1).build();
-    pol += term_builder::TermBuilder::new().ypow((p as i64)+1).build();
+    pol += term_builder::TermBuilder::new().xpow((p as i32)+1).build();
+    pol += term_builder::TermBuilder::new().ypow((p as i32)+1).build();
     return pol;
 }
 
@@ -125,6 +124,7 @@ fn modular_polynomial_test3() {
 }
 
 #[test]
+#[ignore]
 fn modular_polynomial_test5() {
     let pol = modular_polynomial(5);
     assert_eq_str!(pol, "x^6 - x^5 y^5 + 3720 x^5 y^4 - 4550940 x^5 y^3 + 2028551200 x^5 y^2 - 246683410950 x^5 y + 1963211489280 x^5 + 3720 x^4 y^5 + 1665999364600 x^4 y^4 + 107878928185336800 x^4 y^3 + 383083609779811215375 x^4 y^2 + 128541798906828816384000 x^4 y + 1284733132841424456253440 x^4 - 4550940 x^3 y^5 + 107878928185336800 x^3 y^4 - 441206965512914835246100 x^3 y^3 + 26898488858380731577417728000 x^3 y^2 - 192457934618928299655108231168000 x^3 y + 280244777828439527804321565297868800 x^3 + 2028551200 x^2 y^5 + 383083609779811215375 x^2 y^4 + 26898488858380731577417728000 x^2 y^3 + 5110941777552418083110765199360000 x^2 y^2 + 36554736583949629295706472332656640000 x^2 y + 6692500042627997708487149415015068467200 x^2 - 246683410950 x y^5 + 128541798906828816384000 x y^4 - 192457934618928299655108231168000 x y^3 + 36554736583949629295706472332656640000 x y^2 - 264073457076620596259715790247978782949376 x y + 53274330803424425450420160273356509151232000 x + y^6 + 1963211489280 y^5 + 1284733132841424456253440 y^4 + 280244777828439527804321565297868800 y^3 + 6692500042627997708487149415015068467200 y^2 + 53274330803424425450420160273356509151232000 y + 141359947154721358697753474691071362751004672000");

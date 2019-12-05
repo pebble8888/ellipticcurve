@@ -235,8 +235,8 @@ impl<'a> Power<&'a BigInt> for Polynomial {
     }
 }
 
-impl Power<i64> for Polynomial {
-    fn power(&self, n: i64) -> Self {
+impl Power<i32> for Polynomial {
+    fn power(&self, n: i32) -> Self {
         let n = BigInt::from(n);
         self.power(&n)
     }
@@ -258,9 +258,9 @@ impl One for Polynomial {
     }
 }
 
-impl ops::Rem<i64> for &Polynomial {
+impl ops::Rem<i32> for &Polynomial {
     type Output = Polynomial;
-    fn rem(self, p: i64) -> Self::Output {
+    fn rem(self, p: i32) -> Self::Output {
         let p = BigInt::from(p);
         self.rem(&p)
     }
@@ -324,12 +324,12 @@ impl Polynomial {
         r
     }
 
-    pub fn power_omit_high_order_q(&self, n: i64, order: i64) -> Self {
+    pub fn power_omit_high_order_q(&self, n: i32, order: i32) -> Self {
         let mut pol = polynomial::Polynomial::one();
         // TODO:optimise
         for _i in num_iter::range(0, n) {
             pol *= self.clone();
-            pol = pol.omit_high_order_q(order as i64);
+            pol = pol.omit_high_order_q(order as i32);
         }
         pol
     }
@@ -360,9 +360,6 @@ impl Polynomial {
         r.modular_assign(&p);
         r
     }
-
-    //pub fn modulo(&self, p: i64) -> Self {
-    //}
 
     pub fn modular_assign(&mut self, p: &BigInt) {
         let mut del: BTreeSet<term::Monomial> = BTreeSet::new();
@@ -485,7 +482,7 @@ impl Polynomial {
 
     /// frobenius map of Polynomial
     /// x -> x^n  y -> y^n
-    pub fn to_frob(&self, n: i64) -> Self {
+    pub fn to_frob(&self, n: i32) -> Self {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let u = term::Term::from(m, coef);
@@ -496,7 +493,7 @@ impl Polynomial {
     }
 
     /// y -> y^n
-    pub fn to_y_power(&self, n: i64) -> Self {
+    pub fn to_y_power(&self, n: i32) -> Self {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let u = term::Term::from(m, coef);
@@ -507,7 +504,7 @@ impl Polynomial {
     }
 
     /// q -> q^n
-    pub fn to_q_power(&self, n: i64) -> Self {
+    pub fn to_q_power(&self, n: i32) -> Self {
         let mut pol = Polynomial::new();
         for (m, coef) in &self.terms {
             let u = term::Term::from(m, coef);
@@ -543,7 +540,7 @@ impl Polynomial {
     }
 
     /// reduction using y^2 = x^3 + a x + b (mod p)
-    pub fn reduction_modular(&self, a: &BigInt, b: &BigInt, p: i64) -> Self {
+    pub fn reduction_modular(&self, a: &BigInt, b: &BigInt, p: i32) -> Self {
         let pp = BigInt::from(p);
         let mut t = Polynomial::new();
         for (m, coef) in &self.terms {
@@ -639,7 +636,7 @@ impl Polynomial {
 
     /// get x degree
     /// assert if y equal not zero or q equal not zero
-    pub fn degree_x(&self) -> i64 {
+    pub fn degree_x(&self) -> i32 {
         assert!(!self.has_y());
         assert!(!self.has_q());
         if self.is_zero() {
@@ -650,7 +647,7 @@ impl Polynomial {
     }
 
     /// omit O(order+1) for q
-    pub fn omit_high_order_q(&self, order: i64) -> Polynomial {
+    pub fn omit_high_order_q(&self, order: i32) -> Polynomial {
         assert!(!self.has_x(), "has_x()");
         assert!(!self.has_y(), "has_y()");
         let mut pol = Polynomial::new();
@@ -687,7 +684,7 @@ impl Polynomial {
     }
 
     /// get q power coeficient
-    pub fn to_q_power_coef(&self, power: i64) -> polynomial::Polynomial {
+    pub fn to_q_power_coef(&self, power: i32) -> polynomial::Polynomial {
         assert!(!self.has_x(), "has_x()");
         assert!(!self.has_y(), "has_y()");
         let mut pol = Polynomial::new();
@@ -994,7 +991,7 @@ fn isogeny_test() {
 
     let a = BigInt::from(1132);
     let b = BigInt::from(278);
-    let pp: i64 = 2003;
+    let pp: i32 = 2003;
 
     let e1 = TermBuilder::new().ypow(2).build();
 

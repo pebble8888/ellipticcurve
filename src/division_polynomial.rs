@@ -10,7 +10,7 @@ use super::bigint::{Power};
 type TermBuilder = term_builder::TermBuilder;
 type Polynomial = polynomial::Polynomial;
 
-pub fn psi(a: &BigInt, b: &BigInt, n: i64) -> Polynomial {
+pub fn psi(a: &BigInt, b: &BigInt, n: i32) -> Polynomial {
     assert!(n >= Zero::zero());
     if n == Zero::zero() {
         return Polynomial::new();
@@ -54,14 +54,14 @@ pub fn psi(a: &BigInt, b: &BigInt, n: i64) -> Polynomial {
     }
 }
 
-pub fn phi(a: &BigInt, b: &BigInt, n: i64) -> Polynomial {
+pub fn phi(a: &BigInt, b: &BigInt, n: i32) -> Polynomial {
     assert!(n >= One::one());
     let i = TermBuilder::new().xpow(1).build() * psi(a, b, n).power(2)
               - psi(a, b, n+1) * psi(a, b, n-1);
     i.reduction(a, b)
 }
 
-pub fn omega(a: &BigInt, b: &BigInt, n: i64) -> Polynomial {
+pub fn omega(a: &BigInt, b: &BigInt, n: i32) -> Polynomial {
     assert!(n >= One::one());
     if n == One::one() {
         TermBuilder::new().ypow(1).build().to_pol()

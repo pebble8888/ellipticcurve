@@ -9,9 +9,9 @@ type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 #[derive(Debug, Clone, Default)]
 pub struct TermBuilder {
     coef_: BigInt,
-    xpow_: i64,
-    ypow_: i64,
-    qpow_: i64,
+    xpow_: i32,
+    ypow_: i32,
+    qpow_: i32,
     variable_: SubscriptedVariable, 
 }
 
@@ -34,8 +34,8 @@ impl<'a> TermBuildable<BigInt> for TermBuilder {
     }
 }
 
-impl TermBuildable<i64> for TermBuilder {
-    fn coef(&mut self, coef: i64) -> &mut TermBuilder {
+impl TermBuildable<i32> for TermBuilder {
+    fn coef(&mut self, coef: i32) -> &mut TermBuilder {
         self.coef_ = BigInt::from(coef);
         self
     }
@@ -49,17 +49,17 @@ impl TermBuilder {
         }
     }
 
-    pub fn xpow(&mut self, xpow: i64) -> &mut TermBuilder {
+    pub fn xpow(&mut self, xpow: i32) -> &mut TermBuilder {
         self.xpow_ = xpow;
         self
     }
 
-    pub fn ypow(&mut self, ypow: i64) -> &mut TermBuilder {
+    pub fn ypow(&mut self, ypow: i32) -> &mut TermBuilder {
         self.ypow_ = ypow;
         self
     }
 
-    pub fn qpow(&mut self, qpow: i64) -> &mut TermBuilder {
+    pub fn qpow(&mut self, qpow: i32) -> &mut TermBuilder {
         self.qpow_ = qpow;
         self
     }
@@ -69,7 +69,7 @@ impl TermBuilder {
         self
     }
 
-    pub fn variable_ij(&mut self, i: i64, j: i64) -> &mut TermBuilder {
+    pub fn variable_ij(&mut self, i: i32, j: i32) -> &mut TermBuilder {
         assert!(i >= 0);
         assert!(j >= 0);
         self.variable_.i = i;

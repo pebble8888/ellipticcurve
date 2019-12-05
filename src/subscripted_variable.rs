@@ -6,8 +6,8 @@ use primes::is_prime;
 /// if i = 0 and j = 0, omit it
 #[derive(Debug, Clone, Copy)]
 pub struct SubscriptedVariable {
-    pub i: i64,
-    pub j: i64,
+    pub i: i32,
+    pub j: i32,
     pub empty: bool,
 }
 
@@ -79,11 +79,11 @@ impl fmt::Display for SubscriptedVariable {
 
 #[derive(Debug)]
 pub struct SubscriptedVariableConverter {
-    pub p: i64,
+    pub p: i32,
 }
 
 impl SubscriptedVariableConverter {
-    pub fn new(p: i64) -> Self {
+    pub fn new(p: i32) -> Self {
         assert!(p >= 2);
         if !is_prime(p as u64) {
             panic!("p must be prime!");
@@ -133,10 +133,10 @@ impl SubscriptedVariableConverter {
     }
 
     pub fn variable_from_index(&self, index: u64) -> SubscriptedVariable {
-        let mut local_index: i64 = 0;
+        let mut local_index: i32 = 0;
         for i in num_iter::range(0, self.p+1) {
             for j in num_iter::range(i+1, self.p+1) {
-                if local_index == index as i64 {
+                if local_index == index as i32 {
                     return SubscriptedVariable {
                         i: i,
                         j: j,
@@ -147,7 +147,7 @@ impl SubscriptedVariableConverter {
             }
         } 
         for i in num_iter::range(0, self.p+1) {
-            if local_index == index as i64 {
+            if local_index == index as i32 {
                 return SubscriptedVariable {
                     i: i,
                     j: i,

@@ -8,7 +8,7 @@ use super::term_builder::TermBuildable;
 use super::divisor;
 
 /// E_4(q)
-pub fn eisenstein4(max_q_order: i64) -> polynomial::Polynomial {
+pub fn eisenstein4(max_q_order: i32) -> polynomial::Polynomial {
     let mut pol = polynomial::Polynomial::one();
     for n in num_iter::range(1, max_q_order + 1) {
         let sigma = divisor::sigma_divisor(n, 3);

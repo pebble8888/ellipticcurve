@@ -16,7 +16,7 @@ type Polynomial = polynomial::Polynomial;
 
 /// Calculate the order of the Elliptic curve y^2 = x^3 + a x + b
 /// schoof algorithm
-pub fn schoof(a: &BigInt, b: &BigInt, q: i64) -> Vec<bigint::ModResult> {
+pub fn schoof(a: &BigInt, b: &BigInt, q: i32) -> Vec<bigint::ModResult> {
     let qq = BigInt::from(q);
     let mut mod_result: Vec<bigint::ModResult> = Vec::new();
     // l = 2
@@ -39,14 +39,14 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: i64) -> Vec<bigint::ModResult> {
 
     // l >= 3
     // TODO:
-    for l in vec![3i64, 5i64] {
+    for l in vec![3i32, 5i32] {
         println!("{} l:{}", line!(), l);
-        let ql: i64 = q.mod_floor(&l).to_i64().unwrap();
+        let ql: i32 = q.mod_floor(&l).to_i32().unwrap();
         if l >= q {
             break;
         }
         println!("q:{} l:{} ql:{}", q, l, ql);
-        let jmax: i64 = (l-1) / 2;
+        let jmax: i32 = (l-1) / 2;
         println!("j:[1, {}]", jmax);
 
         // (b) x'
@@ -87,7 +87,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: i64) -> Vec<bigint::ModResult> {
         println!("{} psi({}):{}", line!(), l, psi_l);
 
         let mut found = false;
-        let mut jj: i64 = Zero::zero();
+        let mut jj: i32 = Zero::zero();
         for j in num_iter::range(1, jmax + 1) {
             println!("{} j:{}", line!(), j);
             // x
@@ -182,7 +182,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: i64) -> Vec<bigint::ModResult> {
             // (d)
             println!("x not found");
             let mut found = false;
-            let mut w: i64 = 1;
+            let mut w: i32 = 1;
             for i in num_iter::range(1, l) {
                 if i.pow(2).mod_floor(&l) == ql {
                     found = true;
@@ -210,7 +210,7 @@ pub fn schoof(a: &BigInt, b: &BigInt, q: i64) -> Vec<bigint::ModResult> {
                     println!("(e) y  a = 0 mod {}", l);
                 } else {
                     // (e) y
-                    let aa: i64 = a.clone().to_i64().unwrap();
+                    let aa: i32 = a.clone().to_i32().unwrap();
                     let mut p16 = (TermBuilder::new().ypow(aa).build()
                               * division_polynomial::psi(a, b, w).power(3) - division_polynomial::omega(a, b, w)) /
                             TermBuilder::new().ypow(1).build();

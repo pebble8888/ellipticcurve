@@ -6,7 +6,7 @@ use super::delta;
 use super::term_builder;
 
 /// j_invariant * q
-pub fn j_invariant1(order: i64) -> polynomial::Polynomial {
+pub fn j_invariant1(order: i32) -> polynomial::Polynomial {
     let di = delta::delta1_inverse(order);
     let e4 = eisenstein::eisenstein4(order).power(3);
     let e4 = e4.omit_high_order_q(order);
@@ -15,7 +15,7 @@ pub fn j_invariant1(order: i64) -> polynomial::Polynomial {
 }
 
 // j_invariant
-pub fn j_invariant(order: i64) -> polynomial::Polynomial {
+pub fn j_invariant(order: i32) -> polynomial::Polynomial {
     let j1 = j_invariant1(order + 1);
     let t = term_builder::TermBuilder::new()
             .qpow(-1)

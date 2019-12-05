@@ -5,7 +5,6 @@ extern crate num_iter;
 use num_bigint::BigInt;
 use num_traits::{Zero, ToPrimitive};
 use super::term_builder;
-//use super::term_builder::TermBuildable;
 use super::modular_polynomial;
 use super::elliptic_curve;
 use super::polynomial;
@@ -13,19 +12,19 @@ use std::convert::TryInto;
 
 pub struct SEAResult {
     pub gcd: polynomial::Polynomial,
-    pub degree_of_gcd: i64, 
+    pub degree_of_gcd: i32, 
     pub is_elkies_prime: bool,
     pub isogeny_j_invariants: Vec<BigInt>
 }
 
 /// SEA algorithm
 /// TODO: in implementation
-pub fn sea(ec: &elliptic_curve::EllipticCurve, l: i64) -> SEAResult {
+pub fn sea(ec: &elliptic_curve::EllipticCurve, l: i32) -> SEAResult {
     let mut mpol = modular_polynomial::modular_polynomial(l);
     mpol.modular_assign(&ec.p);
     let mut mpol = mpol.eval_y(&ec.j_invariant());
     mpol.modular_assign(&ec.p);
-    let pp: i64 = ec.p.to_i64().unwrap();
+    let pp: i32 = ec.p.to_i32().unwrap();
     let pol = term_builder::TermBuilder::new().xpow(pp).build()
             - term_builder::TermBuilder::new().xpow(1).build();
     let gcd = pol.gcd(&mpol, &ec.p);

@@ -9,7 +9,6 @@ use super::bigint::{Power, PowerModulo};
 use super::term_builder;
 use super::term_builder::TermBuildable;
 use super::subscripted_variable;
-use std::convert::TryInto;
 
 type SubscriptedVariable = subscripted_variable::SubscriptedVariable;
 
@@ -23,9 +22,9 @@ pub struct Term {
 /// x^xpow * y^ypow * c_i_j * q^qpow
 #[derive(Debug, Clone, PartialEq, Eq, Default, Copy)]
 pub struct Monomial {
-    pub xpow: i64,
-    pub ypow: i64,
-    pub qpow: i64,
+    pub xpow: i32,
+    pub ypow: i32,
+    pub qpow: i32,
     pub variable: SubscriptedVariable,
 }
 
@@ -40,7 +39,7 @@ impl_op_ex!(+ |a: &Term, b: &Term| -> polynomial::Polynomial {
     if let Some(av) = pol.terms.get_mut(&b.monomial) {
         *av += b.coef.clone(); 
     } else {
-        pol.terms.insert(b.monomial.clone(), b.coef.clone());
+        pol.terms.insert(b.monomial, b.coef.clone());
     }
     pol
 });
@@ -88,8 +87,8 @@ impl_op_ex!(- |a: &Term| -> Term {
 });
 
 /// Term ^ n
-impl Power<i64> for Term {
-    fn power(&self, n: i64) -> Self {
+impl Power<i32> for Term {
+    fn power(&self, n: i32) -> Self {
         if !self.variable().empty {
             panic!("variable can't power");
         }
@@ -108,7 +107,7 @@ impl<'a> Power<&'a BigInt> for Term {
         if !self.variable().empty {
             panic!("can't power non zero variable!");
         }
-        let nn: i64 = n.to_i64().unwrap();
+        let nn: i32 = n.to_i32().unwrap();
         term_builder::TermBuilder::new()
           .coef(self.coef.power(n))
           .xpow(self.xpow() * nn)
@@ -143,8 +142,8 @@ impl Monomial {
         polynomial.power(self.ypow) * t
     }
 
-    pub fn eval_q(&self, q: i64) -> i64 {
-        q.pow(self.qpow.try_into().unwrap())
+    pub fn eval_q(&self, q: i32) -> i32 {
+        q.pow(self.qpow as u32)
     }
 }
 
@@ -152,19 +151,19 @@ impl Term {
     pub fn from(monomial: &Monomial, coef: &BigInt) -> Self {
         Term {
             coef: coef.clone(),
-            monomial: monomial.clone(),
+            monomial: *monomial,
         }
     }
 
-    pub fn xpow(&self) -> i64 {
+    pub fn xpow(&self) -> i32 {
         self.monomial.xpow
     }
 
-    pub fn ypow(&self) -> i64 {
+    pub fn ypow(&self) -> i32 {
         self.monomial.ypow
     }
 
-    pub fn qpow(&self) -> i64 {
+    pub fn qpow(&self) -> i32 {
         self.monomial.qpow
     }
 
@@ -206,7 +205,7 @@ impl Term {
 
     /// Term^n (mod p)
     pub fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
-        let nn = n.to_i64().unwrap();
+        let nn = n.to_i32().unwrap();
         term_builder::TermBuilder::new()
             .coef(self.coef.power_modulo(n, p))
             .xpow(self.xpow() * nn)
@@ -218,7 +217,7 @@ impl Term {
 
     /// Frobenius map of Term
     /// x -> x^n  y -> y^n
-    pub fn to_frob(&self, n: i64) -> Self {
+    pub fn to_frob(&self, n: i32) -> Self {
         term_builder::TermBuilder::new()
           .coef(self.coef.clone())
           .xpow(self.xpow() * n)
@@ -229,7 +228,7 @@ impl Term {
     }
 
     /// y -> y^n
-    pub fn to_y_power(&self, n: i64) -> Self {
+    pub fn to_y_power(&self, n: i32) -> Self {
         term_builder::TermBuilder::new()
           .coef(self.coef.clone())
           .xpow(self.xpow())
@@ -240,7 +239,7 @@ impl Term {
     }
 
     /// q -> q^n
-    pub fn to_q_power(&self, n: i64) -> Self {
+    pub fn to_q_power(&self, n: i32) -> Self {
         term_builder::TermBuilder::new()
           .coef(self.coef.clone())
           .xpow(self.xpow())
@@ -308,8 +307,8 @@ impl Term {
         assert!(self.xpow() >= Zero::zero());
         let mut t = self.clone();
         if t.xpow() > Zero::zero() { 
-            let c: i64 = t.xpow();
-            t.monomial.xpow = c - 1i64;
+            let c: i32 = t.xpow();
+            t.monomial.xpow = c - 1i32;
             t.coef *= BigInt::from(c);
         } else {
             return term_builder::TermBuilder::new().coef(0).build();
@@ -321,7 +320,7 @@ impl Term {
         assert!(self.ypow() >= Zero::zero());
         let mut t = self.clone();
         if t.ypow() > Zero::zero() { 
-            let c: i64 = t.ypow(); 
+            let c: i32 = t.ypow(); 
             t.monomial.ypow = c - 1;
             t.coef *= c;
         } else {
