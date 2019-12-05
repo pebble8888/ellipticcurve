@@ -61,9 +61,9 @@ pub fn subscripted_variable_modular_polynomial_q(p: i32) -> polynomial::Polynomi
     let j = j_invariant::j_invariant(j_order);
     let j_q_power = j.to_q_power(p);
     let pol1 = pol.eval_x_polynomial(&j);
-    let pol2 = pol1.eval_y_polynomial(&j_q_power);
-    let pol_q = pol2.omit_high_order_q(0); 
-    pol_q
+    let mut pol2 = pol1.eval_y_polynomial(&j_q_power);
+    pol2.omit_high_order_q(0); 
+    pol2
 }
 
 pub fn modular_polynomial(p: i32) -> polynomial::Polynomial {

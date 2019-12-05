@@ -11,7 +11,7 @@ pub fn delta1(order: i32) -> polynomial::Polynomial {
         let t = term_builder::TermBuilder::new().qpow(n).build().to_pol();
         let u = (one.clone() - t).power_omit_high_order_q(24, order);
         pol *= u;
-        pol = pol.omit_high_order_q(order);
+        pol.omit_high_order_q(order);
     }
     pol
 }

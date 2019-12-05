@@ -329,7 +329,7 @@ impl Polynomial {
         // TODO:optimise
         for _i in num_iter::range(0, n) {
             pol *= self.clone();
-            pol = pol.omit_high_order_q(order as i32);
+            pol.omit_high_order_q(order);
         }
         pol
     }
@@ -647,16 +647,16 @@ impl Polynomial {
     }
 
     /// omit O(order+1) for q
-    pub fn omit_high_order_q(&self, order: i32) -> Polynomial {
+    pub fn omit_high_order_q(&mut self, order: i32) {
         assert!(!self.has_x(), "has_x()");
         assert!(!self.has_y(), "has_y()");
-        let mut pol = Polynomial::new();
-        for (m, coef) in &self.terms {
-            if m.qpow <= order {
-                pol.terms.insert(m.clone(), coef.clone());
-            }
-        }
-        pol
+        let m = term::Monomial {
+            xpow: 0,
+            ypow: 0,
+            qpow: order + 1,
+            variable: subscripted_variable::SubscriptedVariable::new(),
+        };
+        self.terms.split_off(&m);
     }
 
     pub fn eval_x_polynomial(&self, polynomial: &polynomial::Polynomial) -> polynomial::Polynomial {

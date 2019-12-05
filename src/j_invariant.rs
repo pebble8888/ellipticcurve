@@ -8,10 +8,11 @@ use super::term_builder;
 /// j_invariant * q
 pub fn j_invariant1(order: i32) -> polynomial::Polynomial {
     let di = delta::delta1_inverse(order);
-    let e4 = eisenstein::eisenstein4(order).power(3);
-    let e4 = e4.omit_high_order_q(order);
-    let j = di * e4;
-    j.omit_high_order_q(order)
+    let mut e4 = eisenstein::eisenstein4(order).power(3);
+    e4.omit_high_order_q(order);
+    let mut j = di * e4;
+    j.omit_high_order_q(order);
+    j
 }
 
 // j_invariant
