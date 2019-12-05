@@ -237,8 +237,22 @@ impl<'a> Power<&'a BigInt> for Polynomial {
 
 impl Power<i32> for Polynomial {
     fn power(&self, n: i32) -> Self {
-        let n = BigInt::from(n);
-        self.power(&n)
+        assert!(n >= 0, "n:{}", n.to_string());
+        if n.is_zero() {
+            return One::one();
+        }
+        let mut e = n;
+        let mut b = self.clone();
+        let mut r: Polynomial = One::one();
+        while e > One::one() {
+            if e.is_odd() {
+                r *= b.clone();
+            }
+            let f = b.clone() * b.clone();
+            b = f;
+            e /= 2;
+        } 
+        r * b
     }
 }
 
@@ -325,8 +339,9 @@ impl Polynomial {
     }
 
     pub fn power_omit_high_order_q(&self, n: i32, order: i32) -> Self {
+        assert!(!self.has_x(), "!self.has_x()");
+        assert!(!self.has_y(), "!self.has_y()");
         let mut pol = polynomial::Polynomial::one();
-        // TODO:optimise
         for _i in num_iter::range(0, n) {
             pol *= self.clone();
             pol.omit_high_order_q(order);
