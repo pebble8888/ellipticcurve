@@ -8,6 +8,7 @@ use super::term_builder;
 use crate::bigint::Inverse;
 use num_traits::Zero;
 use num_traits::One;
+use num_traits::ToPrimitive;
 
 /// y^2 = x^3 + a x + b
 /// GF(p)
@@ -30,6 +31,8 @@ pub struct ECPoint {
 
 impl EllipticCurve {
     pub fn new(a: &BigInt, b: &BigInt, p: &BigInt) -> EllipticCurve {
+        assert!(p >= &BigInt::from(2));
+        assert!(primes::is_prime(p.to_u64().unwrap()));
         let pol = term_builder::TermBuilder::new().xpow(3).build()
         + term_builder::TermBuilder::new().coef(a).xpow(1).build()
         + term_builder::TermBuilder::new().coef(b).build();
@@ -321,4 +324,18 @@ fn elliptic_curve_test5() {
         println!("");
     }
 }
+
+#[test]
+fn isogeny_test1() {
+    let ec = EllipticCurve::new(&BigInt::from(1132), &BigInt::from(278), &BigInt::from(2003));
+    println!("{}", ec);
+    for x in num_iter::range(0, ec.order()) {
+        let point_order = ec.point_order(&ec.points[x]);
+        println!("P{} {} order {}", x + 1, ec.points[x], point_order);
+    }
+
+    //let ec = EllipticCurve::new(&BigInt::from(500), &BigInt::from(1005), &BigInt::from(2003));
+    //println!("{}", ec);
+}
+
 
