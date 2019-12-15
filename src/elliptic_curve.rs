@@ -2,6 +2,8 @@ use crate::bigint::Power;
 use num_bigint::BigInt;
 use num_integer::Integer;
 use std::fmt;
+use std::vec;
+use std::ops::Deref;
 use super::polynomial;
 use super::term_builder::TermBuildable;
 use super::term_builder;
@@ -91,12 +93,16 @@ impl EllipticCurve {
 
     /// Elliptic curve point addition
     pub fn plus(&self, point1: &ECPoint, point2: &ECPoint) -> ECPoint {
-        assert!(self.is_on_curve(point1));
-        assert!(self.is_on_curve(point2));
+        if !self.is_on_curve(point1) {
+            println!("{}", point1);
+            assert!(false, "point1 is not on curve");
+        }
+        assert!(self.is_on_curve(point1), "point1 is not on curve");
+        assert!(self.is_on_curve(point2), "point2 is not on curve");
         if point1.is_infinity() {
-            return ECPoint::new(&point2.x, &point2.y);
+            return ECPoint::new(&point2.x, &point2.y, &point2.z);
         } else if point2.is_infinity() {
-            return ECPoint::new(&point1.x, &point2.y);
+            return ECPoint::new(&point1.x, &point2.y, &point2.z);
         }
         let p1 = self.canonicalize(point1);
         let p2 = self.canonicalize(point2);
@@ -110,7 +116,8 @@ impl EllipticCurve {
             let y3 = m * (&x1 - &x3) - &y1; 
             return ECPoint::new(
                 &x3.mod_floor(&self.p),
-                &y3.mod_floor(&self.p));
+                &y3.mod_floor(&self.p),
+                &BigInt::from(1));
         } else {
             if y1 != y2 || y1 == Zero::zero() {
                 ECPoint::infinity()
@@ -120,7 +127,8 @@ impl EllipticCurve {
                 let y3 = m * (&x1 - &x3) - &y1;
                 return ECPoint::new(
                     &x3.mod_floor(&self.p),
-                    &y3.mod_floor(&self.p));
+                    &y3.mod_floor(&self.p),
+                    &BigInt::from(1));
             }
         }
     }
@@ -132,7 +140,8 @@ impl EllipticCurve {
         }
         ECPoint::new(
             &point.x,
-            &((-point.clone().y).mod_floor(&self.p)))
+            &((-point.clone().y).mod_floor(&self.p)),
+            &point.z)
     }
 
     /// create rational points 
@@ -146,7 +155,7 @@ impl EllipticCurve {
                 let ypol = y.power(2);
                 let ypol = ypol.mod_floor(&self.p);
                 if ypol == xpol {
-                    let point = ECPoint::new(&x, &y);
+                    let point = ECPoint::new(&x, &y, &BigInt::from(1));
                     self.points.push(point.clone());
                     let minus_point = self.negate(&point);
                     if minus_point != point {
@@ -164,8 +173,8 @@ impl EllipticCurve {
         self.points.clone()
     }
 
-    /// EC order by points count
-    pub fn order(&self) -> usize {
+    /// EC cardinality by points count
+    pub fn cardinality(&self) -> usize {
         return self.points.len();
     }
 
@@ -179,13 +188,12 @@ impl EllipticCurve {
         } else if n == &One::one() {
             return point.clone();
         }
-        let point_s = self.multiply_scalar(&point, &(n % BigInt::from(2)));
-        let point_r = self.multiply_scalar(&point_s, &BigInt::from(2));
-        if n.is_odd() {
-            return self.plus(&point_r, point);
-        } else {
-            return point_r;
+        // TODO:optimise
+        let mut pt: ECPoint = point.clone();
+        for _ in num_iter::range(BigInt::from(0), n.clone() - BigInt::from(1)) {
+            pt = self.plus(&pt, point);
         }
+        pt
     }
 
     /// order of P
@@ -203,14 +211,24 @@ impl EllipticCurve {
             x += 1;
         }
     }
+
+    pub fn division_points(&self, order: &BigInt) -> ECPointVec {
+        let mut vec: Vec<ECPoint> = Vec::new();
+        for point in &self.points {
+            if self.multiply_scalar(point, order) == ECPoint::infinity() { 
+                vec.push(point.clone());
+            }
+        }
+        ECPointVec(vec)
+    }
 }
 
 impl ECPoint {
-    pub fn new(x: &BigInt, y:&BigInt) -> ECPoint {
+    pub fn new(x: &BigInt, y:&BigInt, z:&BigInt) -> ECPoint {
         ECPoint {
             x: x.clone(),
             y: y.clone(),
-            z: One::one(),
+            z: z.clone(),
         }
     }
     pub fn infinity() -> ECPoint {
@@ -227,8 +245,8 @@ impl ECPoint {
 
 impl fmt::Display for EllipticCurve {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "F_{}: y^2 = {}, order:{}, j:{}",
-            self.p, self.pol, self.order(), self.j_invariant()) 
+        write!(f, "F_{}: y^2 = {}, cardinality:{}, j:{}",
+            self.p, self.pol, self.cardinality(), self.j_invariant()) 
     }
 }
 
@@ -242,12 +260,50 @@ impl fmt::Display for ECPoint {
     }
 }
 
+pub struct ECPointVec(vec::Vec<ECPoint>);
+
+impl Deref for ECPointVec {
+    type Target = vec::Vec<ECPoint>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<ECPointVec> for vec::Vec<ECPoint> {
+    fn from(ecpointvec: ECPointVec) -> Self {
+        ecpointvec.0.clone()
+    }
+}
+
+impl From<&ECPointVec> for vec::Vec<ECPoint> {
+    fn from(ecpointvec: &ECPointVec) -> Self {
+        ecpointvec.0.clone()
+    }
+}
+
+impl fmt::Display for ECPointVec {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "")?;
+        let v: vec::Vec<ECPoint> = self.into();
+        let mut first = true;
+        for i in v {
+            if first {
+                first = false;
+            } else {
+                write!(f, ", ")?;
+            }
+            write!(f, "{}", i)?;
+        }
+        Ok(())
+    }
+}
+
 // heavy
 /*
 #[test]
 fn elliptic_curve_test1() {
     let ec2 = EllipticCurve::new(&BigInt::from(1132), &BigInt::from(278), &BigInt::from(2003));
-    assert_eq_str!(ec2, "F_2003: y^2 = x^3 + 1132 x + 278, order:1956, j:171");
+    assert_eq_str!(ec2, "F_2003: y^2 = x^3 + 1132 x + 278, cardinality:1956, j:171");
     assert_eq!(ec2.is_on_curve(&ECPoint::new(&BigInt::from(1120), &BigInt::from(1391))), true);
     assert_eq!(ec2.is_on_curve(&ECPoint::new(&BigInt::from(1120), &BigInt::from(1392))), false);
     assert_eq!(ec2.is_on_curve(&ECPoint::new(&BigInt::from(894), &BigInt::from(1425))), true);
@@ -257,7 +313,7 @@ fn elliptic_curve_test1() {
     assert_eq_str!(ec2.plus(&p2, &q2), "(1683, 1388)");
     
     let ec4 = EllipticCurve::new(&BigInt::from(500), &BigInt::from(1005), &BigInt::from(2003));
-    assert_eq_str!(ec4, "F_2003: y^2 = x^3 + 500 x + 1005, order:1956, j:515");
+    assert_eq_str!(ec4, "F_2003: y^2 = x^3 + 500 x + 1005, cardinality:1956, j:515");
     assert_eq!(ec4.is_on_curve(&ECPoint::new(&BigInt::from(565), &BigInt::from(302))), true);
     assert_eq!(ec4.is_on_curve(&ECPoint::new(&BigInt::from(565), &BigInt::from(303))), false);
     assert_eq!(ec4.is_on_curve(&ECPoint::new(&BigInt::from(1818), &BigInt::from(1002))), true);
@@ -271,7 +327,7 @@ fn elliptic_curve_test1() {
 #[test]
 fn elliptic_curve_test2() {
     let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(5));
-    assert_eq_str!(ec, "F_5: y^2 = x^3 + x + 1, order:9, j:2");
+    assert_eq_str!(ec, "F_5: y^2 = x^3 + x + 1, cardinality:9, j:2");
     let points = ec.points();
     assert_eq!(points.len(), 9);
     assert_eq_str!(points[0], "(0, 1)");
@@ -288,7 +344,7 @@ fn elliptic_curve_test2() {
 #[test]
 fn elliptic_curve_test3() {
     let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(5));
-    assert_eq_str!(ec, "F_5: y^2 = x^3 + x + 1, order:9, j:2");
+    assert_eq_str!(ec, "F_5: y^2 = x^3 + x + 1, cardinality:9, j:2");
     assert_eq_str!(ec.point_order(&ec.points[0]), "9");
     assert_eq_str!(ec.point_order(&ec.points[1]), "9");
     assert_eq_str!(ec.point_order(&ec.points[2]), "3");
@@ -304,8 +360,8 @@ fn elliptic_curve_test3() {
 fn elliptic_curve_test4() {
     let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(29));
     println!("{}", ec);
-    for x in num_iter::range(0, ec.order()) {
-        println!("P{} {} order {}", x + 1, ec.points[x], ec.point_order(&ec.points[x]));       
+    for x in num_iter::range(0, ec.cardinality()) {
+        println!("P{} {} cardinality {}", x + 1, ec.points[x], ec.point_order(&ec.points[x]));       
     }
 }
 
@@ -318,8 +374,8 @@ fn elliptic_curve_test5() {
     for p in pset.iter().skip(2).take(10) { 
         let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(p));
         print!("{}", ec);
-        if is_prime(ec.order() as u64) {
-            print!(" order is prime");
+        if is_prime(ec.cardinality() as u64) {
+            print!(" cardinality is prime");
         }
         println!("");
     }
@@ -327,15 +383,35 @@ fn elliptic_curve_test5() {
 
 #[test]
 fn isogeny_test1() {
-    let ec = EllipticCurve::new(&BigInt::from(1132), &BigInt::from(278), &BigInt::from(2003));
+    let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(19));
     println!("{}", ec);
-    for x in num_iter::range(0, ec.order()) {
+    for x in num_iter::range(0, ec.cardinality()) {
         let point_order = ec.point_order(&ec.points[x]);
         println!("P{} {} order {}", x + 1, ec.points[x], point_order);
     }
+    let points2 = ec.division_points(&BigInt::from(2));
+    assert_eq_str!(points2, "O");
 
-    //let ec = EllipticCurve::new(&BigInt::from(500), &BigInt::from(1005), &BigInt::from(2003));
-    //println!("{}", ec);
+    let points3 = ec.division_points(&BigInt::from(3));
+    assert_eq_str!(points3, "(2, 7), (2, 12), O");
+
+    let points7 = ec.division_points(&BigInt::from(7));
+    assert_eq_str!(points7, "(10, 2), (10, 17), (14, 2), (14, 17), (15, 3), (15, 16), O");
 }
 
+#[test]
+#[ignore]
+fn isogeny_test2() {
+    let ec = EllipticCurve::new(&BigInt::from(1811), &BigInt::from(315), &BigInt::from(2003));
+    println!("{}", ec);
+
+    let points2 = ec.division_points(&BigInt::from(2));
+    assert_eq_str!(points2, "(1164, 0), (1222, 0), (1620, 0), O");
+
+    let points3 = ec.division_points(&BigInt::from(3));
+    assert_eq_str!(points3, "(102, 120), (102, 1883), O");
+
+    let points4 = ec.division_points(&BigInt::from(4));
+    assert_eq_str!(points4, "(1164, 0), (1222, 0), (1620, 0), O");
+}
 
