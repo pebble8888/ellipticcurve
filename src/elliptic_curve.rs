@@ -14,6 +14,7 @@ use num_traits::ToPrimitive;
 
 /// y^2 = x^3 + a x + b
 /// GF(p)
+#[derive(Debug, Clone)]
 pub struct EllipticCurve {
     pub a: BigInt,
     pub b: BigInt,
@@ -221,6 +222,29 @@ impl EllipticCurve {
         }
         ECPointVec(vec)
     }
+
+    pub fn isogeny(&self, order: &BigInt) -> EllipticCurve {
+        let pointvec = self.division_points(order);
+        let points: vec::Vec<ECPoint> = pointvec.0.clone();
+        let is_odd_order = order.is_odd();
+        let mut v = BigInt::from(0);
+        let mut w = BigInt::from(0);
+        for point in points {
+            if !point.is_infinity() {
+                let gpx = (BigInt::from(3) * point.x.power(2) + &self.a).div_floor(&self.p);
+                let gpy = (- BigInt::from(2) * point.y).div_floor(&self.p);
+                let up = gpy.power(2).div_floor(&self.p);
+                let vp = if is_odd_order { gpx } else { gpx * BigInt::from(2) };
+                v += vp.clone();
+                w += up + point.x * vp;
+            }
+        }
+        v = v.div_floor(&self.p);
+        w = w.div_floor(&self.p);
+        let a = (&self.a - BigInt::from(5) * v).div_floor(&self.p);
+        let b = (&self.b - BigInt::from(7) * w).div_floor(&self.p);
+        EllipticCurve::new(&a, &b, &self.p)
+    }
 }
 
 impl ECPoint {
@@ -413,5 +437,48 @@ fn isogeny_test2() {
 
     let points4 = ec.division_points(&BigInt::from(4));
     assert_eq_str!(points4, "(1164, 0), (1222, 0), (1620, 0), O");
+}
+
+// TODO:
+#[test]
+fn isogeny_test3() {
+    use primes::PrimeSet;
+    let mut pset = PrimeSet::new();
+
+    for (_, n) in pset.iter().enumerate().skip(3).take(10) {
+        let n: i64 = n as i64;
+        let ec = EllipticCurve::new(&BigInt::from(1), &BigInt::from(1), &BigInt::from(n));
+        println!("{}", ec);
+        /*
+        for x in num_iter::range(0, ec.cardinality()) {
+            let point_order = ec.point_order(&ec.points[x]);
+            println!("P{} {} order {}", x + 1, ec.points[x], point_order);
+        }
+        */
+        let order = BigInt::from(3);
+        println!("order: {}", order);
+        let mut ec_d = ec.clone();
+        for _ in num_iter::range(0, 100) {
+            let points = ec_d.division_points(&order);
+            println!("points: {}", points);
+            if points.len() <= 1 {
+                break;
+            }
+            ec_d = ec_d.isogeny(&order);
+            println!("{}", ec_d);
+        }
+    }
+
+    /*
+    let points3 = ec.division_points(&BigInt::from(3));
+    //assert_eq_str!(points3, "(2, 7), (2, 12), O");
+    println!("3: {}", points3);
+    let ec3 = ec.isogeny(&BigInt::from(3));
+    println!("{}", ec3);
+
+    let points4 = ec.division_points(&BigInt::from(4));
+    println!("4: {}", points4);
+    //assert_eq_str!(points7, "(10, 2), (10, 17), (14, 2), (14, 17), (15, 3), (15, 16), O");
+    */
 }
 
