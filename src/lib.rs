@@ -16,3 +16,4 @@ pub mod delta;
 pub mod j_invariant;
 pub mod subscripted_variable;
 pub mod simultaneous_equation;
+pub mod secp256k1;
