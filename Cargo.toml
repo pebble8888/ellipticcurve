@@ -12,3 +12,5 @@ num-iter = "0.1"
 impl_ops = "0.1"
 primes = "0.2"
 num = "0.2"
+rand = "0.6"
+

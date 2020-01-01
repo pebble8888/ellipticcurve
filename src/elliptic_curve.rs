@@ -189,12 +189,18 @@ impl EllipticCurve {
         } else if n == &One::one() {
             return point.clone();
         }
-        // TODO:optimise
-        let mut pt: ECPoint = point.clone();
-        for _ in num_iter::range(BigInt::from(0), n.clone() - BigInt::from(1)) {
-            pt = self.plus(&pt, point);
-        }
-        pt
+        let mut e = n.clone();
+        let mut b = point.clone();
+        let mut r = ECPoint::infinity();
+        while e > One::one() {
+            if e.is_odd() {
+                r = self.plus(&r, &b.clone());
+            }
+            let f = self.plus(&b.clone(), &b.clone());
+            b = f;
+            e /= 2;
+        } 
+        self.plus(&r, &b)
     }
 
     /// order of P
