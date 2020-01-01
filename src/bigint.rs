@@ -67,12 +67,22 @@ impl Power<i32> for BigInt {
 
 impl PowerModulo for BigInt {
     fn power_modulo(&self, n: &BigInt, p: &BigInt) -> Self {
-        let mut t = BigInt::from(1);
-        for _i in num_iter::range(Zero::zero(), n.clone()) {
-            t *= self;
+        if n == &Zero::zero() {
+            return One::one();
         }
-        t = t.mod_floor(p);
-        t
+        let mut e = n.clone();
+        let mut b = self.clone();
+        let mut r = BigInt::from(1);
+        while e > One::one() {
+            if e.is_odd() {
+                r *= b.clone();
+                r = r.mod_floor(p);
+            }
+            let f = b.clone() * b.clone();
+            b = f.mod_floor(p);
+            e /= 2;
+        }
+        return (r * b).mod_floor(p);
     }
 }
 
