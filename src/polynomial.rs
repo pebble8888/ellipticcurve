@@ -569,7 +569,6 @@ impl Polynomial {
                 let ee = term_builder::TermBuilder::new().xpow(3).build()
                        + term_builder::TermBuilder::new().coef(a.clone()).xpow(1).build()
                        + term_builder::TermBuilder::new().coef(b.clone()).build();
-                // power() is faster than power_modulo()
                 let ee = ee.power_modulo(&yy, &pp);
                 let ee = ee.reduction_modular(a, b, p);
                 e *= ee;
